@@ -18,6 +18,7 @@ const API_TIMEOUT = 30000; // 30 seconds
  * Response from the /scan endpoint
  */
 export interface ScanResponse {
+  confidence: number;
   food_name: string;
   nutritional_info: {
     calories?: number;
@@ -26,7 +27,8 @@ export interface ScanResponse {
     fats?: number;
     [key: string]: any;
   };
-  health_assessment: string;
+  assessment_score: number;
+  assessment: string;
   alternatives: Array<{
     name: string;
     description?: string;
@@ -77,6 +79,7 @@ export async function scanFood(imageUri: string): Promise<ScanResponse> {
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
     try {
+      console.log('Requesting', `${BACKEND_URL}/scan`)
       const response = await fetch(`${BACKEND_URL}/scan`, {
         method: 'POST',
         body: formData,
@@ -89,6 +92,7 @@ export async function scanFood(imageUri: string): Promise<ScanResponse> {
       clearTimeout(timeoutId);
 
       // Handle non-OK responses
+      console.log('Response:', JSON.stringify(response));
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
@@ -106,6 +110,8 @@ export async function scanFood(imageUri: string): Promise<ScanResponse> {
       throw error;
     }
   } catch (error: any) {
+    console.log(error);
+
     // Handle abort (timeout)
     if (error.name === 'AbortError') {
       throw new ApiError(

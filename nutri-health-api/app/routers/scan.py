@@ -60,6 +60,7 @@ async def scan_food(
     """
     
     # Validate file type
+    print('Validating file type:', file.content_type)
     if file.content_type not in ALLOWED_TYPES:
         logger.warning(f"Invalid file type: {file.content_type}")
         raise HTTPException(
@@ -68,6 +69,7 @@ async def scan_food(
         )
     
     # Read file content
+    print('Reading file content')
     try:
         file_content = await file.read()
     except Exception as e:
@@ -78,6 +80,7 @@ async def scan_food(
         )
     
     # Validate file size
+    print('Validating file size of:', len(file_content))
     if len(file_content) > MAX_FILE_SIZE:
         logger.warning(f"File too large: {len(file_content)} bytes")
         raise HTTPException(
@@ -93,10 +96,13 @@ async def scan_food(
         )
     
     # Generate image hash for caching
+    print('Generating image hash')
     image_hash = hash_image(file_content)
+    print('Generated image hash:', image_hash)
     logger.info(f"Processing image with hash: {image_hash[:16]}...")
     
     # Check cache
+    print('Checking cache')
     cached_result = get_cached_result(db, image_hash)
     if cached_result:
         logger.info("Returning cached result")

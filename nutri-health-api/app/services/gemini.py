@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Any
 from io import BytesIO
 from PIL import Image
-import google.generativeai as genai
+import google.genai as genai
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -20,29 +20,12 @@ logger = logging.getLogger(__name__)
 
 # Configure Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "PLACEHOLDER_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
+
 
 # Prompt template for food analysis
 FOOD_ANALYSIS_PROMPT = """
 Analyze this food image and provide a comprehensive nutritional assessment suitable for children aged 7-12.
-
-Please respond in JSON format with the following structure:
-{
-    "food_name": "Name of the food item",
-    "nutritional_info": {
-        "calories": estimated calories (integer),
-        "carbohydrates": grams of carbs (float),
-        "protein": grams of protein (float),
-        "fats": grams of fats (float)
-    },
-    "health_assessment": "A child-friendly explanation of the food's health impact (2-3 sentences)",
-    "alternatives": [
-        {
-            "name": "Healthier alternative name",
-            "description": "Why this is a better choice"
-        }
-    ]
-}
 
 Guidelines:
 1. Use simple, child-friendly language
@@ -56,13 +39,85 @@ Guidelines:
 Please analyze the image and respond with ONLY the JSON object, no additional text.
 """
 
+ANALYSIS_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "confidence": {
+            "type": "number",
+            "description": "Your confidence level as a float between 0 and 1 about correctly identifying the food item"
+        },
+        "food_name": {
+            "type": "string",
+            "description": "Name of the food item"
+        },
+        "nutritional_info": {
+            "type": "object",
+            "properties": {
+                "calories": {
+                    "type": "integer",
+                    "description": "Estimated calories"
+                },
+                "carbohydrates": {
+                    "type": "number",
+                    "description": "Grams of carbs"
+                },
+                "protein": {
+                    "type": "number",
+                    "description": "Grams of protein"
+                },
+                "fats": {
+                    "type": "number",
+                    "description": "Grams of fats"
+                }
+            },
+            "required": ["calories", "carbohydrates", "protein", "fats"],
+            "additionalProperties": False
+        },
+        "assessment_score": {
+            "type": "integer",
+            "enum": [1, 2, 3],
+            "description": "1 = unhealthy, 2 = moderate, 3 = healthy"
+        },
+        "assessment": {
+            "type": "string",
+            "description": "A child-friendly explanation of the food's health impact (2-3 sentences)"
+        },
+        "alternatives": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Healthier alternative name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Why this is a better choice"
+                    }
+                },
+                "required": ["name", "description"],
+                "additionalProperties": False
+            }
+        }
+    },
+    "required": [
+        "confidence",
+        "food_name",
+        "nutritional_info",
+        "assessment_score",
+        "assessment",
+        "alternatives"
+    ],
+    "additionalProperties": False
+}
+
 
 class GeminiService:
     """Service for interacting with Google's Gemini API"""
     
     def __init__(self):
         """Initialize Gemini service"""
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
         self.is_configured = GEMINI_API_KEY != "PLACEHOLDER_KEY"
     
     async def analyze_food_image(self, image_bytes: bytes) -> Dict[str, Any]:
@@ -91,13 +146,16 @@ class GeminiService:
                 image = image.convert('RGB')
             
             # Generate content with the image and prompt
-            response = self.model.generate_content(
-                [FOOD_ANALYSIS_PROMPT, image],
-                generation_config=genai.GenerationConfig(
-                    temperature=0.7,
-                    max_output_tokens=1024,
+            response = client.models.generate_content(
+                model='gemini-3.1-flash-lite-preview',
+                contents=[FOOD_ANALYSIS_PROMPT, image],
+                config=genai.types.GenerateContentConfig(
+                    thinking_config=genai.types.ThinkingConfig(thinking_level='medium'),
+                    response_json_schema=ANALYSIS_RESPONSE_SCHEMA
                 )
             )
+
+            print('Response:', response.text)
             
             # Extract text from response
             response_text = response.text.strip()
@@ -119,7 +177,8 @@ class GeminiService:
             result = json.loads(response_text)
             
             # Validate response structure
-            required_fields = ["food_name", "nutritional_info", "health_assessment"]
+            print('Validating response')
+            required_fields = ["confidence", "food_name", "nutritional_info", "assessment_score", "assessment"]
             for field in required_fields:
                 if field not in result:
                     logger.error(f"Missing required field: {field}")
@@ -149,6 +208,7 @@ class GeminiService:
             Dictionary with placeholder data
         """
         return {
+            "confidence": 0,
             "food_name": "Food Item",
             "nutritional_info": {
                 "calories": 0,
@@ -156,7 +216,8 @@ class GeminiService:
                 "protein": 0.0,
                 "fats": 0.0
             },
-            "health_assessment": "We're having trouble analyzing this food right now. Please try again later, or ask a grown-up to help you learn about this food! 🌟",
+            "assessment_score": 1,
+            "assessment": "We're having trouble analyzing this food right now. Please try again later, or ask a grown-up to help you learn about this food! 🌟",
             "alternatives": [
                 {
                     "name": "Fresh Fruits",

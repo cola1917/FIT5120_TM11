@@ -11,7 +11,8 @@ python-multipart==0.0.12
 pillow==11.0.0
 
 # AI Integration
-google-generativeai==0.8.3
+# google-generativeai==0.8.3
+google-genai==1.68.0
 
 # Environment variables
 python-dotenv==1.0.1

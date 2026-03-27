@@ -10,8 +10,10 @@
  * Font Families
  */
 export const FontFamily = {
-  display: 'PlusJakartaSans-Bold',
-  headline: 'PlusJakartaSans-SemiBold',
+  // display: 'PlusJakartaSans-Bold',
+  display: 'PlusJakartaSans-Variable',
+  // headline: 'PlusJakartaSans-SemiBold',
+  headline: 'PlusJakartaSans-Variable',
   body: 'BeVietnamPro-Regular',
   body_medium: 'BeVietnamPro-Medium',
   body_bold: 'BeVietnamPro-Bold',
@@ -179,8 +181,9 @@ export const Typography = {
  * For use with expo-font or Google Fonts
  */
 export const FontAssets = {
-  'PlusJakartaSans-Bold': require('../assets/fonts/PlusJakartaSans-Bold.ttf'),
-  'PlusJakartaSans-SemiBold': require('../assets/fonts/PlusJakartaSans-SemiBold.ttf'),
+  // 'PlusJakartaSans-Bold': require('../assets/fonts/PlusJakartaSans-Bold.ttf'),
+  'PlusJakartaSans-Variable': require('../assets/fonts/PlusJakartaSans-VariableFont_wght.ttf'),
+  // 'PlusJakartaSans-SemiBold': require('../assets/fonts/PlusJakartaSans-SemiBold.ttf'),
   'BeVietnamPro-Regular': require('../assets/fonts/BeVietnamPro-Regular.ttf'),
   'BeVietnamPro-Medium': require('../assets/fonts/BeVietnamPro-Medium.ttf'),
   'BeVietnamPro-Bold': require('../assets/fonts/BeVietnamPro-Bold.ttf'),

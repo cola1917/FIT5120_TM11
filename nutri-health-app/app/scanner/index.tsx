@@ -49,7 +49,8 @@ export default function Scanner() {
         pathname: '/scanner/results' as any,
         params: {
           foodName: result.food_name,
-          healthAssessment: result.health_assessment,
+          assessmentScore: result.assessment_score,
+          healthAssessment: result.assessment,
           nutritionalInfo: JSON.stringify(result.nutritional_info),
           alternatives: JSON.stringify(result.alternatives),
         },

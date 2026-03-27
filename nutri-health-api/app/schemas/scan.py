@@ -31,14 +31,17 @@ class Alternative(BaseModel):
 
 class ScanResponse(BaseModel):
     """Response from the /scan endpoint"""
+    confidence: float = Field(..., description="Confidence")
     food_name: str = Field(..., description="Identified food name")
     nutritional_info: NutritionalInfo = Field(..., description="Nutritional breakdown")
-    health_assessment: str = Field(..., description="Health assessment and recommendations")
+    assessment_score: int = Field(..., description="Health score")
+    assessment: str = Field(..., description="Assessment and recommendations")
     alternatives: List[Alternative] = Field(default_factory=list, description="Healthier alternatives")
     
     class Config:
         json_schema_extra = {
             "example": {
+                "confidence": 0.95,
                 "food_name": "Chocolate Chip Cookie",
                 "nutritional_info": {
                     "calories": 150,
@@ -46,7 +49,8 @@ class ScanResponse(BaseModel):
                     "protein": 2.0,
                     "fats": 7.0
                 },
-                "health_assessment": "This cookie is high in sugar and fats. While it's okay as an occasional treat, it shouldn't be eaten every day. Try to balance it with healthier snacks like fruits!",
+                "assessment_score": 1,
+                "assessment": "This cookie is high in sugar and fats. While it's okay as an occasional treat, it shouldn't be eaten every day. Try to balance it with healthier snacks like fruits!",
                 "alternatives": [
                     {
                         "name": "Oatmeal Raisin Cookie",

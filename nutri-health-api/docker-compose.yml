@@ -30,10 +30,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://nutrihealth:nutrihealth_dev_password@db:5432/nutrihealth
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-your_gemini_api_key_here}
-      - CORS_ORIGINS=http://localhost:8081,http://localhost:19006,http://localhost:3000
-      - ENVIRONMENT=development
+      DATABASE_URL: postgresql://nutrihealth:nutrihealth_dev_password@db:5432/nutrihealth
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your_gemini_api_key_here}
+      CORS_ORIGINS: http://localhost:8081,http://localhost:19006,http://localhost:3000
+      ENVIRONMENT: development
     depends_on:
       db:
         condition: service_healthy
