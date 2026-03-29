@@ -37,8 +37,15 @@ export default function RootLayout() {
         <Drawer.Screen
           name="scanner/index"
           options={{
-            drawerLabel: 'Food Scanner',
-            title: 'Food Scanner',
+            drawerLabel: 'Scanner',
+            title: 'Scanner',
+          }}
+        />
+        <Drawer.Screen
+          name="scanner/results"
+          options={{
+            drawerLabel: 'Results',
+            title: 'Results',
           }}
         />
       </Drawer>

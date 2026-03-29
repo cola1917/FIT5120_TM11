@@ -34,7 +34,7 @@ export default function Results() {
     : [];
 
   const handleScanAnother = () => {
-    router.back();
+    router.navigate('/scanner');
   };
 
   return (

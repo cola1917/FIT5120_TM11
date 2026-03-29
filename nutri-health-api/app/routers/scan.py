@@ -4,6 +4,7 @@ Handles the /scan endpoint for food image analysis
 """
 
 import logging
+import os
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -120,7 +121,10 @@ async def scan_food(
         )
     
     # Cache the result
-    cache_result(db, image_hash, result, ttl_days=1)
+    if (bool(os.getenv("CACHE_AI_RESPONSE", True))):
+        cache_result(db, image_hash, result, ttl_days=1)
+    else:
+        logger.info('AI response caching disabled')
     
     # Return response
     logger.info(f"Successfully processed scan for: {result.get('food_name')}")
