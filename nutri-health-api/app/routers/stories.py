@@ -82,7 +82,7 @@ async def get_story_cover(
     Raises:
         HTTPException: 404 if story or cover image not found
     """
-    logger.info(f"User '{current_user.get('sub')}' requested cover for story '{story_id}'")
+    logger.info(f"User '{current_user.get('username')}' requested cover for story '{story_id}'")
     
     # Validate story exists
     if not validate_story_exists(story_id):
@@ -97,6 +97,37 @@ async def get_story_cover(
     
     return FileResponse(cover_path, media_type="image/jpeg")
 
+@router.get("/{story_id}/text")
+async def get_story_text(story_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Gets the story text of a specific story.
+    
+    Args:
+        story_id: The unique identifier for the story
+
+    Returns:
+        str: The text for the story
+    
+    Raises:
+        HTTPException: 404 if story not found
+    """
+    logger.info(f"User '{current_user.get('sub')}' requested text for story '{story_id}'")
+
+    # Validate story exists
+    if not validate_story_exists(story_id):
+        raise HTTPException(status_code=404, detail=f"Story '{story_id}' not found")
+    
+    text_path = os.path.join(STORIES_DIR, story_id, "text.json")
+    if not os.path.exists(text_path):
+        logger.error(f"Text not found at {text_path}")
+        raise HTTPException(status_code=404, detail="Text not found")
+    
+    with open(text_path) as text_file:
+        text = json.load(text_file)
+
+    response = list(map(lambda p: {'storyText': p['storyText']}, text['pages']))
+    logger.info(f"Returning response {response}")
+    return response
 
 @router.get("/{story_id}/pages/{page_number}/image")
 async def get_story_page_image(

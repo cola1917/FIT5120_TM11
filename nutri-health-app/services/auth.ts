@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const TOKEN_KEY = 'auth_token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
 const BACKEND_URL = __DEV__ 
-  ? 'http://localhost:8000'
+  ? 'http://192.168.50.152:8000'
   : 'https://your-app.onrender.com';
 
 // Hardcoded credentials (for demo only)
@@ -26,6 +26,7 @@ interface TokenResponse {
  * Request a new token from the backend
  */
 async function requestNewToken(): Promise<string> {
+  console.log(`Requesting new token at ${BACKEND_URL}/token`);
   const formData = new URLSearchParams();
   formData.append('username', DEMO_USERNAME);
   formData.append('password', DEMO_PASSWORD);
@@ -76,6 +77,7 @@ export async function getToken(): Promise<string> {
     
     // If token exists and not expired, return it
     if (cachedToken && !(await isTokenExpired())) {
+      console.log('Using cached token', cachedToken);
       return cachedToken;
     }
     
@@ -101,6 +103,7 @@ export async function clearToken(): Promise<void> {
  */
 export async function initializeAuth(): Promise<void> {
   try {
+    console.log('Getting auth token');
     await getToken();
     console.log('Authentication initialized successfully');
   } catch (error) {

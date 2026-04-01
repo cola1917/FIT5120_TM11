@@ -10,10 +10,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +30,7 @@ import {
   Story,
   StoryTextData,
   ApiError,
+  StoryPage,
 } from '../../services/stories';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -54,7 +55,7 @@ export default function StoryViewerScreen() {
   const storyId = params.id as string;
 
   const [story, setStory] = useState<Story | null>(null);
-  const [storyText, setStoryText] = useState<StoryTextData | null>(null);
+  const [storyText, setStoryText] = useState<StoryPage[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -275,7 +276,7 @@ export default function StoryViewerScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        {storyText.pages.map((page, index) => {
+        {storyText.map((page, index) => {
           const pageNumber = index + 1;
           const imageUrl = getStoryPageImageUrl(storyId, pageNumber);
 

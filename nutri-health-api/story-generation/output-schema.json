@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "storyText": {
+            "type": "string",
+            "description": "The text of the story for the current page. Ensure language is easy to understand."
+          },
+          "imagePrompt": {
+            "type": "string",
+            "description": "Prompt to be used to generate an image for the current page. Ensure it is relevant to the story text. Describe in detail the scene of the story text so that an image generating AI can use the prompt to generate an image of the scene. Include detailed descriptions of any actions, texts, objects, and colours that are relevant to the scene."
+          }
+        },
+        "required": [
+          "storyText",
+          "imagePrompt"
+        ],
+        "propertyOrdering": [
+          "storyText",
+          "imagePrompt"
+        ]
+      }
+    }
+  },
+  "propertyOrdering": [
+    "pages"
+  ]
+}

@@ -11,7 +11,7 @@ import { getToken, clearToken } from './auth';
 // For local development: use your local IP address
 // For production: use the deployed backend URL
 const BACKEND_URL = __DEV__ 
-  ? 'http://localhost:8000'  // Change to your local IP if testing on device (e.g., 'http://192.168.1.100:8000')
+  ? 'http://192.168.50.152:8000'  // Change to your local IP if testing on device (e.g., 'http://192.168.1.100:8000')
   : 'https://your-app.onrender.com';  // Replace with actual render.com URL
 
 const API_TIMEOUT = 30000; // 30 seconds

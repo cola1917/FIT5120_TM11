@@ -9,7 +9,7 @@ import { getToken, clearToken } from './auth';
 
 // Backend URL configuration
 const BACKEND_URL = __DEV__ 
-  ? 'http://localhost:8000'
+  ? 'http://192.168.50.152:8000'
   : 'https://your-app.onrender.com';
 
 const API_TIMEOUT = 30000; // 30 seconds
@@ -29,7 +29,6 @@ export interface Story {
  */
 export interface StoryPage {
   storyText: string;
-  imagePrompt: string;
 }
 
 /**
@@ -210,7 +209,7 @@ export async function getAuthHeaders(): Promise<{ Authorization: string }> {
  * @returns Story text data with all pages
  * @throws ApiError if the request fails
  */
-export async function getStoryText(storyId: string): Promise<StoryTextData> {
+export async function getStoryText(storyId: string): Promise<StoryPage[]> {
   try {
     const headers = await getAuthHeaders();
     
@@ -236,7 +235,7 @@ export async function getStoryText(storyId: string): Promise<StoryTextData> {
         );
       }
       
-      const data: StoryTextData = await response.json();
+      const data: StoryPage[] = await response.json();
       return data;
     } catch (error) {
       clearTimeout(timeoutId);

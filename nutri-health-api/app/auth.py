@@ -153,6 +153,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     Raises:
         HTTPException: 401 Unauthorized if token is invalid or expired
     """
+    print('Getting current user', token)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -161,8 +162,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     
     # Decode and validate token
     token_data = decode_access_token(token)
+    print('token data', token_data)
     if token_data is None:
         raise credentials_exception
     
-    logger.debug(f"Token validated successfully for user '{token_data['username']}'")
+    logger.info(f"Token validated successfully for user '{token_data['username']}'")
     return token_data

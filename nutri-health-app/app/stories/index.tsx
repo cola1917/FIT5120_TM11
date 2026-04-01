@@ -10,10 +10,10 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
@@ -40,6 +40,7 @@ export default function StoriesListScreen() {
   const loadAuthHeaders = async () => {
     try {
       const headers = await getAuthHeaders();
+      console.log('Setting auth headers:', headers);
       setAuthHeaders(headers);
     } catch (err) {
       console.error('Failed to load auth headers:', err);
