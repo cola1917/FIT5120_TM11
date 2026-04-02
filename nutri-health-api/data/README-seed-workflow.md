@@ -54,12 +54,17 @@ Outputs:
 - `data/staging/anomaly_report.json`
 - `data/staging/anomaly_report.md`
 
-3. Optional startup seed
-Set environment variables:
-- `SEED_ON_STARTUP=true`
-- `SEED_TRUNCATE_BEFORE_LOAD=true`
+5. Default startup init behavior
+- On startup, service always runs table init (`create_all`).
+- By default, startup also runs seed once (`SEED_ON_STARTUP=true` by default).
+- After first successful seed, marker `app_init_state.init_key=cn2026_v1` is stored.
+- Next startups skip seed automatically if marker exists.
 
-Then start API as usual.
+Relevant env vars:
+- `SEED_ON_STARTUP` default `true`
+- `SEED_KEY` default `cn2026_v1`
+- `SEED_TRUNCATE_BEFORE_LOAD` default `true`
+- `SEED_FORCE_RELOAD` default `false` (set `true` to force reseed)
 
 ## Suggested next input from you
 1. Database design (tables, columns, types, constraints, unique keys, foreign keys).

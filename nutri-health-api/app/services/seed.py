@@ -38,6 +38,14 @@ TABLE_TRUNCATE_ORDER = [
     "cn_ctgnme",
 ]
 
+INIT_STATE_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS app_init_state (
+    init_key TEXT PRIMARY KEY,
+    init_value TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+)
+"""
+
 
 def _load_seed_table(table_name: str) -> list[dict[str, Any]]:
     file_path = SEED_DIR / f"{table_name}.json"
@@ -57,6 +65,37 @@ def _load_seed_table(table_name: str) -> list[dict[str, Any]]:
 def _chunk_rows(rows: list[dict[str, Any]], chunk_size: int = 2000):
     for i in range(0, len(rows), chunk_size):
         yield rows[i : i + chunk_size]
+
+
+def _ensure_init_state_table(db: Session) -> None:
+    db.execute(text(INIT_STATE_TABLE_SQL))
+
+
+def has_seed_been_initialized(db: Session, seed_key: str) -> bool:
+    """Check whether a seed key has already been marked as completed."""
+    _ensure_init_state_table(db)
+    result = db.execute(
+        text("SELECT 1 FROM app_init_state WHERE init_key = :seed_key LIMIT 1"),
+        {"seed_key": seed_key},
+    ).first()
+    return result is not None
+
+
+def mark_seed_initialized(db: Session, seed_key: str, init_value: str = "completed") -> None:
+    """Persist a marker so startup seeding can be skipped after first success."""
+    _ensure_init_state_table(db)
+    db.execute(
+        text(
+            """
+            INSERT INTO app_init_state (init_key, init_value, updated_at)
+            VALUES (:seed_key, :init_value, NOW())
+            ON CONFLICT (init_key)
+            DO UPDATE SET init_value = EXCLUDED.init_value, updated_at = NOW()
+            """
+        ),
+        {"seed_key": seed_key, "init_value": init_value},
+    )
+    db.commit()
 
 
 def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[str, int]:
