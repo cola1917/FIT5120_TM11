@@ -56,14 +56,15 @@ Outputs:
 
 5. Default startup init behavior
 - On startup, service always runs table init (`create_all`).
-- By default, startup also runs seed once (`SEED_ON_STARTUP=true` by default).
+- By default, startup does not import seed data (`SEED_ON_STARTUP=false`).
 - After first successful seed, marker `app_init_state.init_key=cn2026_v1` is stored.
 - Next startups skip seed automatically if marker exists.
+- If no seed data is loaded, change the startup config and restart the service to trigger a one-time import.
 
 Relevant env vars:
-- `SEED_ON_STARTUP` default `true`
+- `SEED_ON_STARTUP` default `false`
 - `SEED_KEY` default `cn2026_v1`
-- `SEED_TRUNCATE_BEFORE_LOAD` default `true`
+- `SEED_TRUNCATE_BEFORE_LOAD` default `false`
 - `SEED_FORCE_RELOAD` default `false` (set `true` to force reseed)
 
 ## Suggested next input from you

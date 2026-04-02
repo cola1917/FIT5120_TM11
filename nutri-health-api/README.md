@@ -77,11 +77,12 @@ nutri-health-api/
    ```bash
    cp .env.example .env
    ```
-   
-   Edit `.env` and configure:
+
+   Edit `.env` and configure at minimum:
    - `DATABASE_URL`: PostgreSQL connection string
    - `GEMINI_API_KEY`: Your Gemini API key
-   - `CORS_ORIGINS`: Allowed origins (comma-separated)
+
+   The default startup behavior is to create tables only. Seed import is disabled by default.
 
 5. **Run the server**
    ```bash
@@ -93,6 +94,12 @@ nutri-health-api/
 6. **Access API documentation**
    - Swagger UI: `http://localhost:8000/docs`
    - ReDoc: `http://localhost:8000/redoc`
+
+### Startup Initialization
+
+- On startup, the service always runs database table initialization (`create_all`).
+- It does not import seed data unless `SEED_ON_STARTUP=true` is set in `.env`.
+- If you need the initial seed data, update the startup config, restart the service, and the seed will run once for that `SEED_KEY`.
 
 ## API Endpoints
 
