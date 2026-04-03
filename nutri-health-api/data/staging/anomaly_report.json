@@ -1,0 +1,277 @@
+{
+  "summary": {
+    "total_foods": 9202,
+    "total_nutvals": 174838,
+    "total_weights": 15271,
+    "total_alternatives": 13017,
+    "negative_nutrient_values": 0,
+    "gram_over_100": 1,
+    "energy_over_900_kcal": 8,
+    "sodium_over_5000_mg": 25,
+    "non_positive_weight_rows": 15,
+    "gtin_non_numeric": 0,
+    "gtin_unusual_length": 0,
+    "non_improving_alternatives": 0
+  },
+  "details": {
+    "gram_over_100_samples": [
+      {
+        "cn_code": 123360,
+        "nutrient_code": 203,
+        "nutrient_value": 101.38,
+        "descriptor": "Sausage Egg Cheese English Muffin"
+      }
+    ],
+    "energy_over_900_samples": [
+      {
+        "cn_code": 4001,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fat, beef tallow"
+      },
+      {
+        "cn_code": 4002,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Lard"
+      },
+      {
+        "cn_code": 4589,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fish oil, cod liver"
+      },
+      {
+        "cn_code": 4590,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fish oil, herring"
+      },
+      {
+        "cn_code": 4591,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fish oil, menhaden"
+      },
+      {
+        "cn_code": 4592,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fish oil, menhaden, fully hydrogenated"
+      },
+      {
+        "cn_code": 4593,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fish oil, salmon"
+      },
+      {
+        "cn_code": 4594,
+        "kcal_per_100g": 902.0,
+        "descriptor": "Fish oil, sardine"
+      }
+    ],
+    "sodium_over_5000_samples": [
+      {
+        "cn_code": 2047,
+        "sodium_mg_per_100g": 38758.0,
+        "descriptor": "Salt, table"
+      },
+      {
+        "cn_code": 18372,
+        "sodium_mg_per_100g": 27360.0,
+        "descriptor": "Leavening agents, baking soda"
+      },
+      {
+        "cn_code": 19225,
+        "sodium_mg_per_100g": 26050.0,
+        "descriptor": "Desserts, rennin, tablets, unsweetened"
+      },
+      {
+        "cn_code": 6075,
+        "sodium_mg_per_100g": 26000.0,
+        "descriptor": "Soup, beef broth or bouillon, powder, dry"
+      },
+      {
+        "cn_code": 6081,
+        "sodium_mg_per_100g": 24000.0,
+        "descriptor": "Soup, chicken broth cubes, dry"
+      },
+      {
+        "cn_code": 6076,
+        "sodium_mg_per_100g": 24000.0,
+        "descriptor": "Soup, beef broth, cubed, dry"
+      },
+      {
+        "cn_code": 6080,
+        "sodium_mg_per_100g": 23875.0,
+        "descriptor": "Soup, chicken broth or bouillon, dry"
+      },
+      {
+        "cn_code": 2074,
+        "sodium_mg_per_100g": 17000.0,
+        "descriptor": "Seasoning mix, dry, sazon, coriander & annatto"
+      },
+      {
+        "cn_code": 6115,
+        "sodium_mg_per_100g": 11588.0,
+        "descriptor": "Gravy, au jus, dry"
+      },
+      {
+        "cn_code": 18369,
+        "sodium_mg_per_100g": 10600.0,
+        "descriptor": "Leavening agents, baking powder, double-acting, sodium aluminum sulfate"
+      },
+      {
+        "cn_code": 43497,
+        "sodium_mg_per_100g": 9690.0,
+        "descriptor": "Jellyfish, dried, salted"
+      },
+      {
+        "cn_code": 6094,
+        "sodium_mg_per_100g": 8031.0,
+        "descriptor": "Soup, onion, dry, mix"
+      },
+      {
+        "cn_code": 18370,
+        "sodium_mg_per_100g": 7893.0,
+        "descriptor": "Leavening agents, baking powder, double-acting, straight phosphate"
+      },
+      {
+        "cn_code": 6179,
+        "sodium_mg_per_100g": 7851.0,
+        "descriptor": "Sauce, fish, ready-to-serve"
+      },
+      {
+        "cn_code": 2075,
+        "sodium_mg_per_100g": 7203.0,
+        "descriptor": "Seasoning mix, dry, taco, original"
+      },
+      {
+        "cn_code": 15018,
+        "sodium_mg_per_100g": 7027.0,
+        "descriptor": "Fish, cod, Atlantic, dried and salted"
+      },
+      {
+        "cn_code": 16125,
+        "sodium_mg_per_100g": 6820.0,
+        "descriptor": "Soy sauce made from hydrolyzed vegetable protein"
+      },
+      {
+        "cn_code": 6122,
+        "sodium_mg_per_100g": 6580.0,
+        "descriptor": "Gravy, mushroom, dry, powder"
+      },
+      {
+        "cn_code": 12536,
+        "sodium_mg_per_100g": 6008.0,
+        "descriptor": "Seeds, sunflower seed kernels from shell, dry roasted, with salt added"
+      },
+      {
+        "cn_code": 6127,
+        "sodium_mg_per_100g": 5730.0,
+        "descriptor": "Gravy, unspecified type, dry"
+      }
+    ],
+    "non_positive_weight_samples": [
+      {
+        "cn_code": 1284,
+        "sequence_num": 6,
+        "amount": 0.0,
+        "unit_amount": 113.0,
+        "measure_description": "container (4 oz)"
+      },
+      {
+        "cn_code": 5009,
+        "sequence_num": 4,
+        "amount": 0.0,
+        "unit_amount": 299.0,
+        "measure_description": "chicken, bone removed"
+      },
+      {
+        "cn_code": 5015,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 79.0,
+        "measure_description": "chicken, skin only"
+      },
+      {
+        "cn_code": 5016,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 190.0,
+        "measure_description": "chicken, skin only"
+      },
+      {
+        "cn_code": 5019,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 72.0,
+        "measure_description": "chicken, skin only"
+      },
+      {
+        "cn_code": 5029,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 194.0,
+        "measure_description": "chicken, bone removed"
+      },
+      {
+        "cn_code": 5053,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 51.0,
+        "measure_description": "back, bone and skin removed"
+      },
+      {
+        "cn_code": 5055,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 40.0,
+        "measure_description": "back, bone and skin removed"
+      },
+      {
+        "cn_code": 5058,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 140.0,
+        "measure_description": "breast, bone removed"
+      },
+      {
+        "cn_code": 5192,
+        "sequence_num": 3,
+        "amount": 0.0,
+        "unit_amount": 864.0,
+        "measure_description": "breast, bone removed"
+      },
+      {
+        "cn_code": 19213,
+        "sequence_num": 1,
+        "amount": 0.0,
+        "unit_amount": 142.0,
+        "measure_description": "cup"
+      },
+      {
+        "cn_code": 19214,
+        "sequence_num": 1,
+        "amount": 0.0,
+        "unit_amount": 142.0,
+        "measure_description": "cup"
+      },
+      {
+        "cn_code": 19221,
+        "sequence_num": 1,
+        "amount": 0.0,
+        "unit_amount": 142.0,
+        "measure_description": "cup"
+      },
+      {
+        "cn_code": 19231,
+        "sequence_num": 1,
+        "amount": 0.0,
+        "unit_amount": 141.0,
+        "measure_description": "cup"
+      },
+      {
+        "cn_code": 19232,
+        "sequence_num": 1,
+        "amount": 0.0,
+        "unit_amount": 141.0,
+        "measure_description": "cup"
+      }
+    ]
+  }
+}

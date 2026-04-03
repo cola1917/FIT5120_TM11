@@ -50,4 +50,7 @@ def init_db():
     Initialize database by creating all tables.
     Should be called on application startup.
     """
+    # Import models to register table metadata before create_all.
+    import app.models  # noqa: F401
+
     Base.metadata.create_all(bind=engine)

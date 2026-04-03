@@ -1,0 +1,42 @@
+{
+  "nutrient_codes": {
+    "energy_kcal": 208,
+    "sugar_g": 269,
+    "saturated_fat_g": 606,
+    "sodium_mg": 307,
+    "fiber_g": 291,
+    "protein_g": 203,
+    "trans_fat_g": 605
+  },
+  "nutri_score": {
+    "negative": {
+      "energy_kj": [335, 670, 1005, 1340, 1675, 2010, 2345, 2680, 3015, 3350],
+      "sugars_g": [4.5, 9, 13.5, 18, 22.5, 27, 31, 36, 40, 45],
+      "sat_fat_g": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "sodium_mg": [90, 180, 270, 360, 450, 540, 630, 720, 810, 900]
+    },
+    "positive": {
+      "fiber_g": [0.9, 1.9, 2.8, 3.7, 4.7],
+      "protein_g": [1.6, 3.2, 4.8, 6.4, 8.0]
+    }
+  },
+  "hcl_default_thresholds": {
+    "energy_kcal": 400,
+    "sugar_g": 10,
+    "sodium_mg": 400,
+    "saturated_fat_g": 3
+  },
+  "halal_non_compliant_keywords": [
+    "pork",
+    "bacon",
+    "ham",
+    "lard",
+    "gelatin",
+    "alcohol",
+    "rum",
+    "brandy",
+    "wine",
+    "beer",
+    "mirin"
+  ]
+}
