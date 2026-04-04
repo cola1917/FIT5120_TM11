@@ -126,7 +126,6 @@ async def get_story_text(story_id: str, current_user: dict = Depends(get_current
         text = json.load(text_file)
 
     response = list(map(lambda p: {'storyText': p['storyText']}, text['pages']))
-    logger.info(f"Returning response {response}")
     return response
 
 @router.get("/{story_id}/pages/{page_number}/image")
@@ -208,10 +207,10 @@ async def get_story_page_audio(
         )
     
     # Construct path to page audio
-    audio_path = os.path.join(STORIES_DIR, story_id, "pages", f"page-{page_number}.mp3")
+    audio_path = os.path.join(STORIES_DIR, story_id, "pages", f"page-{page_number}.wav")
     
     if not os.path.exists(audio_path):
         logger.error(f"Page audio not found at {audio_path}")
         raise HTTPException(status_code=404, detail="Page audio not found")
     
-    return FileResponse(audio_path, media_type="audio/mpeg")
+    return FileResponse(audio_path)
