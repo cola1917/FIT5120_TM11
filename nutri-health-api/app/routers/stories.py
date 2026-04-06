@@ -208,9 +208,9 @@ async def get_story_page_audio(
     
     # Construct path to page audio
     audio_path = os.path.join(STORIES_DIR, story_id, "pages", f"page-{page_number}.wav")
-    
-    if not os.path.exists(audio_path):
-        logger.error(f"Page audio not found at {audio_path}")
-        raise HTTPException(status_code=404, detail="Page audio not found")
-    
-    return FileResponse(audio_path)
+    if os.path.exists(audio_path):
+        return FileResponse(audio_path)
+    if os.path.exists(audio_path_alt := audio_path.rstrip('.wav') + '.WAV'):
+        return FileResponse(audio_path_alt)
+    logger.error(f"Page audio not found at {audio_path} or {audio_path_alt}")
+    raise HTTPException(status_code=404, detail='Page audio not found')

@@ -10,7 +10,7 @@ import { getToken, clearToken } from './auth';
 // Backend URL configuration
 const BACKEND_URL = __DEV__ 
   ? 'http://192.168.18.6:8000'
-  : 'https://your-app.onrender.com';
+  : 'https://fit5120-tm11.onrender.com';
 
 const API_TIMEOUT = 30000; // 30 seconds
 
