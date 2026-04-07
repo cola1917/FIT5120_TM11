@@ -326,6 +326,10 @@ export default function StoryViewerScreen() {
                   resizeMode="contain"
                 />
               </View>
+
+              {index + 1 === story.pageCount &&
+                <Ionicons name='arrow-down-circle-outline' size={52} style={{alignSelf: 'center', paddingTop: Spacing.md}}/>
+              }
             </View>
           );
         })}

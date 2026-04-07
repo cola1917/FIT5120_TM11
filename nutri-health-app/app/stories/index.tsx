@@ -22,6 +22,7 @@ import { getStories, getStoryCoverUrl, getAuthHeaders, Story, ApiError } from '.
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.6;
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
+const CARD_SPACING = (SCREEN_WIDTH - CARD_WIDTH) / 2;
 
 const AUTO_SCROLL_INTERVAL = 4000;
 
@@ -225,7 +226,7 @@ export default function StoriesListScreen() {
           keyExtractor={(item) => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}
-          snapToInterval={CARD_WIDTH + Spacing.lg}
+          snapToInterval={CARD_WIDTH + CARD_SPACING - Spacing.xs}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
           onTouchStart={stopAutoScroll}
@@ -236,8 +237,8 @@ export default function StoriesListScreen() {
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
           getItemLayout={(_, index) => ({
-            length: CARD_WIDTH + Spacing.lg,
-            offset: (CARD_WIDTH + Spacing.lg / 2) * index,
+            length: (CARD_WIDTH + CARD_SPACING - Spacing.xs),
+            offset: (CARD_WIDTH + CARD_SPACING - Spacing.xs) * index,
             index,
           })}
         />
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     color: Colors.on_surface_variant,
   },
   listContent: {
-    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH - Spacing.xs * 2) / 2,
+    paddingHorizontal: CARD_SPACING,
     paddingVertical: Spacing.md,
   },
   card: {
