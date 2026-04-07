@@ -11,6 +11,12 @@
       "title": "The Sticky Kingdom",
       "coverImage": "story-2/cover.jpg",
       "pageCount": 9
+    },
+    {
+      "id": "story-3",
+      "title": "The Legend of the Rainbow Feast",
+      "coverImage": "story-3/cover.jpg",
+      "pageCount": 15
     }
   ]
 }

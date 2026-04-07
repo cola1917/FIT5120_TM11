@@ -1,0 +1,3 @@
+The following JSON object contains a short story for children divided into individual pages. In each page, storyText contains the text of the story for that page, imagePrompt contains additional prompt info to be used when generating a relevant image for that page:
+<story JSON>
+Generate the images for each page in a grid according to the story text and image prompt for each page, each image should roughly have a square aspect ratio, do not include page numbers or story text in the image.

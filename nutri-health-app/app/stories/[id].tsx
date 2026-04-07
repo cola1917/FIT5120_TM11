@@ -30,10 +30,8 @@ import {
   getStoryText,
   Story,
   ApiError,
-  StoryPage,
   StoryTextData,
 } from '../../services/stories';
-import { Button } from '../../components/Button';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HEADER_HEIGHT = 80;
@@ -418,8 +416,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   pageImage: {
-    width: Math.min(SCREEN_WIDTH, PAGE_HEIGHT),
-    height: Math.min(SCREEN_WIDTH, PAGE_HEIGHT)
+    width: '100%',
+    aspectRatio: 1
   },
   outcomeTitle: {
     ...Typography.headlineLarge

@@ -1,0 +1,4 @@
+Given the following short story:
+<story JSON>
+What is the takeaway for children from this story?
+Summarize the takeaway into a couple of sentences that children aged 7 to 12 can understand.
