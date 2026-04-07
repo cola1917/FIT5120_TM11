@@ -35,7 +35,7 @@ export default function StoriesListScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const flatListRef = useRef<FlatList>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   // 🔥 Progress animation
   const progress = useRef(new Animated.Value(0)).current;
@@ -173,9 +173,6 @@ export default function StoriesListScreen() {
             style={styles.title}>
             {item.title}
           </AutoSizeText>
-          {/* <Text style={styles.title} numberOfLines={3}>
-            {item.title}
-          </Text> */}
         </View>
       </TouchableOpacity>
     );
