@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Audio } from 'expo-av';
@@ -28,10 +29,11 @@ import {
   getAuthHeaders,
   getStoryText,
   Story,
-  StoryTextData,
   ApiError,
   StoryPage,
+  StoryTextData,
 } from '../../services/stories';
+import { Button } from '../../components/Button';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HEADER_HEIGHT = 80;
@@ -52,10 +54,12 @@ const getStoryTextStyle = (storyId: string) => {
 export default function StoryViewerScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation();
+  const parent = navigation.getParent();
   const storyId = params.id as string;
 
   const [story, setStory] = useState<Story | null>(null);
-  const [storyText, setStoryText] = useState<StoryPage[] | null>(null);
+  const [storyText, setStoryText] = useState<StoryTextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,6 +69,30 @@ export default function StoryViewerScreen() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const isAutoScrolling = useRef(false);
+
+  const cleanUp = () => {
+    parent?.setOptions({title: 'Stories', headerRight: undefined});
+  }
+
+  useEffect(() => {
+    if (!story) return;
+
+    // Set dynamic title + custom back button
+    parent?.setOptions({
+      title: story.title,
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{ marginRight: 16 }}
+        >
+          <Ionicons name="arrow-back" size={24} />
+        </TouchableOpacity>
+      ),
+    });
+
+    // Cleanup: restore default title when leaving
+    return cleanUp;
+  }, [story]);
 
   useEffect(() => {
     loadStoryData();
@@ -276,7 +304,7 @@ export default function StoryViewerScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        {storyText.map((page, index) => {
+        {storyText.pages.map((page, index) => {
           const pageNumber = index + 1;
           const imageUrl = getStoryPageImageUrl(storyId, pageNumber);
 
@@ -303,6 +331,13 @@ export default function StoryViewerScreen() {
             </View>
           );
         })}
+        <View style={styles.centerContainer}>
+          <Text style={{...styles.outcomeTitle, paddingBottom: Spacing.md}}>What can we learn?</Text>
+          <Text style={{...styles.storyText, paddingBottom: Spacing.lg}}>{storyText.outcome}</Text>
+          <TouchableOpacity style={{...styles.backButton, marginBottom: Spacing.lg}} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>Back to Stories</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -385,6 +420,9 @@ const styles = StyleSheet.create({
   pageImage: {
     width: Math.min(SCREEN_WIDTH, PAGE_HEIGHT),
     height: Math.min(SCREEN_WIDTH, PAGE_HEIGHT)
+  },
+  outcomeTitle: {
+    ...Typography.headlineLarge
   },
   loadingText: {
     ...Typography.bodyLarge,

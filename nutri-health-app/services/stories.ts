@@ -33,6 +33,7 @@ export interface StoryPage {
  */
 export interface StoryTextData {
   pages: StoryPage[];
+  outcome: string;
 }
 
 /**
@@ -206,7 +207,7 @@ export async function getAuthHeaders(): Promise<{ Authorization: string }> {
  * @returns Story text data with all pages
  * @throws ApiError if the request fails
  */
-export async function getStoryText(storyId: string): Promise<StoryPage[]> {
+export async function getStoryText(storyId: string): Promise<StoryTextData> {
   try {
     const headers = await getAuthHeaders();
     
@@ -232,7 +233,7 @@ export async function getStoryText(storyId: string): Promise<StoryPage[]> {
         );
       }
       
-      const data: StoryPage[] = await response.json();
+      const data: StoryTextData = await response.json();
       return data;
     } catch (error) {
       clearTimeout(timeoutId);

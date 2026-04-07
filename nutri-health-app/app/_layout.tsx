@@ -80,17 +80,10 @@ export default function RootLayout() {
           }}
         />
         <Drawer.Screen
-          name="stories/index"
+          name="stories"
           options={{
             drawerLabel: 'Stories',
             title: 'Stories',
-          }}
-        />
-        <Drawer.Screen
-          name="stories/[id]"
-          options={{
-            drawerItemStyle: { display: 'none' },
-            title: 'Story',
           }}
         />
       </Drawer>

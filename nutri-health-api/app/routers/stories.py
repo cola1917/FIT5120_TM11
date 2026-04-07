@@ -123,10 +123,9 @@ async def get_story_text(story_id: str, current_user: dict = Depends(get_current
         raise HTTPException(status_code=404, detail="Text not found")
     
     with open(text_path) as text_file:
-        text = json.load(text_file)
+        data = json.load(text_file)
 
-    response = list(map(lambda p: {'storyText': p['storyText']}, text['pages']))
-    return response
+    return data
 
 @router.get("/{story_id}/pages/{page_number}/image")
 async def get_story_page_image(

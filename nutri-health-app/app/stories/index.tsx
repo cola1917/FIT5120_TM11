@@ -66,7 +66,10 @@ export default function StoriesListScreen() {
   };
 
   const handleStoryPress = (story: Story) => {
-    router.push(`/stories/${story.id}` as any);
+    router.push({
+      pathname: `/stories/[id]`,
+      params: {id: story.id}
+    });
   };
 
   const renderStoryCard = ({ item }: { item: Story }) => {
