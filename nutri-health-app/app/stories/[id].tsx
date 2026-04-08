@@ -61,7 +61,7 @@ export default function StoryViewerScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioState, setAudioState] = useState<'playing'| 'idle' | 'error'>('idle');
   const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
 
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -121,7 +121,7 @@ export default function StoryViewerScreen() {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
-      setIsPlaying(false);
+      setAudioState('idle');
     } catch (err) {
       console.error('Failed to cleanup audio:', err);
     }
@@ -207,7 +207,7 @@ export default function StoryViewerScreen() {
       }
 
       soundRef.current = sound;
-      setIsPlaying(true);
+      setAudioState('playing');
 
       // Set up callback for when audio finishes
       sound.setOnPlaybackStatusUpdate((status) => {
@@ -217,12 +217,12 @@ export default function StoryViewerScreen() {
       });
     } catch (err) {
       console.error('Failed to play audio:', err);
-      setIsPlaying(false);
+      setAudioState('error');
     }
   };
 
   const handleAudioFinished = async (pageNumber: number) => {
-    setIsPlaying(false);
+    setAudioState('idle');
     
     // Auto-advance to next page if available
     if (story && pageNumber < story.pageCount) {
@@ -250,16 +250,17 @@ export default function StoryViewerScreen() {
   };
 
   const handleListenPress = async () => {
-    if (isPlaying) {
-      await cleanupAudio();
-    } else {
+    if (audioState === 'idle' || audioState === 'error') {
       await playAudioForPage(currentPage);
+    } else if (audioState === 'playing') {
+      await cleanupAudio();
     }
   };
 
   const handleBackPress = async () => {
     await cleanupAudio();
-    router.push('/stories/index' as any);
+    loadAuthHeaders();
+    loadStoryData();
   };
 
   if (loading) {
@@ -275,8 +276,8 @@ export default function StoryViewerScreen() {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error || 'Story not found'}</Text>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Text style={styles.backButtonText}>Back to Stories</Text>
+        <TouchableOpacity style={styles.button} onPress={handleBackPress}>
+          <Text style={styles.backButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
     );
@@ -294,12 +295,12 @@ export default function StoryViewerScreen() {
           activeOpacity={0.8}
         >
           <Ionicons 
-            name={isPlaying ? "stop-circle" : "volume-high"} 
+            name={audioState === 'playing' ? "stop-circle" : audioState === 'idle' ? "volume-high" : "warning-outline"} 
             size={24} 
             color={Colors.on_primary} 
           />
           <Text style={styles.listenButtonText}>
-            {isPlaying ? 'Stop' : 'Listen'}
+            {audioState === 'playing' ? 'Stop' : audioState === 'idle' ? 'Listen' : "Unavailable"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -347,7 +348,7 @@ export default function StoryViewerScreen() {
         <View style={styles.centerContainer}>
           <Text style={{...styles.outcomeTitle, paddingBottom: Spacing.md}}>What can we learn?</Text>
           <Text style={{...styles.storyText, paddingBottom: Spacing.lg}}>{storyText.outcome}</Text>
-          <TouchableOpacity style={{...styles.backButton, marginBottom: Spacing.lg}} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={{...styles.button, marginBottom: Spacing.lg}} onPress={() => navigation.goBack()}>
             <Text style={styles.backButtonText}>Back to Stories</Text>
           </TouchableOpacity>
         </View>
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
-  backButton: {
+  button: {
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,

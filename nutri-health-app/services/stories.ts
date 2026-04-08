@@ -255,6 +255,6 @@ export async function getStoryText(storyId: string): Promise<StoryTextData> {
       throw error;
     }
     
-    throw new ApiError('Failed to load story text', 500, error);
+    throw new ApiError('Unable to load story', 500, error);
   }
 }
