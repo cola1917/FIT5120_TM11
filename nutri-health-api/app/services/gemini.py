@@ -1,42 +1,57 @@
 """
-Gemini AI Integration Service
-Handles food image analysis using Google's Gemini API
+Food image analysis: OpenAI GPT-4o is the primary provider, automatically falls back to
+Qwen-VL (DashScope) when the OpenAI quota is exhausted.
+
+Flow:
+  1. analyze_food_image()  — vision LLM, outputs child-friendly format directly (~10s)
+  2. RAG search            — fast FAISS lookup using food_name (<1s)
+  3. rewrite_alternatives() — small LLM call, rewrites only the alternatives list (~2-3s)
 """
 
-import os
+import asyncio
+import base64
 import json
 import logging
-from typing import Dict, Any
 from io import BytesIO
+from typing import Any, Dict, List
+
 from PIL import Image
-import google.genai as genai
 from dotenv import load_dotenv
 
-# Load environment variables
+from app.config.vision_llm import (
+    dashscope_chat_extra_body,
+    get_dashscope_openai_client,
+    get_dashscope_settings,
+    get_openai_client,
+)
+
 load_dotenv()
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
-# Configure Gemini API
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "PLACEHOLDER_KEY")
-client = genai.Client(api_key=GEMINI_API_KEY)
-
-
-# Prompt template for food analysis
 FOOD_ANALYSIS_PROMPT = """
-Analyze this food image and provide a comprehensive nutritional assessment suitable for children aged 7-12.
+Analyze this food image and provide a child-friendly nutritional assessment for children aged 7-12.
 
-Guidelines:
-1. Use simple, child-friendly language
-2. Be encouraging and positive
-3. If the food is unhealthy, suggest 2-3 healthier alternatives
-4. If the food is already healthy, praise it and suggest similar healthy options
-5. Nutritional values should be per typical serving size
-6. Be specific and accurate with nutritional information
-7. Make health assessments educational and not judgmental
+Tone and style rules:
+- Warm, lively, and encouraging — like a supportive nutritionist friend
+- Simple language that children aged 7-12 can easily understand
+- Never use fear-based, negative, or warning language
+- Do NOT include any calorie information anywhere
 
-Please analyze the image and respond with ONLY the JSON object, no additional text.
+For nutritional_info fields (carbohydrates, protein, fats):
+- First line: numeric estimate with unit (e.g. "12.5g")
+- Second line: one simple sentence explaining what it helps with
+- No emojis in nutritional_info
+
+For assessment:
+- Max 3 sentences: praise something good, suggest one pairing, encouraging close
+- At most 4 emojis naturally placed
+
+For alternatives:
+- 2-3 options if the food is unhealthy or moderate
+- Real food names only, 1-2 key benefits in child-friendly language
+
+Respond with ONLY the JSON object, no additional text.
 """
 
 ANALYSIS_RESPONSE_SCHEMA = {
@@ -44,7 +59,7 @@ ANALYSIS_RESPONSE_SCHEMA = {
     "properties": {
         "confidence": {
             "type": "number",
-            "description": "Your confidence level as a float between 0 and 1 about correctly identifying the food item"
+            "description": "Confidence level 0-1 about correctly identifying the food item"
         },
         "food_name": {
             "type": "string",
@@ -53,24 +68,20 @@ ANALYSIS_RESPONSE_SCHEMA = {
         "nutritional_info": {
             "type": "object",
             "properties": {
-                "calories": {
-                    "type": "integer",
-                    "description": "Estimated calories"
-                },
                 "carbohydrates": {
-                    "type": "number",
-                    "description": "Grams of carbs"
+                    "type": "string",
+                    "description": "e.g. '12.5g\\nHelps you run and play all afternoon'"
                 },
                 "protein": {
-                    "type": "number",
-                    "description": "Grams of protein"
+                    "type": "string",
+                    "description": "e.g. '5.0g\\nBuilds strong muscles and helps you grow'"
                 },
                 "fats": {
-                    "type": "number",
-                    "description": "Grams of fats"
+                    "type": "string",
+                    "description": "e.g. '8.0g\\nKeeps your brain sharp and body warm'"
                 }
             },
-            "required": ["calories", "carbohydrates", "protein", "fats"],
+            "required": ["carbohydrates", "protein", "fats"],
             "additionalProperties": False
         },
         "assessment_score": {
@@ -80,21 +91,15 @@ ANALYSIS_RESPONSE_SCHEMA = {
         },
         "assessment": {
             "type": "string",
-            "description": "A child-friendly explanation of the food's health impact (2-3 sentences)"
+            "description": "Child-friendly health assessment, max 3 sentences, at most 4 emojis"
         },
         "alternatives": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Healthier alternative name"
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "Why this is a better choice"
-                    }
+                    "name": {"type": "string"},
+                    "description": {"type": "string"}
                 },
                 "required": ["name", "description"],
                 "additionalProperties": False
@@ -102,134 +107,335 @@ ANALYSIS_RESPONSE_SCHEMA = {
         }
     },
     "required": [
-        "confidence",
-        "food_name",
-        "nutritional_info",
-        "assessment_score",
-        "assessment",
-        "alternatives"
+        "confidence", "food_name", "nutritional_info",
+        "assessment_score", "assessment", "alternatives"
     ],
     "additionalProperties": False
 }
 
+ALTERNATIVES_REWRITE_SCHEMA = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "description": {"type": "string"}
+        },
+        "required": ["name", "description"],
+        "additionalProperties": False
+    }
+}
+
+
+def _unwrap_json_markdown(response_text: str) -> str:
+    text = response_text.strip()
+    if text.startswith("```json"):
+        text = text.split("```json", 1)[1]
+        text = text.split("```", 1)[0]
+    elif text.startswith("```"):
+        text = text.split("```", 1)[1]
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.split("```", 1)[0]
+    return text.strip()
+
+
+def _validate_analysis_core(result: Dict[str, Any]) -> bool:
+    required_fields = ["confidence", "food_name", "nutritional_info", "assessment_score", "assessment"]
+    return all(field in result for field in required_fields)
+
+
+def _is_low_quality(result: Dict[str, Any]) -> bool:
+    """Return True if the vision result is too low quality to use."""
+    if result.get("confidence", 1) < 0.6:
+        return True
+    if result.get("food_name", "").strip().lower() in ("", "food item"):
+        return True
+    return False
+
+
+def _is_quota_exceeded(error: Exception) -> bool:
+    """Return True if the error indicates an OpenAI quota exhaustion."""
+    try:
+        from openai import RateLimitError
+        if isinstance(error, RateLimitError):
+            code = getattr(error, "code", None) or ""
+            body = str(error)
+            return "insufficient_quota" in code or "insufficient_quota" in body
+    except ImportError:
+        pass
+    return False
+
 
 class GeminiService:
-    """Service for interacting with Google's Gemini API"""
-    
-    def __init__(self):
-        """Initialize Gemini service"""
-        self.is_configured = GEMINI_API_KEY != "PLACEHOLDER_KEY"
-    
-    async def analyze_food_image(self, image_bytes: bytes) -> Dict[str, Any]:
-        """
-        Analyze a food image using Gemini AI.
-        
-        Args:
-            image_bytes: Raw image bytes
-            
-        Returns:
-            Dictionary containing food analysis results
-            
-        Raises:
-            Exception: If analysis fails
-        """
-        if not self.is_configured:
-            logger.warning("Gemini API key not configured, returning mock data")
-            return self._get_fallback_response()
-        
-        try:
-            # Open and validate image
-            image = Image.open(BytesIO(image_bytes))
-            
-            # Ensure image is in RGB mode
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-            
-            # Generate content with the image and prompt
-            response = client.models.generate_content(
-                model='gemini-3.1-flash-lite-preview',
-                contents=[FOOD_ANALYSIS_PROMPT, image],
-                config=genai.types.GenerateContentConfig(
-                    thinking_config=genai.types.ThinkingConfig(thinking_level='medium'),
-                    response_json_schema=ANALYSIS_RESPONSE_SCHEMA
-                )
-            )
+    """Food scanner: OpenAI first, automatic fallback to Qwen-VL on quota exhaustion."""
 
-            print('Response:', response.text)
-            
-            # Extract text from response
-            response_text = response.text.strip()
-            
-            # Try to parse JSON from response
-            # Sometimes Gemini wraps JSON in markdown code blocks
-            if response_text.startswith("```json"):
-                response_text = response_text.split("```json")[1]
-                response_text = response_text.split("```")[0]
-            elif response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
-                response_text = response_text.split("```")[0]
-            
-            response_text = response_text.strip()
-            
-            # Parse JSON response
+    # ------------------------------------------------------------------ #
+    #  Image analysis                                                      #
+    # ------------------------------------------------------------------ #
+
+    def _analyze_food_image_openai(self, image_bytes: bytes, model: str = None) -> Dict[str, Any]:
+        client = get_openai_client()
+        if not client:
+            return None
+
+        s = get_dashscope_settings()
+        use_model = model or s.openai_vision_model
+        response_text = ""
+        try:
+            image = Image.open(BytesIO(image_bytes))
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+            buf = BytesIO()
+            image.save(buf, format="JPEG")
+            b64 = base64.standard_b64encode(buf.getvalue()).decode("ascii")
+            data_url = f"data:image/jpeg;base64,{b64}"
+
+            schema_hint = (
+                "\n\nRespond with ONLY one JSON object (no markdown) matching this schema:\n"
+                + json.dumps(ANALYSIS_RESPONSE_SCHEMA, ensure_ascii=False)
+            )
+            user_text = FOOD_ANALYSIS_PROMPT.strip() + schema_hint
+
+            completion = client.chat.completions.create(
+                model=use_model,
+                messages=[{"role": "user", "content": [
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                    {"type": "text", "text": user_text},
+                ]}],
+            )
+            response_text = (completion.choices[0].message.content or "").strip()
+            response_text = _unwrap_json_markdown(response_text)
             result = json.loads(response_text)
-            
-            # Validate response structure
-            print('Validating response')
-            required_fields = ["confidence", "food_name", "nutritional_info", "assessment_score", "assessment"]
-            for field in required_fields:
-                if field not in result:
-                    logger.error(f"Missing required field: {field}")
-                    return self._get_fallback_response()
-            
-            # Ensure alternatives is a list
+            if not _validate_analysis_core(result):
+                logger.error("OpenAI response JSON is missing required fields")
+                return self._get_fallback_response()
             if "alternatives" not in result:
                 result["alternatives"] = []
-            
-            logger.info(f"Successfully analyzed food: {result.get('food_name')}")
+            logger.info("OpenAI analysis succeeded (%s): %s", use_model, result.get("food_name"))
             return result
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Gemini response as JSON: {e}")
-            logger.error(f"Response text: {response_text}")
-            return self._get_fallback_response()
-            
         except Exception as e:
-            logger.error(f"Error analyzing food image: {e}")
+            if _is_quota_exceeded(e):
+                raise
+            logger.error("OpenAI image analysis failed (%s): %s", use_model, e)
             return self._get_fallback_response()
-    
+
+    def _analyze_food_image_qwen(self, image_bytes: bytes) -> Dict[str, Any]:
+        client = get_dashscope_openai_client()
+        if not client:
+            return self._get_fallback_response()
+
+        s = get_dashscope_settings()
+        response_text = ""
+        try:
+            image = Image.open(BytesIO(image_bytes))
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+
+            fmt = (image.format or "JPEG").upper()
+            mime = "image/png" if fmt == "PNG" else "image/jpeg"
+            buf = BytesIO()
+            save_fmt = "PNG" if mime == "image/png" else "JPEG"
+            image.save(buf, format=save_fmt)
+            b64 = base64.standard_b64encode(buf.getvalue()).decode("ascii")
+            data_url = f"data:{mime};base64,{b64}"
+
+            schema_hint = (
+                "\n\nRespond with ONLY one JSON object (no markdown) matching this schema:\n"
+                + json.dumps(ANALYSIS_RESPONSE_SCHEMA, ensure_ascii=False)
+            )
+            user_text = FOOD_ANALYSIS_PROMPT.strip() + schema_hint
+
+            content: List[Dict[str, Any]] = [
+                {"type": "image_url", "image_url": {"url": data_url}},
+                {"type": "text", "text": user_text},
+            ]
+
+            extra = dashscope_chat_extra_body()
+            if s.qwen_vl_stream:
+                stream = client.chat.completions.create(
+                    model=s.qwen_vl_model,
+                    messages=[{"role": "user", "content": content}],
+                    stream=True,
+                    extra_body=extra,
+                )
+                parts: List[str] = []
+                for chunk in stream:
+                    if not chunk.choices:
+                        continue
+                    delta = chunk.choices[0].delta
+                    if delta is None:
+                        continue
+                    c = getattr(delta, "content", None) or ""
+                    if c:
+                        parts.append(c)
+                response_text = "".join(parts).strip()
+            else:
+                completion = client.chat.completions.create(
+                    model=s.qwen_vl_model,
+                    messages=[{"role": "user", "content": content}],
+                    stream=False,
+                    extra_body=extra,
+                )
+                msg = completion.choices[0].message
+                response_text = (msg.content or "").strip()
+
+            response_text = _unwrap_json_markdown(response_text)
+            result = json.loads(response_text)
+            if not _validate_analysis_core(result):
+                logger.error("Qwen response JSON is missing required fields")
+                return self._get_fallback_response()
+            if "alternatives" not in result:
+                result["alternatives"] = []
+            logger.info("Qwen-VL analysis succeeded: %s", result.get("food_name"))
+            return result
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse Qwen image analysis JSON: %s", e)
+            logger.error("Raw response text: %s", response_text[:2000] if response_text else "")
+            return self._get_fallback_response()
+        except Exception as e:
+            logger.error("Qwen image analysis failed: %s", e)
+            return self._get_fallback_response()
+
+    async def analyze_food_image(self, image_bytes: bytes) -> Dict[str, Any]:
+        if get_openai_client() is not None:
+            try:
+                s = get_dashscope_settings()
+                result = await asyncio.to_thread(self._analyze_food_image_openai, image_bytes)
+                if result is not None:
+                    if _is_low_quality(result) and s.openai_vision_fallback_model != s.openai_vision_model:
+                        logger.info(
+                            "Low quality result from %s (confidence=%.2f, food_name=%r), retrying with %s",
+                            s.openai_vision_model,
+                            result.get("confidence", 0),
+                            result.get("food_name"),
+                            s.openai_vision_fallback_model,
+                        )
+                        retry = await asyncio.to_thread(
+                            self._analyze_food_image_openai, image_bytes, s.openai_vision_fallback_model
+                        )
+                        if retry is not None:
+                            return retry
+                    return result
+            except Exception as e:
+                if _is_quota_exceeded(e):
+                    logger.warning("OpenAI quota exhausted, switching to Qwen-VL")
+                else:
+                    logger.error("OpenAI image analysis error: %s", e)
+
+        logger.info("Using Qwen-VL for image analysis")
+        return await asyncio.to_thread(self._analyze_food_image_qwen, image_bytes)
+
+    # ------------------------------------------------------------------ #
+    #  Alternatives rewrite (small second LLM call)                       #
+    # ------------------------------------------------------------------ #
+
+    def _rewrite_alternatives_openai(self, alternatives: list) -> list:
+        client = get_openai_client()
+        if not client:
+            return None
+
+        s = get_dashscope_settings()
+        prompt = (
+            "Rewrite the descriptions of these food alternatives for children aged 7-12.\n"
+            "Rules:\n"
+            "- Keep the 'name' field exactly as given, do not change it\n"
+            "- Rewrite 'description' to be simple, warm, and encouraging (1-2 sentences)\n"
+            "- No emojis, no calories\n"
+            "- Output only the JSON array, nothing else\n\n"
+            "Input:\n"
+            + json.dumps(alternatives, ensure_ascii=False)
+        )
+
+        try:
+            completion = client.chat.completions.create(
+                model=s.openai_text_model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            response_text = (completion.choices[0].message.content or "").strip()
+            response_text = _unwrap_json_markdown(response_text)
+            return json.loads(response_text)
+        except Exception as e:
+            if _is_quota_exceeded(e):
+                raise
+            logger.error("OpenAI alternatives rewrite failed: %s", e)
+            return alternatives
+
+    def _rewrite_alternatives_qwen(self, alternatives: list) -> list:
+        client = get_dashscope_openai_client()
+        if not client:
+            return alternatives
+
+        s = get_dashscope_settings()
+        prompt = (
+            "Rewrite the descriptions of these food alternatives for children aged 7-12.\n"
+            "Rules:\n"
+            "- Keep the 'name' field exactly as given, do not change it\n"
+            "- Rewrite 'description' to be simple, warm, and encouraging (1-2 sentences)\n"
+            "- No emojis, no calories\n"
+            "- Output only the JSON array, nothing else\n\n"
+            "Input:\n"
+            + json.dumps(alternatives, ensure_ascii=False)
+        )
+
+        try:
+            completion = client.chat.completions.create(
+                model=s.qwen_text_model,
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+            )
+            response_text = (completion.choices[0].message.content or "").strip()
+            response_text = _unwrap_json_markdown(response_text)
+            return json.loads(response_text)
+        except Exception as e:
+            logger.error("Qwen alternatives rewrite failed: %s", e)
+            return alternatives
+
+    async def rewrite_alternatives(self, alternatives: list) -> list:
+        """Rewrite only the alternatives list in child-friendly language."""
+        if not alternatives:
+            return alternatives
+
+        if get_openai_client() is not None:
+            try:
+                result = await asyncio.to_thread(self._rewrite_alternatives_openai, alternatives)
+                if result is not None:
+                    return result
+            except Exception as e:
+                if _is_quota_exceeded(e):
+                    logger.warning("OpenAI quota exhausted, switching to Qwen for alternatives rewrite")
+                else:
+                    logger.error("OpenAI alternatives rewrite error: %s", e)
+
+        logger.info("Using Qwen for alternatives rewrite")
+        return await asyncio.to_thread(self._rewrite_alternatives_qwen, alternatives)
+
+    # ------------------------------------------------------------------ #
+    #  Fallback response                                                   #
+    # ------------------------------------------------------------------ #
+
     def _get_fallback_response(self) -> Dict[str, Any]:
-        """
-        Get a fallback response when Gemini is unavailable or fails.
-        
-        Returns:
-            Dictionary with placeholder data
-        """
         return {
             "confidence": 0,
             "food_name": "Food Item",
             "nutritional_info": {
-                "calories": 0,
-                "carbohydrates": 0.0,
-                "protein": 0.0,
-                "fats": 0.0
+                "carbohydrates": "0g\nHelps give you energy to play",
+                "protein": "0g\nHelps your muscles grow strong",
+                "fats": "0g\nKeeps your brain and body working well"
             },
             "assessment_score": 1,
-            "assessment": "We're having trouble analyzing this food right now. Please try again later, or ask a grown-up to help you learn about this food! 🌟",
+            "assessment": "We're having trouble analysing this food right now. Please try again later, or ask a grown-up to help you learn about this food! 🌟",
             "alternatives": [
                 {
                     "name": "Fresh Fruits",
-                    "description": "Fruits are always a great choice with natural sweetness and vitamins!"
+                    "description": "Fruits are always a great choice — naturally sweet and full of goodness!"
                 },
                 {
                     "name": "Vegetables",
-                    "description": "Colorful veggies help you grow strong and healthy!"
+                    "description": "Colourful veggies help you grow strong and feel great!"
                 }
             ]
         }
 
 
-# Create singleton instance
 gemini_service = GeminiService()

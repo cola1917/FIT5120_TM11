@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { scanFood, ApiError } from '../../services/api';
+import { scanFood, ApiError } from '../../../services/api';
 
 interface RecommendedFood {
   id: string;

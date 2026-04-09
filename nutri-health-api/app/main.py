@@ -8,7 +8,10 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+
+from app.load_env import ensure_dotenv_loaded
+
+ensure_dotenv_loaded()
 
 from app.database import init_db
 from app.database import SessionLocal
@@ -18,9 +21,6 @@ from app.services.seed import (
     mark_seed_initialized,
     seed_catalog_tables,
 )
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(

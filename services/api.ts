@@ -9,27 +9,25 @@ import { getToken, clearToken } from './auth';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
-const API_TIMEOUT = 30000; // 30 seconds
+const API_TIMEOUT = 60000; // 60 seconds
 
 /**
  * Response from the /scan endpoint
  */
 export interface ScanResponse {
+  recognised: boolean;
   confidence: number;
   food_name: string;
   nutritional_info: {
-    calories?: number;
-    carbohydrates?: number;
-    protein?: number;
-    fats?: number;
-    [key: string]: any;
+    carbohydrates?: string;
+    protein?: string;
+    fats?: string;
   };
   assessment_score: number;
   assessment: string;
   alternatives: Array<{
     name: string;
     description?: string;
-    [key: string]: any;
   }>;
 }
 
@@ -84,7 +82,6 @@ export async function scanFood(imageUri: string): Promise<ScanResponse> {
         method: 'POST',
         body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`,
         },
         signal: controller.signal,
@@ -103,7 +100,6 @@ export async function scanFood(imageUri: string): Promise<ScanResponse> {
           method: 'POST',
           body: formData,
           headers: {
-            'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${newToken}`,
           },
         });
