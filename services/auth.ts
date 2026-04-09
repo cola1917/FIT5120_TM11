@@ -1,6 +1,6 @@
 /**
  * Authentication Service
- * 
+ *
  * Handles JWT token management for API authentication.
  * Automatically authenticates with hardcoded credentials and caches tokens.
  */
@@ -28,32 +28,43 @@ interface TokenResponse {
  */
 async function requestNewToken(): Promise<string> {
   console.log(`Requesting new token at ${BACKEND_URL}/token`);
+  console.log('Checking credentials:', DEMO_USERNAME, DEMO_PASSWORD);
   const formData = new URLSearchParams();
   formData.append('username', DEMO_USERNAME);
   formData.append('password', DEMO_PASSWORD);
+  formData.append('grant_type', 'password');
 
-  const response = await fetch(`${BACKEND_URL}/token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData.toString(),
-  });
+  try {
+    const response = await fetch(`${BACKEND_URL}/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
-  if (!response.ok) {
-    throw new Error('Authentication failed');
+    console.log('Response status:', response.status);
+    const responseText = await response.text();
+    console.log('Response body:', responseText);
+
+    if (!response.ok) {
+      throw new Error(`Authentication failed: ${response.status} - ${responseText}`);
+    }
+
+    const data: TokenResponse = JSON.parse(responseText);
+
+    // Calculate expiry time (24 hours from now)
+    const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+
+    // Cache token and expiry
+    await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
+    await AsyncStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+
+    return data.access_token;
+  } catch (error) {
+    console.error('Error in requestNewToken:', error);
+    throw error;
   }
-
-  const data: TokenResponse = await response.json();
-  
-  // Calculate expiry time (24 hours from now)
-  const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
-  
-  // Cache token and expiry
-  await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
-  await AsyncStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
-  
-  return data.access_token;
 }
 
 /**
@@ -62,7 +73,7 @@ async function requestNewToken(): Promise<string> {
 async function isTokenExpired(): Promise<boolean> {
   const expiryStr = await AsyncStorage.getItem(TOKEN_EXPIRY_KEY);
   if (!expiryStr) return true;
-  
+
   const expiry = parseInt(expiryStr, 10);
   return Date.now() >= expiry;
 }
@@ -75,13 +86,13 @@ export async function getToken(): Promise<string> {
   try {
     // Check if we have a cached token
     const cachedToken = await AsyncStorage.getItem(TOKEN_KEY);
-    
+
     // If token exists and not expired, return it
     if (cachedToken && !(await isTokenExpired())) {
       console.log('Using cached token', cachedToken);
       return cachedToken;
     }
-    
+
     // Otherwise, request new token
     return await requestNewToken();
   } catch (error) {
