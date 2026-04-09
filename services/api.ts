@@ -7,7 +7,7 @@
 
 import { getToken, clearToken } from './auth';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://192.168.100.238:8000';
 
 const API_TIMEOUT = 60000; // 60 seconds
 
