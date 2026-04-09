@@ -9,9 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = 'auth_token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
-//const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-//const BACKEND_URL = 'http://localhost:8000';
-const BACKEND_URL = 'http://127.0.0.1:8000';
+// Use your computer's LAN IP for Expo Go testing
+const BACKEND_URL = 'http://192.168.100.238:8000';
 
 // Hardcoded credentials (for demo only)
  const DEMO_USERNAME = 'demo';
