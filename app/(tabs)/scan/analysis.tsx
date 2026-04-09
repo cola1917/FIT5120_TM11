@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { scanFood, ApiError } from '../../services/api';
 
 interface RecommendedFood {
   id: string;
@@ -42,27 +43,8 @@ const DEBUG_FORCE_NO_RESULT = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_RESULT = false;
 
-const MOCK_ANALYSIS_RESULT: AnalysisResult = {
-  rating: 'UNHEALTHY',
-  label: 'Needs an Upgrade',
-  mascotMessage: 'This snack is tasty, but we can make it more hero-worthy!',
-  recommendedFoods: [
-    {
-      id: '1',
-      name: 'Apple Slices',
-      description: 'Fresh, crunchy, and naturally sweet.',
-      image:
-        'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      id: '2',
-      name: 'Greek Yogurt',
-      description: 'Creamy and packed with protein.',
-      image:
-        'https://images.unsplash.com/photo-1571212515416-fca88e2d5c3e?auto=format&fit=crop&w=800&q=80',
-    },
-  ],
-};
+// Mock data is no longer needed as we fetch from the backend
+// Kept for reference during development if needed
 
 const { width } = Dimensions.get('window');
 const ALTERNATIVE_CARD_WIDTH = width - 80;
@@ -76,51 +58,109 @@ export default function AnalysisScreen() {
   const [cannotRecognise, setCannotRecognise] = useState(false);
   const [alternativesUnavailable, setAlternativesUnavailable] = useState(false);
   const [alternativesResultFailed, setAlternativesResultFailed] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const loadAnalysis = () => {
+  const loadAnalysis = async () => {
     setLoading(true);
     setAnalysisResult(null);
     setNoResult(false);
     setCannotRecognise(false);
     setAlternativesUnavailable(false);
     setAlternativesResultFailed(false);
+    setApiError(null);
 
     const delay = DEBUG_FORCE_LOADING_DELAY ? 2200 : 700;
 
-    setTimeout(() => {
-      if (!photoUri) {
-        setNoResult(true);
-        setLoading(false);
-        return;
-      }
+    // If no photo URI, show error immediately
+    if (!photoUri) {
+      setNoResult(true);
+      setLoading(false);
+      return;
+    }
 
-      if (DEBUG_FORCE_UNABLE_TO_RECOGNISE) {
-        setCannotRecognise(true);
-        setLoading(false);
-        return;
-      }
+    // Handle debug flags first
+    if (DEBUG_FORCE_UNABLE_TO_RECOGNISE) {
+      setCannotRecognise(true);
+      setLoading(false);
+      return;
+    }
 
-      if (DEBUG_FORCE_NO_RESULT) {
-        setNoResult(true);
-        setLoading(false);
-        return;
-      }
+    if (DEBUG_FORCE_NO_RESULT) {
+      setNoResult(true);
+      setLoading(false);
+      return;
+    }
 
-      const result = { ...MOCK_ANALYSIS_RESULT };
+    try {
+      // Call backend API to scan the food image
+      console.log('Scanning food image:', photoUri);
+      const scanResponse = await scanFood(photoUri);
+      
+      console.log('Scan response received:', scanResponse);
+      
+      // Map backend response to frontend format
+      const rating: 'HEALTHY' | 'MODERATE' | 'UNHEALTHY' = 
+        scanResponse.assessment_score >= 70 ? 'HEALTHY' :
+        scanResponse.assessment_score >= 40 ? 'MODERATE' : 'UNHEALTHY';
+      
+      const labelMap: Record<string, string> = {
+        'HEALTHY': 'Great Choice!',
+        'MODERATE': 'Could Be Better',
+        'UNHEALTHY': 'Needs an Upgrade'
+      };
+      
+      const mascotMessages: Record<string, string> = {
+        'HEALTHY': 'Awesome! This food is super healthy for you!',
+        'MODERATE': 'This is okay, but maybe we can find something even better!',
+        'UNHEALTHY': 'This snack is tasty, but we can make it more hero-worthy!'
+      };
 
-      if (DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE) {
-        result.recommendedFoods = [];
-        setAlternativesUnavailable(true);
-      }
+      // Map alternatives from backend
+      const recommendedFoods: RecommendedFood[] = scanResponse.alternatives && scanResponse.alternatives.length > 0
+        ? scanResponse.alternatives.map((alt, index) => ({
+            id: `alt-${index}`,
+            name: alt.name,
+            description: alt.description || 'A healthier option for you!',
+            image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80'
+          }))
+        : [];
 
-      if (DEBUG_FORCE_NO_ALTERNATIVES_RESULT) {
-        result.recommendedFoods = [];
-        setAlternativesResultFailed(true);
+      const result: AnalysisResult = {
+        rating,
+        label: labelMap[rating],
+        mascotMessage: mascotMessages[rating],
+        recommendedFoods
+      };
+
+      // Handle empty alternatives
+      if (recommendedFoods.length === 0) {
+        if (DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE) {
+          setAlternativesUnavailable(true);
+        } else if (DEBUG_FORCE_NO_ALTERNATIVES_RESULT) {
+          setAlternativesResultFailed(true);
+        }
       }
 
       setAnalysisResult(result);
+    } catch (error) {
+      console.error('Error scanning food:', error);
+      
+      if (error instanceof ApiError) {
+        if (error.statusCode === 408) {
+          setApiError('Request timed out. Please try again!');
+        } else if (error.statusCode === 0) {
+          setApiError('Network error. Please check your connection!');
+        } else if (error.statusCode === 401) {
+          setApiError('Authentication failed. Please log in again!');
+        } else {
+          setApiError(error.message || 'Failed to analyze image. Please try again.');
+        }
+      } else {
+        setApiError('An unexpected error occurred. Please try again.');
+      }
+    } finally {
       setLoading(false);
-    }, delay);
+    }
   };
 
   useEffect(() => {
@@ -177,6 +217,27 @@ export default function AnalysisScreen() {
         <Text style={styles.feedbackText}>
           Please try again. We do not want to show incomplete or confusing information.
         </Text>
+
+        <TouchableOpacity style={styles.primaryAction} onPress={loadAnalysis}>
+          <Text style={styles.primaryActionText}>Retry</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryAction}
+          onPress={() => router.replace('/scan')}
+        >
+          <Text style={styles.secondaryActionText}>Go Home</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Show API error if present
+  if (apiError) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.feedbackTitle}>Error</Text>
+        <Text style={styles.feedbackText}>{apiError}</Text>
 
         <TouchableOpacity style={styles.primaryAction} onPress={loadAnalysis}>
           <Text style={styles.primaryActionText}>Retry</Text>
