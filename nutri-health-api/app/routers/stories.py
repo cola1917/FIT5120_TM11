@@ -67,8 +67,7 @@ async def get_stories(current_user: dict = Depends(get_current_user)):
 
 @router.get("/{story_id}/cover")
 async def get_story_cover(
-    story_id: str,
-    current_user: dict = Depends(get_current_user)
+    story_id: str
 ):
     """
     Get the cover image for a specific story.
@@ -82,7 +81,7 @@ async def get_story_cover(
     Raises:
         HTTPException: 404 if story or cover image not found
     """
-    logger.info(f"User '{current_user.get('username')}' requested cover for story '{story_id}'")
+    logger.info(f"Requested cover for story '{story_id}'")
     
     # Validate story exists
     if not validate_story_exists(story_id):
@@ -130,8 +129,7 @@ async def get_story_text(story_id: str, current_user: dict = Depends(get_current
 @router.get("/{story_id}/pages/{page_number}/image")
 async def get_story_page_image(
     story_id: str,
-    page_number: int,
-    current_user: dict = Depends(get_current_user)
+    page_number: int
 ):
     """
     Get the image for a specific page of a story.
@@ -147,7 +145,7 @@ async def get_story_page_image(
         HTTPException: 404 if story, page, or image not found
         HTTPException: 400 if page_number is invalid
     """
-    logger.info(f"User '{current_user.get('sub')}' requested page {page_number} image for story '{story_id}'")
+    logger.info(f"Requested page {page_number} image for story '{story_id}'")
     
     # Validate story exists
     if not validate_story_exists(story_id):
@@ -174,8 +172,7 @@ async def get_story_page_image(
 @router.get("/{story_id}/pages/{page_number}/audio")
 async def get_story_page_audio(
     story_id: str,
-    page_number: int,
-    current_user: dict = Depends(get_current_user)
+    page_number: int
 ):
     """
     Get the audio file for a specific page of a story.
@@ -191,7 +188,7 @@ async def get_story_page_audio(
         HTTPException: 404 if story, page, or audio not found
         HTTPException: 400 if page_number is invalid
     """
-    logger.info(f"User '{current_user.get('sub')}' requested page {page_number} audio for story '{story_id}'")
+    logger.info(f"Requested page {page_number} audio for story '{story_id}'")
     
     # Validate story exists
     if not validate_story_exists(story_id):
