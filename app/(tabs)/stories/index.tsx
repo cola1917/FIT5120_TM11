@@ -1,9 +1,10 @@
 import AppHeader from '@/components/app_header';
-import { STORY_SUMMARIES, type StorySummary } from '@/constants/mock-stories';
+import { getStories, getStoryCoverUrl } from '@/services/stories';
 import { router } from 'expo-router';
 import { BookOpen } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -21,7 +22,36 @@ const CARD_HEIGHT = height * 0.48;
 // Local mascot image used for the bottom reading helper area.
 const readingMascot = require('../../../assets/images/nutriheroes_reading.png');
 
+interface Story {
+  id: string;
+  title: string;
+  coverImage: string;
+  pageCount: number;
+}
+
 export default function StoriesScreen() {
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadStories();
+  }, []);
+
+  const loadStories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getStories();
+      setStories(data);
+    } catch (err: any) {
+      console.error('Failed to load stories:', err);
+      setError(err.message || 'Failed to load stories');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOpenStory = (storyId?: string) => {
     // Prevent navigation when the story id is missing or invalid.
     if (!storyId || !storyId.trim()) {
@@ -31,7 +61,7 @@ export default function StoriesScreen() {
     router.push(`/stories/${storyId}`);
   };
 
-  const renderStoryCard = ({ item }: { item: StorySummary }) => {
+  const renderStoryCard = ({ item }: { item: Story }) => {
     return (
       <View style={styles.cardWrapper}>
         <TouchableOpacity
@@ -40,7 +70,7 @@ export default function StoriesScreen() {
           onPress={() => handleOpenStory(item.id)}
         >
           <Image
-            source={{ uri: item.coverImage }}
+            source={{ uri: getStoryCoverUrl(item.id) }}
             style={styles.cardImage}
             resizeMode="cover"
           />
@@ -54,10 +84,12 @@ export default function StoriesScreen() {
             </View>
 
             <View style={styles.bottomPanel}>
-              <Text style={styles.cardDescription}>{item.description}</Text>
+              <Text style={styles.cardDescription}>
+                A {item.pageCount}-page adventure awaits!
+              </Text>
 
               <TouchableOpacity
-                style={[styles.readButton, { backgroundColor: item.accentColor }]}
+                style={[styles.readButton, { backgroundColor: '#E77A1F' }]}
                 onPress={() => handleOpenStory(item.id)}
               >
                 <Text style={styles.readButtonText}>Read Now</Text>
@@ -68,6 +100,31 @@ export default function StoriesScreen() {
       </View>
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#E77A1F" />
+          <Text style={styles.loadingText}>Loading stories...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={styles.errorTitle}>Oops!</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadStories}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -90,7 +147,7 @@ export default function StoriesScreen() {
         {/* Fixed-height carousel area keeps the mascot helper stable below */}
         <View style={styles.carouselSection}>
           <FlatList
-            data={STORY_SUMMARIES}
+            data={stories}
             keyExtractor={(item) => item.id}
             renderItem={renderStoryCard}
             horizontal
@@ -247,5 +304,43 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#745D4E',
     fontWeight: '700',
+  },
+  centered: {
+    flex: 1,
+    backgroundColor: '#F8F5E9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6C5B4F',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#2D241F',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#6C5B4F',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#E77A1F',
+    borderRadius: 999,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
   },
 });

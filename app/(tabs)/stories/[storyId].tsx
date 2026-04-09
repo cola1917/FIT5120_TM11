@@ -1,4 +1,4 @@
-import { getStoryById } from '@/constants/mock-stories';
+import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl } from '@/services/stories';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { ArrowLeft, Pause, Play } from 'lucide-react-native';
@@ -14,40 +14,60 @@ import {
   View,
 } from 'react-native';
 
+interface StoryPage {
+  storyText: string;
+}
+
+interface StoryTextData {
+  pages: StoryPage[];
+  outcome: string;
+}
+
+interface Story {
+  id: string;
+  title: string;
+  pageCount: number;
+}
+
 export default function StoryReaderScreen() {
   const { storyId } = useLocalSearchParams<{ storyId: string }>();
 
-  const [story, setStory] = useState<ReturnType<typeof getStoryById> | null>(null);
+  const [story, setStory] = useState<Story | null>(null);
+  const [storyTextData, setStoryTextData] = useState<StoryTextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const loadStory = () => {
+  const loadStory = async () => {
     setLoading(true);
     setLoadFailed(false);
 
     try {
-      const foundStory = getStoryById(storyId);
-
-      // Simulate a real loading flow so the UI can show feedback instead of a blank screen.
-      setTimeout(() => {
-        if (!foundStory) {
-          setStory(null);
-          setLoadFailed(true);
-        } else {
-          setStory(foundStory);
-        }
-        setLoading(false);
-      }, 400);
-    } catch {
+      // Fetch story metadata and text content
+      const textData = await getStoryText(storyId);
+      
+      setStory({
+        id: storyId,
+        title: storyId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        pageCount: textData.pages.length,
+      });
+      setStoryTextData(textData);
+      setCurrentPage(0);
+    } catch (error) {
+      console.error('Failed to load story:', error);
       setStory(null);
+      setStoryTextData(null);
       setLoadFailed(true);
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStory();
+    if (storyId) {
+      loadStory();
+    }
   }, [storyId]);
 
   useEffect(() => {
@@ -57,7 +77,7 @@ export default function StoryReaderScreen() {
   }, []);
 
   const handleToggleListen = () => {
-    if (!story) return;
+    if (!storyTextData) return;
 
     if (isSpeaking) {
       Speech.stop();
@@ -65,7 +85,7 @@ export default function StoryReaderScreen() {
       return;
     }
 
-    const fullStoryText = story.pages.map((page) => page.text).join(' ');
+    const fullStoryText = storyTextData.pages.map((page) => page.storyText).join(' ');
 
     if (!fullStoryText.trim()) {
       Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
@@ -100,6 +120,19 @@ export default function StoryReaderScreen() {
     });
   };
 
+  const handleNextPage = () => {
+    if (!storyTextData) return;
+    if (currentPage < storyTextData.pages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -112,7 +145,7 @@ export default function StoryReaderScreen() {
     );
   }
 
-  if (loadFailed || !story) {
+  if (loadFailed || !story || !storyTextData) {
     return (
       <View style={styles.centered}>
         <Text style={styles.feedbackTitle}>Unable to load story</Text>
@@ -131,6 +164,9 @@ export default function StoryReaderScreen() {
     );
   }
 
+  const currentPageData = storyTextData.pages[currentPage];
+  const imageUrl = getStoryPageImageUrl(storyId, currentPage + 1);
+
   return (
     <ScrollView
       style={styles.container}
@@ -139,7 +175,7 @@ export default function StoryReaderScreen() {
     >
       <View style={styles.heroCard}>
         <Image
-          source={{ uri: story.coverImage }}
+          source={{ uri: imageUrl }}
           style={styles.coverImage}
           resizeMode="cover"
         />
@@ -156,7 +192,7 @@ export default function StoryReaderScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.listenButton, { backgroundColor: story.accentColor }]}
+            style={[styles.listenButton, { backgroundColor: '#E77A1F' }]}
             onPress={handleToggleListen}
           >
             {isSpeaking ? (
@@ -173,40 +209,62 @@ export default function StoryReaderScreen() {
 
       <View style={styles.introCard}>
         <Text style={styles.introText}>
-          Scroll down to read the story and see the pictures.
+          Page {currentPage + 1} of {story.pageCount}
         </Text>
       </View>
 
       <View style={styles.pagesContainer}>
-        {story.pages.map((page) => (
-          <View key={page.id} style={styles.pageCard}>
-            <Text style={styles.pageNumber}>
-              Page {page.pageNumber}/{story.totalPages}
-            </Text>
-
-            <Text style={styles.pageText}>{page.text}</Text>
-
-            {page.image ? (
-              <Image
-                source={{ uri: page.image }}
-                style={styles.pageImage}
-                resizeMode="cover"
-              />
-            ) : null}
-          </View>
-        ))}
-
-        <View style={styles.factPromptCard}>
-          <Text style={styles.factPromptTitle}>Want to know more?</Text>
-
-          <Text style={styles.factPromptText}>
-            Tap to discover something new about this healthy food.
+        <View style={styles.pageCard}>
+          <Text style={styles.pageNumber}>
+            Page {currentPage + 1}/{story.pageCount}
           </Text>
 
-          <TouchableOpacity style={styles.factButton} onPress={handleOpenFoodFact}>
-            <Text style={styles.factButtonText}>Let&apos;s Explore!</Text>
-          </TouchableOpacity>
+          <Text style={styles.pageText}>{currentPageData.storyText}</Text>
+
+          <Image
+            source={{ uri: imageUrl }}
+            style={styles.pageImage}
+            resizeMode="cover"
+          />
         </View>
+
+        <View style={styles.navigationRow}>
+          <TouchableOpacity
+            style={[styles.navButton, currentPage === 0 && styles.navButtonDisabled]}
+            onPress={handlePrevPage}
+            disabled={currentPage === 0}
+          >
+            <Text style={[styles.navButtonText, currentPage === 0 && styles.navButtonTextDisabled]}>
+              Previous
+            </Text>
+          </TouchableOpacity>
+
+          {currentPage < story.pageCount - 1 ? (
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={handleNextPage}
+            >
+              <Text style={styles.navButtonText}>Next</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.factButton} onPress={handleOpenFoodFact}>
+              <Text style={styles.factButtonText}>Let's Explore!</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {currentPage === story.pageCount - 1 && (
+          <View style={styles.factPromptCard}>
+            <Text style={styles.factPromptTitle}>Want to know more?</Text>
+
+            <Text style={styles.factPromptText}>
+              Tap to discover something new about this healthy food.
+            </Text>
+
+            <Text style={styles.outcomeTitle}>Story Outcome:</Text>
+            <Text style={styles.outcomeText}>{storyTextData.outcome}</Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -410,5 +468,47 @@ const styles = StyleSheet.create({
     color: '#B45309',
     fontSize: 16,
     fontWeight: '900',
+  },
+  navigationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  navButton: {
+    flex: 1,
+    backgroundColor: '#FFF3E3',
+    borderRadius: 999,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F1E3C8',
+  },
+  navButtonDisabled: {
+    opacity: 0.5,
+  },
+  navButtonText: {
+    color: '#705D50',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  navButtonTextDisabled: {
+    color: '#A0A0A0',
+  },
+  outcomeTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#2D241F',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  outcomeText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#6C5B4F',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
