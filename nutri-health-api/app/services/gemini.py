@@ -441,7 +441,7 @@ class GeminiService:
                 "protein": {"amount": "0g", "description": "Helps your muscles grow strong"},
                 "fats": {"amount": "0g", "description": "Keeps your brain and body working well"}
             },
-            "assessment_score": 1,
+            "assessment_score": 2,  # Changed from 1 (unhealthy) to 2 (moderate) for unrecognized foods
             "assessment": "We're having trouble analysing this food right now. Please try again later, or ask a grown-up to help you learn about this food! 🌟",
             "alternatives": [
                 {

@@ -98,10 +98,18 @@ export default function AnalysisScreen() {
       
       console.log('Scan response received:', scanResponse);
       
+      // Check if food was not recognized (confidence = 0 or food_name = "Food Item")
+      if (scanResponse.confidence === 0 || scanResponse.food_name.toLowerCase() === 'food item') {
+        setCannotRecognise(true);
+        setLoading(false);
+        return;
+      }
+      
       // Map backend response to frontend format
+      // Backend uses: 1 = unhealthy, 2 = moderate, 3 = healthy
       const rating: 'HEALTHY' | 'MODERATE' | 'UNHEALTHY' = 
-        scanResponse.assessment_score >= 70 ? 'HEALTHY' :
-        scanResponse.assessment_score >= 40 ? 'MODERATE' : 'UNHEALTHY';
+        scanResponse.assessment_score === 3 ? 'HEALTHY' :
+        scanResponse.assessment_score === 2 ? 'MODERATE' : 'UNHEALTHY';
       
       const labelMap: Record<string, string> = {
         'HEALTHY': 'Great Choice!',
