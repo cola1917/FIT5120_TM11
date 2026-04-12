@@ -106,7 +106,7 @@ async def scan_food(
         food_name = result.get("food_name", "")
         rag_alternatives = rag_service.get_alternatives(food_name, k=3)
         rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
-        # Add image URLs for each alternative using Wikimedia Commons for stable, open-source food images
+        
         # Mapping of food names to Wikimedia Commons file names
         wikimedia_food_map = {
             "apple": "Apple_with_cut.jpg",
@@ -187,7 +187,14 @@ async def scan_food(
             "plain": "Plain_yogurt.jpg",
             "grain": "Whole_grain_bread.jpg",
             "grilled": "Grilled_chicken.jpg",
+            "fruit platter": "Fruit_platter.jpg",
+            "vegetable salad": "Vegetable_salad.jpg",
+            "plain yoghurt": "Plain_yogurt.jpg",
+            "whole grain": "Whole_grain_bread.jpg",
+            "grilled chicken": "Grilled_chicken.jpg",
         }
+        
+        import hashlib
         
         for i, alt in enumerate(rewritten_alternatives):
             alt_name = alt.get("name", "").lower()
@@ -198,12 +205,33 @@ async def scan_food(
                     wikimedia_file = value
                     break
             
-            # Build Wikimedia Commons URL if a match was found
+            # Build Wikimedia Commons URL using MediaWiki API for reliable image retrieval
             if wikimedia_file:
-                alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/800px/{wikimedia_file}"
+                # Use MediaWiki API to get the actual image URL
+                api_url = f"https://commons.wikimedia.org/w/api.php?action=query&titles=File:{wikimedia_file}&prop=imageinfo&iiprop=url&format=json"
+                try:
+                    import aiohttp
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(api_url) as resp:
+                            if resp.status == 200:
+                                data = await resp.json()
+                                pages = data.get("query", {}).get("pages", {})
+                                for page_id, page_data in pages.items():
+                                    if "imageinfo" in page_data:
+                                        alt["image_url"] = page_data["imageinfo"][0]["url"]
+                                        break
+                except Exception as e:
+                    logger.warning(f"Failed to fetch image URL from Wikimedia API: {e}")
+                    # Fallback to direct URL construction
+                    alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{wikimedia_file[0].lower()}/{wikimedia_file}"
             else:
-                # Fallback: use a generic healthy food image from Wikimedia
-                alt["image_url"] = "https://upload.wikimedia.org/wikipedia/commons/800px/Healthy_food_platter.jpg"
+                # Fallback: use a generic healthy food image
+                fallback_files = ["Healthy_food_platter.jpg", "Fresh_fruit_bowl.jpg", "Mixed_vegetables.jpg"]
+                # Use hash of alternative name to pick a consistent fallback
+                hash_idx = int(hashlib.md5(alt_name.encode()).hexdigest(), 16) % len(fallback_files)
+                fallback_file = fallback_files[hash_idx]
+                alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{fallback_file[0].lower()}/{fallback_file}"
+                
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
