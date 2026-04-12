@@ -268,7 +268,7 @@ export default function AnalysisScreen() {
             const healthDescriptions: Record<string, string> = {
               'default': 'A nutritious and delicious healthier option!',
               'vegetable': 'Packed with vitamins and fiber for optimal health!',
-              'fruit': 'Nature's candy - full of antioxidants and natural sweetness!',
+              'fruit': "Nature's candy - full of antioxidants and natural sweetness!",
               'whole grain': 'Rich in fiber and essential nutrients!',
               'lean protein': 'Builds muscle while keeping you energized!',
               'salad': 'Fresh, crisp, and loaded with goodness!',
