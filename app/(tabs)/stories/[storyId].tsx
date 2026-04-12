@@ -120,6 +120,15 @@ export default function StoryReaderScreen() {
     });
   };
 
+  const handleViewOutcome = () => {
+    if (!story) return;
+
+    router.push({
+      pathname: '/stories/story-outcome',
+      params: { storyId: story.id },
+    });
+  };
+
   const handleNextPage = () => {
     if (!storyTextData) return;
     if (currentPage < storyTextData.pages.length - 1) {
@@ -261,8 +270,9 @@ export default function StoryReaderScreen() {
               Tap to discover something new about this healthy food.
             </Text>
 
-            <Text style={styles.outcomeTitle}>Story Outcome:</Text>
-            <Text style={styles.outcomeText}>{storyTextData.outcome}</Text>
+            <TouchableOpacity style={styles.outcomeButton} onPress={handleViewOutcome}>
+              <Text style={styles.outcomeButtonText}>View Story Outcome</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -496,19 +506,16 @@ const styles = StyleSheet.create({
   navButtonTextDisabled: {
     color: '#A0A0A0',
   },
-  outcomeTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#2D241F',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
+  outcomeButton: {
+    backgroundColor: '#E77A1F',
+    borderRadius: 999,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
   },
-  outcomeText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#6C5B4F',
-    textAlign: 'center',
-    fontWeight: '600',
+  outcomeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
   },
 });

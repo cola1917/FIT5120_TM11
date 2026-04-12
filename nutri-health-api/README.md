@@ -86,7 +86,11 @@ nutri-health-api/
 
 5. **Run the server**
    ```bash
+<<<<<<< HEAD
    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+=======
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+>>>>>>> a2513903b73df4a0d1792262d221da21d5c4e410
    ```
 
    The API will be available at `http://localhost:8000`
