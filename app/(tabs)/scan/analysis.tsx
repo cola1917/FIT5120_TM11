@@ -43,6 +43,23 @@ const DEBUG_FORCE_NO_RESULT = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_RESULT = false;
 
+/**
+ * Get image URL for a food item from an external image API
+ * Uses Unsplash API with food-related keywords to fetch different images
+ * 
+ * @param foodName - Name of the food item
+ * @returns Image URL string
+ */
+function getImageUrlForFood(foodName: string): string {
+  // Clean and format the food name for the API query
+  const query = encodeURIComponent(foodName.toLowerCase().trim());
+  
+  // Use Unsplash Source API with food keyword and specific food name
+  // This will return different images based on the search query
+  // Format: https://source.unsplash.com/{size}/?{keywords}
+  return `https://source.unsplash.com/800x600/?food,${query}`;
+}
+
 // Mock data is no longer needed as we fetch from the backend
 // Kept for reference during development if needed
 
@@ -129,7 +146,7 @@ export default function AnalysisScreen() {
             id: `alt-${index}`,
             name: alt.name,
             description: alt.description || 'A healthier option for you!',
-            image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80'
+            image: alt.image_url || getImageUrlForFood(alt.name)
           }))
         : [];
 
