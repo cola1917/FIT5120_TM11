@@ -106,20 +106,104 @@ async def scan_food(
         food_name = result.get("food_name", "")
         rag_alternatives = rag_service.get_alternatives(food_name, k=3)
         rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
-        # Add image URLs for each alternative using placehold.co
-        for alt in rewritten_alternatives:
-            alt_name = alt.get("name", "")
-            # Generate a reliable placeholder image URL with emoji and healthy colors
-            colors = ['4CAF50', '8BC34A', 'CDDC39', 'FFC107', 'FF9800']
-            color_index = len(alt_name) % len(colors)
-            # Extract emoji from the name (first character if it's an emoji, otherwise default)
-            emoji = '🍽️'
-            if alt_name:
-                first_char = alt_name[0]
-                # Check if first character is an emoji (common food emojis)
-                if ord(first_char) > 127000 or first_char in '🍎🍌🍊🍇🍓🍉🍚🍞🥐🥖🥞🧇🧀🥩🍗🥓🍔🍟🍕🌭🥪🌮🌯🥗🍲🍜🍝🍣🍱🍛🍤🥚🥑🥦🥕🌽🥒🍅🥔🍄🫑🧅🧄🍦🍰🍪🍫🍬🍩🥧☕🍵🧃🍷🍺🍹🥛🥤':
-                    emoji = first_char
-            alt["image_url"] = f"https://placehold.co/800x600/{colors[color_index]}/FFFFFF?text={emoji}+{alt_name}"
+        # Add image URLs for each alternative using Wikimedia Commons for stable, open-source food images
+        # Mapping of food names to Wikimedia Commons file names
+        wikimedia_food_map = {
+            "apple": "Apple_with_cut.jpg",
+            "banana": "Bananas_single.jpg",
+            "orange": "Orange_blossom_wb.jpg",
+            "grape": "Grapes_-_green_one_layer.jpg",
+            "strawberry": "Strawberry_closeup.jpg",
+            "watermelon": "Watermelon_cross_section.jpg",
+            "rice": "White_rice_grains.jpg",
+            "bread": "Bread_loaf.jpg",
+            "croissant": "Croissant_01.jpg",
+            "pancake": "Pancakes_with_butter_and_syrup.jpg",
+            "cheese": "Cheese_platter.jpg",
+            "meat": "Raw_meat.jpg",
+            "chicken": "Chicken_breast.jpg",
+            "bacon": "Bacon_crispy.jpg",
+            "burger": "Hamburger_cheese.jpg",
+            "fries": "French_fries.jpg",
+            "pizza": "Pizza_margherita.jpg",
+            "hotdog": "Hot_dog.jpg",
+            "sandwich": "Sandwich_variety.jpg",
+            "taco": "Taco_shell.jpg",
+            "burrito": "Burrito.jpg",
+            "salad": "Green_salad.jpg",
+            "soup": "Vegetable_soup.jpg",
+            "noodle": "Noodles.jpg",
+            "pasta": "Pasta_variety.jpg",
+            "sushi": "Sushi_platter.jpg",
+            "egg": "Eggs_white_brown.jpg",
+            "avocado": "Avocado_cut.jpg",
+            "broccoli": "Broccoli_flower.jpg",
+            "carrot": "Carrots_variety.jpg",
+            "corn": "Sweet_corn.jpg",
+            "cucumber": "Cucumber_slices.jpg",
+            "tomato": "Tomato_red.jpg",
+            "potato": "Potatoes_variety.jpg",
+            "mushroom": "Mushroom_variety.jpg",
+            "pepper": "Bell_peppers_colorful.jpg",
+            "ice cream": "Ice_cream_cone.jpg",
+            "cake": "Birthday_cake.jpg",
+            "cookie": "Chocolate_chip_cookies.jpg",
+            "chocolate": "Chocolate_bar.jpg",
+            "donut": "Glazed_donuts.jpg",
+            "yogurt": "Yogurt_with_fruit.jpg",
+            "milk": "Glass_of_milk.jpg",
+            "smoothie": "Fruit_smoothie.jpg",
+            "juice": "Orange_juice_glass.jpg",
+            "berries": "Mixed_berries.jpg",
+            "blueberry": "Blueberries_fresh.jpg",
+            "raspberry": "Raspberries_fresh.jpg",
+            "pear": "Pear_green.jpg",
+            "peach": "Peach_fruit.jpg",
+            "plum": "Plum_fruit.jpg",
+            "kiwi": "Kiwi_fruit_cut.jpg",
+            "mango": "Mango_fruit.jpg",
+            "pineapple": "Pineapple_whole.jpg",
+            "papaya": "Papaya_cut.jpg",
+            "spinach": "Spinach_leaves.jpg",
+            "lettuce": "Lettuce_head.jpg",
+            "cabbage": "Cabbage_green.jpg",
+            "beans": "Green_beans.jpg",
+            "lentils": "Lentils_dried.jpg",
+            "tofu": "Tofu_block.jpg",
+            "fish": "Fresh_fish.jpg",
+            "salmon": "Salmon_fillet.jpg",
+            "shrimp": "Shrimp_cooked.jpg",
+            "oats": "Oatmeal_bowl.jpg",
+            "cereal": "Breakfast_cereal.jpg",
+            "nuts": "Mixed_nuts.jpg",
+            "almonds": "Almonds_raw.jpg",
+            "walnuts": "Walnuts_shelled.jpg",
+            "healthy": "Healthy_food_platter.jpg",
+            "fruit": "Fresh_fruit_bowl.jpg",
+            "vegetable": "Mixed_vegetables.jpg",
+            "platter": "Fruit_platter.jpg",
+            "vegetables": "Vegetable_salad.jpg",
+            "yoghurt": "Plain_yogurt.jpg",
+            "plain": "Plain_yogurt.jpg",
+            "grain": "Whole_grain_bread.jpg",
+            "grilled": "Grilled_chicken.jpg",
+        }
+        
+        for i, alt in enumerate(rewritten_alternatives):
+            alt_name = alt.get("name", "").lower()
+            # Extract keywords from the alternative name to find matching Wikimedia image
+            wikimedia_file = None
+            for key, value in wikimedia_food_map.items():
+                if key in alt_name:
+                    wikimedia_file = value
+                    break
+            
+            # Build Wikimedia Commons URL if a match was found
+            if wikimedia_file:
+                alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/800px/{wikimedia_file}"
+            else:
+                # Fallback: use a generic healthy food image from Wikimedia
+                alt["image_url"] = "https://upload.wikimedia.org/wikipedia/commons/800px/Healthy_food_platter.jpg"
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
