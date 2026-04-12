@@ -58,6 +58,7 @@ def get_dashscope_openai_client() -> Optional["OpenAI"]:
     from openai import OpenAI
 
     s = get_dashscope_settings()
+    print(f"==== Loaded DashScope Key: [{s.dashscope_api_key}] ====")
     if not s.is_configured:
         return None
     return OpenAI(

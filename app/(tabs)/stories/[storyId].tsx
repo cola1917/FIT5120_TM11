@@ -85,15 +85,15 @@ export default function StoryReaderScreen() {
       return;
     }
 
-    const fullStoryText = storyTextData.pages.map((page) => page.storyText).join(' ');
+    const pageText = currentPageData.storyText;
 
-    if (!fullStoryText.trim()) {
+    if (!pageText.trim()) {
       Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
       return;
     }
 
     try {
-      Speech.speak(fullStoryText, {
+      Speech.speak(pageText, {
         language: 'en-US',
         rate: 0.9,
         pitch: 1.0,
