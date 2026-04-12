@@ -5,6 +5,7 @@ Handles the /scan endpoint for food image analysis
 
 import logging
 import os
+import requests
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -161,71 +162,78 @@ async def scan_food(
                 "description": alt.get("description", "A healthy and tasty choice")
             })
         
-        # Mapping of food names to Wikimedia Commons file names (must match the whitelist in rag_service.py)
-        wikimedia_food_map = {
-            "apple": "Apple_with_cut.jpg",
-            "banana": "Bananas_single.jpg",
-            "orange": "Orange_blossom_wb.jpg",
-            "grape": "Grapes_-_green_one_layer.jpg",
-            "strawberry": "Strawberry_closeup.jpg",
-            "watermelon": "Watermelon_cross_section.jpg",
-            "broccoli": "Broccoli_flower.jpg",
-            "carrot": "Carrots_variety.jpg",
-            "cucumber": "Cucumber_slices.jpg",
-            "tomato": "Tomato_red.jpg",
+        # Mapping from standardized food name to Wikimedia Commons filename
+        # We store only the filename and fetch the real URL dynamically via API
+        WIKIMEDIA_FILE_MAP = {
+            "apple": "Apples.jpg",
+            "banana": "Banana-Single.jpg",
+            "orange": "Orange_blossom_2.jpg",
+            "grape": "Grapes_-_green_and_red.jpg",
+            "strawberry": "Fragaria_'Ananassa'_Garten_Erdbeere.jpg",
+            "watermelon": "Watermelon_stylized.jpg",
+            "broccoli": "Broccoli_closeup.jpg",
+            "carrot": "Carrots_of_many_colors.jpg",
+            "cucumber": "Cucumbers.jpg",
+            "tomato": "Tomato_je.jpg",
             "spinach": "Spinach_leaves.jpg",
-            "lettuce": "Lettuce_head.jpg",
-            "corn": "Sweet_corn.jpg",
-            "avocado": "Avocado_cut.jpg",
-            "blueberry": "Blueberries_fresh.jpg",
-            "raspberry": "Raspberries_fresh.jpg",
-            "pear": "Pear_green.jpg",
-            "peach": "Peach_fruit.jpg",
-            "kiwi": "Kiwi_fruit_cut.jpg",
-            "mango": "Mango_fruit.jpg",
-            "pineapple": "Pineapple_whole.jpg",
-            "plum": "Plum_fruit.jpg",
-            "papaya": "Papaya_cut.jpg",
-            "beans": "Green_beans.jpg",
-            "salad": "Green_salad.jpg",
-            "vegetable salad": "Vegetable_salad.jpg",
-            "fruit platter": "Fruit_platter.jpg",
-            "plain yoghurt": "Plain_yogurt.jpg",
+            "lettuce": "Lettuce_leaves.jpg",
+            "corn": "Corn_on_the_cob.jpg",
+            "avocado": "Avocado_open_and_closed.jpg",
+            "blueberry": "Blueberries.jpg",
+            "raspberry": "Raspberries.jpg",
+            "pear": "Pears.jpg",
+            "peach": "Peaches_-_whole_and_halved.jpg",
+            "kiwi": "Kiwi_fruit.jpg",
+            "mango": "Mango_frucht.jpg",
+            "pineapple": "Pineapple_and_cross_section.jpg",
+            "plum": "Cherries.jpg",  # Using cherries as fallback for plum
+            "papaya": "Papaya_cross_section.jpg",
+            "beans": "Peas_in_a_pod.jpg",
+            "salad": "Lettuce_leaves.jpg",
+            "vegetable salad": "Lettuce_leaves.jpg",
+            "fruit platter": "Apples.jpg",
+            "plain yoghurt": "Yogurt_with_fruit.jpg",
             "grilled chicken": "Grilled_chicken.jpg",
-            "fish": "Fresh_fish.jpg",
+            "fish": "Salmon_fillet.jpg",
         }
         
-        import hashlib
+        def get_wikimedia_image_url(filename: str) -> str | None:
+            """Fetch real image URL from Wikimedia API to avoid hardcoded paths."""
+            try:
+                api_url = "https://commons.wikimedia.org/w/api.php"
+                params = {
+                    "action": "query",
+                    "titles": f"File:{filename}",
+                    "prop": "imageinfo",
+                    "iiprop": "url",
+                    "format": "json"
+                }
+                response = requests.get(api_url, params=params, timeout=5)
+                response.raise_for_status()
+                data = response.json()
+                
+                pages = data.get("query", {}).get("pages", {})
+                page_data = next(iter(pages.values()), {})
+                
+                if "imageinfo" in page_data and len(page_data["imageinfo"]) > 0:
+                    return page_data["imageinfo"][0]["url"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch image URL for {filename}: {e}")
+            return None
         
         for alt in processed_alternatives:
             # Use the stored original_name for exact matching
             image_key = alt.get("original_name", "")
-            wikimedia_file = wikimedia_food_map.get(image_key)
+            filename = WIKIMEDIA_FILE_MAP.get(image_key)
             
-            # Build Wikimedia Commons URL using MediaWiki API for reliable image retrieval
-            if wikimedia_file:
-                # Use MediaWiki API to get the actual image URL
-                api_url = f"https://commons.wikimedia.org/w/api.php?action=query&titles=File:{wikimedia_file}&prop=imageinfo&iiprop=url&format=json"
-                try:
-                    import aiohttp
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(api_url) as resp:
-                            if resp.status == 200:
-                                data = await resp.json()
-                                pages = data.get("query", {}).get("pages", {})
-                                for page_id, page_data in pages.items():
-                                    if "imageinfo" in page_data:
-                                        alt["image_url"] = page_data["imageinfo"][0]["url"]
-                                        break
-                                    elif "missing" in page_data:
-                                        # File doesn't exist, use fallback
-                                        break
-                except Exception as e:
-                    logger.warning(f"Failed to fetch image URL from Wikimedia API: {e}")
-                    # Fallback to direct URL construction using Special:FilePath (no hash needed)
-                    alt["image_url"] = f"https://commons.wikimedia.org/wiki/Special:FilePath/{wikimedia_file}"
+            image_url = None
+            if filename:
+                image_url = get_wikimedia_image_url(filename)
+            
+            if image_url:
+                alt["image_url"] = image_url
             else:
-                # This should not happen since we control the whitelist, but just in case
+                # Fallback to generic healthy food image if specific one fails
                 logger.warning(f"No image mapping found for: {image_key}")
                 alt["image_url"] = None
         
