@@ -43,9 +43,9 @@ For nutritional_info fields (carbohydrates, protein, fats), each must be an obje
 - "description": one simple sentence explaining what it helps with (no emojis)
 
 For assessment_score (CRITICAL - follow these rules strictly):
-- Score 1 (UNHEALTHY): Foods high in sugar, unhealthy fats, or refined carbs with little nutritional value. Examples: donuts, candy, sugary drinks, french fries, potato chips, ice cream, pastries, deep-fried foods. These should be rare treats only.
-- Score 2 (MODERATE): Foods with some nutritional value but also significant amounts of fat, sugar, salt, or refined carbs. Examples: burgers, pizza, hot dogs, regular pasta, white bread, processed snacks. Okay occasionally but not daily.
-- Score 3 (HEALTHY): Whole foods rich in nutrients, fiber, vitamins, and minerals. Examples: fruits, vegetables, whole grains, lean proteins, nuts, legumes, dairy. Great for everyday eating.
+- Score 1 (UNHEALTHY): Foods high in sugar, unhealthy fats, or refined carbs with little nutritional value. This includes ALL types of potato chips (bagged Lay's, kettle-cooked, Pringles), french fries, sugary donuts, candy bars, cookies, cakes, pastries, soda, energy drinks, sugary cereals, fried chicken, nuggets, onion rings, cheese puffs, ice cream, and processed meats like hot dogs. These should be rare treats only.
+- Score 2 (MODERATE): Foods with some nutritional value but also significant amounts of fat, sugar, salt, or refined carbs. Examples: burgers, pizza, regular pasta, white bread sandwiches, flavored yogurt, sweetened oatmeal, processed snacks. Okay occasionally but not daily.
+- Score 3 (HEALTHY): Whole foods rich in nutrients, fiber, vitamins, and minerals. Examples: fruits, vegetables, whole grains, lean proteins, nuts, legumes, dairy, eggs, fish, quinoa, brown rice, unsweetened yogurt. Great for everyday eating.
 
 For assessment:
 - Max 3 sentences: praise something good, suggest one pairing, encouraging close
