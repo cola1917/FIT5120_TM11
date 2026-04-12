@@ -28,6 +28,7 @@ export interface ScanResponse {
   alternatives: Array<{
     name: string;
     description?: string;
+    image_url?: string; // Optional: backend can provide image URL
   }>;
 }
 
