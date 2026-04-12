@@ -71,25 +71,58 @@ class RAGService:
         return context
 
     def get_alternatives(self, food_name: str, goal: str = "grow tall", k: int = 3) -> List[Dict]:
-        """Get a list of healthier alternative foods."""
+        """Get a list of healthy foods (random selection, not based on input food)."""
         if not self.is_ready:
             return self._get_fallback_alternatives()
 
-        query = f"healthy alternative to {food_name} for kids {goal} nutritious"
-        docs = self.vectorstore.similarity_search(query, k=k)
+        # Get all healthy foods (grade A or B) from the vector store
+        # We do a broad search to get diverse healthy options
+        query = f"healthy nutritious food for kids {goal} fruits vegetables whole grains lean protein"
+        docs = self.vectorstore.similarity_search(query, k=20)
 
-        alternatives = []
+        # Filter for only A and B grade foods and collect unique ones
+        healthy_foods = []
+        seen_names = set()
         for doc in docs:
             name = doc.metadata.get("name", "")
-            if name and name != food_name:
-                alternatives.append(
+            grade = doc.metadata.get("health_grade", "")
+            if name and grade in ["A", "B"] and name not in seen_names:
+                seen_names.add(name)
+                healthy_foods.append(
                     {
                         "name": name,
                         "description": self._extract_description(doc.page_content),
+                        "grade": grade,
                     }
                 )
 
-        return alternatives if alternatives else self._get_fallback_alternatives()
+        # If we don't have enough from similarity search, add fallback options
+        if len(healthy_foods) < k:
+            fallbacks = [
+                {"name": "Fruit Platter", "description": "Natural sweetness, rich in vitamins", "grade": "A"},
+                {"name": "Vegetable Salad", "description": "Great source of dietary fibre", "grade": "A"},
+                {"name": "Plain Yoghurt", "description": "High in calcium and kid-friendly", "grade": "B"},
+                {"name": "Whole Grain Bread", "description": "Long-lasting energy from whole grains", "grade": "A"},
+                {"name": "Grilled Chicken", "description": "Lean protein for strong muscles", "grade": "A"},
+            ]
+            for fb in fallbacks:
+                if fb["name"] not in seen_names:
+                    healthy_foods.append(fb)
+                    if len(healthy_foods) >= k + 5:
+                        break
+
+        # Randomly select k items to ensure variety across scans
+        import random
+        if len(healthy_foods) > k:
+            selected = random.sample(healthy_foods, k)
+        else:
+            selected = healthy_foods[:k]
+
+        # Return without grade info (frontend doesn't need it)
+        return [
+            {"name": item["name"], "description": item["description"]}
+            for item in selected
+        ] if selected else self._get_fallback_alternatives()
 
     def _extract_description(self, text: str) -> str:
         """Extract a short description from recipe text."""
