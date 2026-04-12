@@ -1,3 +1,9 @@
+```
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 Nothing should be ignored based on the provided file changes, as they only include source code files (.py) without any build artifacts, dependencies, or temporary files.
 # Compiled and build artifacts
 *.pyc
@@ -79,6 +85,47 @@ parts/
 sdist/
 var/
 wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+.coverage.*
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+
+# Distribution / packaging
+.pybuild/
+.tox/
+.nox/
+.coverage
+```
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/

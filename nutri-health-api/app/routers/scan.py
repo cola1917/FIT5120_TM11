@@ -101,11 +101,61 @@ async def scan_food(
     # Set recognised flag
     result["recognised"] = _is_recognised(result)
 
-    # Enrich alternatives with RAG and rewrite in child-friendly language
+    # Enrich alternatives with RAG (no LLM rewrite to preserve exact food names for image mapping)
     if rag_service.is_ready and result["recognised"]:
         food_name = result.get("food_name", "")
         rag_alternatives = rag_service.get_alternatives(food_name, k=3)
-        rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
+        
+        # Add emojis to food names (no LLM rewrite to ensure exact name matching for images)
+        emoji_map = {
+            "apple": "🍎",
+            "banana": "🍌",
+            "orange": "🍊",
+            "grape": "🍇",
+            "strawberry": "🍓",
+            "watermelon": "🍉",
+            "broccoli": "🥦",
+            "carrot": "🥕",
+            "cucumber": "🥒",
+            "tomato": "🍅",
+            "spinach": "🥬",
+            "lettuce": "🥗",
+            "corn": "🌽",
+            "avocado": "🥑",
+            "blueberry": "🫐",
+            "raspberry": "🍇",
+            "pear": "🍐",
+            "peach": "🍑",
+            "kiwi": "🥝",
+            "mango": "🥭",
+            "pineapple": "🍍",
+            "plum": "🍑",
+            "papaya": "🥭",
+            "beans": "🫘",
+            "salad": "🥗",
+            "vegetable salad": "🥗",
+            "fruit platter": "🍎",
+            "plain yoghurt": "🥛",
+            "grilled chicken": "🍗",
+            "fish": "🐟",
+        }
+        
+        rewritten_alternatives = []
+        for alt in rag_alternatives:
+            alt_name = alt.get("name", "").lower()
+            # Find matching emoji
+            emoji = "🍽️"  # default emoji
+            for key, value in emoji_map.items():
+                if key == alt_name or key in alt_name or alt_name in key:
+                    emoji = value
+                    break
+            
+            # Capitalize name properly
+            display_name = alt.get("name", "").title()
+            rewritten_alternatives.append({
+                "name": f"{emoji} {display_name}",
+                "description": alt.get("description", "A healthy and tasty choice")
+            })
         
         # Mapping of food names to Wikimedia Commons file names (must match the whitelist in rag_service.py)
         wikimedia_food_map = {

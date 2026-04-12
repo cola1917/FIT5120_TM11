@@ -71,40 +71,44 @@ class RAGService:
         return context
 
     def get_alternatives(self, food_name: str, goal: str = "grow tall", k: int = 3) -> List[Dict]:
-        """Get a list of healthy foods that have Wikimedia images (random selection, not based on input food)."""
-        # Whitelist of healthy foods that have guaranteed Wikimedia images
-        # Only foods with health_grade A or B are included
+        """Get a list of healthy foods that have Wikimedia images (random selection, not based on input food).
+        
+        IMPORTANT: Food names must EXACTLY match the keys in scan.py's wikimedia_food_map dictionary.
+        Only use lowercase names that are guaranteed to have images.
+        """
+        # Whitelist of healthy foods with EXACT name matching to wikimedia_food_map in scan.py
+        # All names must be lowercase to match the mapping dictionary
         healthy_foods_with_images = [
-            {"name": "Apple", "description": "Natural sweetness, rich in vitamins", "grade": "A"},
-            {"name": "Banana", "description": "Great source of potassium and energy", "grade": "A"},
-            {"name": "Orange", "description": "Packed with vitamin C for immunity", "grade": "A"},
-            {"name": "Grape", "description": "Antioxidant-rich and hydrating", "grade": "A"},
-            {"name": "Strawberry", "description": "Delicious berries full of vitamins", "grade": "A"},
-            {"name": "Watermelon", "description": "Refreshing and hydrating fruit", "grade": "A"},
-            {"name": "Broccoli", "description": "Super vegetable with lots of nutrients", "grade": "A"},
-            {"name": "Carrot", "description": "Great for eyesight and crunchy fun", "grade": "A"},
-            {"name": "Cucumber", "description": "Cool and refreshing vegetable", "grade": "A"},
-            {"name": "Tomato", "description": "Juicy and full of lycopene", "grade": "A"},
-            {"name": "Spinach", "description": "Iron-rich leafy green", "grade": "A"},
-            {"name": "Lettuce", "description": "Light and crispy salad base", "grade": "A"},
-            {"name": "Corn", "description": "Sweet kernels with fibre", "grade": "A"},
-            {"name": "Avocado", "description": "Creamy healthy fats for growing brains", "grade": "A"},
-            {"name": "Blueberry", "description": "Tiny but mighty antioxidant berries", "grade": "A"},
-            {"name": "Raspberry", "description": "Tart and sweet nutrient-packed berries", "grade": "A"},
-            {"name": "Pear", "description": "Sweet and juicy fibre-rich fruit", "grade": "A"},
-            {"name": "Peach", "description": "Soft and sweet summer fruit", "grade": "A"},
-            {"name": "Kiwi", "description": "Tropical fruit loaded with vitamin C", "grade": "A"},
-            {"name": "Mango", "description": "Sweet tropical delight with vitamins", "grade": "A"},
-            {"name": "Pineapple", "description": "Tangy tropical fruit with enzymes", "grade": "A"},
-            {"name": "Plum", "description": "Sweet and tart stone fruit", "grade": "A"},
-            {"name": "Papaya", "description": "Tropical fruit great for digestion", "grade": "A"},
-            {"name": "Beans", "description": "Protein-packed legumes", "grade": "A"},
-            {"name": "Salad", "description": "Fresh mixed greens for health", "grade": "A"},
-            {"name": "Vegetable Salad", "description": "Great source of dietary fibre", "grade": "A"},
-            {"name": "Fruit Platter", "description": "Natural sweetness, rich in vitamins", "grade": "A"},
-            {"name": "Plain Yoghurt", "description": "High in calcium and kid-friendly", "grade": "B"},
-            {"name": "Grilled Chicken", "description": "Lean protein for strong muscles", "grade": "A"},
-            {"name": "Fish", "description": "Omega-3 rich protein for brain health", "grade": "A"},
+            {"name": "apple", "description": "Natural sweetness, rich in vitamins"},
+            {"name": "banana", "description": "Great source of potassium and energy"},
+            {"name": "orange", "description": "Packed with vitamin C for immunity"},
+            {"name": "grape", "description": "Antioxidant-rich and hydrating"},
+            {"name": "strawberry", "description": "Delicious berries full of vitamins"},
+            {"name": "watermelon", "description": "Refreshing and hydrating fruit"},
+            {"name": "broccoli", "description": "Super vegetable with lots of nutrients"},
+            {"name": "carrot", "description": "Great for eyesight and crunchy fun"},
+            {"name": "cucumber", "description": "Cool and refreshing vegetable"},
+            {"name": "tomato", "description": "Juicy and full of lycopene"},
+            {"name": "spinach", "description": "Iron-rich leafy green"},
+            {"name": "lettuce", "description": "Light and crispy salad base"},
+            {"name": "corn", "description": "Sweet kernels with fibre"},
+            {"name": "avocado", "description": "Creamy healthy fats for growing brains"},
+            {"name": "blueberry", "description": "Tiny but mighty antioxidant berries"},
+            {"name": "raspberry", "description": "Tart and sweet nutrient-packed berries"},
+            {"name": "pear", "description": "Sweet and juicy fibre-rich fruit"},
+            {"name": "peach", "description": "Soft and sweet summer fruit"},
+            {"name": "kiwi", "description": "Tropical fruit loaded with vitamin C"},
+            {"name": "mango", "description": "Sweet tropical delight with vitamins"},
+            {"name": "pineapple", "description": "Tangy tropical fruit with enzymes"},
+            {"name": "plum", "description": "Sweet and tart stone fruit"},
+            {"name": "papaya", "description": "Tropical fruit great for digestion"},
+            {"name": "beans", "description": "Protein-packed legumes"},
+            {"name": "salad", "description": "Fresh mixed greens for health"},
+            {"name": "vegetable salad", "description": "Great source of dietary fibre"},
+            {"name": "fruit platter", "description": "Natural sweetness, rich in vitamins"},
+            {"name": "plain yoghurt", "description": "High in calcium and kid-friendly"},
+            {"name": "grilled chicken", "description": "Lean protein for strong muscles"},
+            {"name": "fish", "description": "Omega-3 rich protein for brain health"},
         ]
         
         # Randomly select k items to ensure variety across scans
@@ -114,11 +118,8 @@ class RAGService:
         else:
             selected = healthy_foods_with_images[:k]
 
-        # Return without grade info (frontend doesn't need it)
-        return [
-            {"name": item["name"], "description": item["description"]}
-            for item in selected
-        ]
+        # Return exactly as defined - names must match wikimedia_food_map keys
+        return selected
 
     def _extract_description(self, text: str) -> str:
         """Extract a short description from recipe text."""
