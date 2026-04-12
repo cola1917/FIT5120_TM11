@@ -43,35 +43,59 @@ const DEBUG_FORCE_NO_RESULT = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_RESULT = false;
 /**
- * Get image URL for a food item from an external image API
- * Uses multiple fallback strategies to ensure reliable image loading
+ * Get image URL for a food item from a fast, reliable image API
+ * Uses Placehold.co with food-specific colors and emojis
+ * This ensures instant loading and healthy food themed visuals
  * 
- * Available APIs (no API key required):
- * 1. Pollinations AI - AI-generated food images based on text prompts
- * 2. Placehold.co - Custom placeholder with emoji and colors as reliable fallback
- *
  * @param foodName - Name of the food item
  * @returns Image URL string
  */
 function getImageUrlForFood(foodName: string): string {
   // Clean and format the food name
-  const cleanName = foodName.toLowerCase().trim().replace(/\s+/g, '-');
+  const cleanName = foodName.toLowerCase().trim();
   
-  // Strategy 1: Use Pollinations AI - generates realistic food images based on text prompts
-  // Format: https://image.pollinations.ai/prompt/{prompt}
-  // This is a free service that generates images using AI based on your text description
-  // No API key required, very reliable for food images
-  const pollinationsUrl = `https://image.pollinations.ai/prompt/delicious ${encodeURIComponent(foodName)} food photography high quality?width=800&height=600&seed=${cleanName.length}`;
-  
-  // Strategy 2: Use placehold.co as backup - creates custom placeholders with emoji
-  // This is extremely reliable and always works, good fallback option
-  const colors = ['FF6B6B', '4ECDC4', '45B7D1', '96CEB4', 'FFEAA7', 'DDA0DD', '98D8C8', 'F7DC6F'];
+  // Use placehold.co - creates custom placeholders with emoji
+  // This is extremely reliable, loads instantly, and always works
+  // We use healthy, vibrant colors that match the health theme
+  const colors = ['4CAF50', '8BC34A', 'CDDC39', 'FFEB3B', 'FFC107', 'FF9800'];
   const colorIndex = cleanName.length % colors.length;
   const emoji = getFoodEmoji(foodName);
   const placeholderUrl = `https://placehold.co/800x600/${colors[colorIndex]}/FFFFFF?text=${encodeURIComponent(emoji + ' ' + foodName)}`;
   
-  // Return Pollinations AI as primary choice (generates realistic food images)
-  return pollinationsUrl;
+  return placeholderUrl;
+}
+
+/**
+ * Get food category for potential future API integration
+ */
+function getFoodCategory(foodName: string): string {
+  const lowerName = foodName.toLowerCase();
+  
+  const categories: Record<string, string[]> = {
+    'pizza': ['pizza', 'pepperoni', 'margherita'],
+    'burger': ['burger', 'hamburger', 'cheeseburger'],
+    'pasta': ['pasta', 'spaghetti', 'noodles', 'lasagna', 'fettuccine'],
+    'rice': ['rice', 'fried-rice', 'sushi', 'biryani'],
+    'salad': ['salad', 'caesar-salad', 'greek-salad'],
+    'soup': ['soup', 'tomato-soup', 'chicken-soup', 'ramen'],
+    'sandwich': ['sandwich', 'sub', 'wrap', 'panini'],
+    'taco': ['taco', 'burrito', 'quesadilla', 'nachos'],
+    'chicken': ['chicken', 'grilled-chicken', 'fried-chicken'],
+    'fish': ['fish', 'salmon', 'tuna', 'cod'],
+    'steak': ['steak', 'beef', 'meat'],
+    'vegetable': ['vegetable', 'broccoli', 'carrot', 'spinach'],
+    'fruit': ['fruit', 'apple', 'banana', 'orange'],
+    'dessert': ['cake', 'cookie', 'ice-cream', 'pie'],
+    'bread': ['bread', 'toast', 'bagel', 'croissant'],
+  };
+  
+  for (const [category, keywords] of Object.entries(categories)) {
+    if (keywords.some(keyword => lowerName.includes(keyword))) {
+      return category;
+    }
+  }
+  
+  return 'misc';
 }
 
 /**
@@ -237,14 +261,46 @@ export default function AnalysisScreen() {
         'UNHEALTHY': 'This snack is tasty, but we can make it more hero-worthy!'
       };
 
-      // Map alternatives from backend
+      // Map alternatives from backend with health-focused descriptions
       const recommendedFoods: RecommendedFood[] = scanResponse.alternatives && scanResponse.alternatives.length > 0
-        ? scanResponse.alternatives.map((alt, index) => ({
-            id: `alt-${index}`,
-            name: alt.name,
-            description: alt.description || 'A healthier option for you!',
-            image: alt.image_url || getImageUrlForFood(alt.name)
-          }))
+        ? scanResponse.alternatives.map((alt, index) => {
+            // Generate health-focused description if not provided
+            const healthDescriptions: Record<string, string> = {
+              'default': 'A nutritious and delicious healthier option!',
+              'vegetable': 'Packed with vitamins and fiber for optimal health!',
+              'fruit': 'Nature's candy - full of antioxidants and natural sweetness!',
+              'whole grain': 'Rich in fiber and essential nutrients!',
+              'lean protein': 'Builds muscle while keeping you energized!',
+              'salad': 'Fresh, crisp, and loaded with goodness!',
+              'smoothie': 'A refreshing blend of nutrients in every sip!',
+            };
+            
+            let description = alt.description;
+            if (!description) {
+              // Try to match based on food name
+              const lowerName = alt.name.toLowerCase();
+              if (lowerName.includes('salad') || lowerName.includes('vegetable') || lowerName.includes('veggie')) {
+                description = healthDescriptions['vegetable'];
+              } else if (lowerName.includes('fruit') || lowerName.includes('apple') || lowerName.includes('banana')) {
+                description = healthDescriptions['fruit'];
+              } else if (lowerName.includes('brown rice') || lowerName.includes('quinoa') || lowerName.includes('oat') || lowerName.includes('whole')) {
+                description = healthDescriptions['whole grain'];
+              } else if (lowerName.includes('chicken') || lowerName.includes('fish') || lowerName.includes('tofu') || lowerName.includes('bean')) {
+                description = healthDescriptions['lean protein'];
+              } else if (lowerName.includes('smoothie') || lowerName.includes('shake')) {
+                description = healthDescriptions['smoothie'];
+              } else {
+                description = healthDescriptions['default'];
+              }
+            }
+            
+            return {
+              id: `alt-${index}`,
+              name: alt.name,
+              description: description,
+              image: alt.image_url || getImageUrlForFood(alt.name)
+            };
+          })
         : [];
 
       const result: AnalysisResult = {
