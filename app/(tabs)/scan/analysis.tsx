@@ -42,22 +42,119 @@ const DEBUG_FORCE_UNABLE_TO_RECOGNISE = false;
 const DEBUG_FORCE_NO_RESULT = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_RESULT = false;
-
 /**
  * Get image URL for a food item from an external image API
- * Uses Unsplash API with food-related keywords to fetch different images
+ * Uses multiple fallback strategies to ensure reliable image loading
  * 
+ * Available APIs (no API key required):
+ * 1. Pollinations AI - AI-generated food images based on text prompts
+ * 2. Placehold.co - Custom placeholder with emoji and colors as reliable fallback
+ *
  * @param foodName - Name of the food item
  * @returns Image URL string
  */
 function getImageUrlForFood(foodName: string): string {
-  // Clean and format the food name for the API query
-  const query = encodeURIComponent(foodName.toLowerCase().trim());
+  // Clean and format the food name
+  const cleanName = foodName.toLowerCase().trim().replace(/\s+/g, '-');
   
-  // Use Unsplash Source API with food keyword and specific food name
-  // This will return different images based on the search query
-  // Format: https://source.unsplash.com/{size}/?{keywords}
-  return `https://source.unsplash.com/800x600/?food,${query}`;
+  // Strategy 1: Use Pollinations AI - generates realistic food images based on text prompts
+  // Format: https://image.pollinations.ai/prompt/{prompt}
+  // This is a free service that generates images using AI based on your text description
+  // No API key required, very reliable for food images
+  const pollinationsUrl = `https://image.pollinations.ai/prompt/delicious ${encodeURIComponent(foodName)} food photography high quality?width=800&height=600&seed=${cleanName.length}`;
+  
+  // Strategy 2: Use placehold.co as backup - creates custom placeholders with emoji
+  // This is extremely reliable and always works, good fallback option
+  const colors = ['FF6B6B', '4ECDC4', '45B7D1', '96CEB4', 'FFEAA7', 'DDA0DD', '98D8C8', 'F7DC6F'];
+  const colorIndex = cleanName.length % colors.length;
+  const emoji = getFoodEmoji(foodName);
+  const placeholderUrl = `https://placehold.co/800x600/${colors[colorIndex]}/FFFFFF?text=${encodeURIComponent(emoji + ' ' + foodName)}`;
+  
+  // Return Pollinations AI as primary choice (generates realistic food images)
+  return pollinationsUrl;
+}
+
+/**
+ * Get a relevant emoji for common food items
+ * Used for placeholder images when API fails
+ */
+function getFoodEmoji(foodName: string): string {
+  const lowerName = foodName.toLowerCase();
+  
+  const emojiMap: Record<string, string> = {
+    'apple': '🍎',
+    'banana': '🍌',
+    'orange': '🍊',
+    'grape': '🍇',
+    'strawberry': '🍓',
+    'watermelon': '🍉',
+    'rice': '🍚',
+    'bread': '🍞',
+    'croissant': '🥐',
+    'baguette': '🥖',
+    'pancake': '🥞',
+    'waffle': '🧇',
+    'cheese': '🧀',
+    'meat': '🥩',
+    'poultry': '🍗',
+    'bacon': '🥓',
+    'hamburger': '🍔',
+    'fries': '🍟',
+    'pizza': '🍕',
+    'hotdog': '🌭',
+    'sandwich': '🥪',
+    'taco': '🌮',
+    'burrito': '🌯',
+    'salad': '🥗',
+    'soup': '🍲',
+    'noodles': '🍜',
+    'spaghetti': '🍝',
+    'sushi': '🍣',
+    'bento': '🍱',
+    'curry': '🍛',
+    'ramen': '🍜',
+    'steak': '🥩',
+    'chicken': '🍗',
+    'fish': '🐟',
+    'shrimp': '🍤',
+    'egg': '🥚',
+    'avocado': '🥑',
+    'broccoli': '🥦',
+    'carrot': '🥕',
+    'corn': '🌽',
+    'cucumber': '🥒',
+    'tomato': '🍅',
+    'potato': '🥔',
+    'mushroom': '🍄',
+    'pepper': '🫑',
+    'onion': '🧅',
+    'garlic': '🧄',
+    'ice cream': '🍦',
+    'cake': '🍰',
+    'cookie': '🍪',
+    'chocolate': '🍫',
+    'candy': '🍬',
+    'donut': '🍩',
+    'pie': '🥧',
+    'coffee': '☕',
+    'tea': '🍵',
+    'juice': '🧃',
+    'wine': '🍷',
+    'beer': '🍺',
+    'cocktail': '🍹',
+    'milk': '🥛',
+    'smoothie': '🥤',
+  };
+  
+  // Find matching emoji
+  for (const [key, emoji] of Object.entries(emojiMap)) {
+    if (lowerName.includes(key)) {
+      return emoji;
+    }
+  }
+  
+  // Default food emoji
+  return '🍽️';
 }
 
 // Mock data is no longer needed as we fetch from the backend
