@@ -106,6 +106,20 @@ async def scan_food(
         food_name = result.get("food_name", "")
         rag_alternatives = rag_service.get_alternatives(food_name, k=3)
         rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
+        # Add image URLs for each alternative using placehold.co
+        for alt in rewritten_alternatives:
+            alt_name = alt.get("name", "")
+            # Generate a reliable placeholder image URL with emoji and healthy colors
+            colors = ['4CAF50', '8BC34A', 'CDDC39', 'FFC107', 'FF9800']
+            color_index = len(alt_name) % len(colors)
+            # Extract emoji from the name (first character if it's an emoji, otherwise default)
+            emoji = '🍽️'
+            if alt_name:
+                first_char = alt_name[0]
+                # Check if first character is an emoji (common food emojis)
+                if ord(first_char) > 127000 or first_char in '🍎🍌🍊🍇🍓🍉🍚🍞🥐🥖🥞🧇🧀🥩🍗🥓🍔🍟🍕🌭🥪🌮🌯🥗🍲🍜🍝🍣🍱🍛🍤🥚🥑🥦🥕🌽🥒🍅🥔🍄🫑🧅🧄🍦🍰🍪🍫🍬🍩🥧☕🍵🧃🍷🍺🍹🥛🥤':
+                    emoji = first_char
+            alt["image_url"] = f"https://placehold.co/800x600/{colors[color_index]}/FFFFFF?text={emoji}+{alt_name}"
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
