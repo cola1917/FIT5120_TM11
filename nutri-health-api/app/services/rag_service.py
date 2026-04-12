@@ -71,58 +71,54 @@ class RAGService:
         return context
 
     def get_alternatives(self, food_name: str, goal: str = "grow tall", k: int = 3) -> List[Dict]:
-        """Get a list of healthy foods (random selection, not based on input food)."""
-        if not self.is_ready:
-            return self._get_fallback_alternatives()
-
-        # Get all healthy foods (grade A or B) from the vector store
-        # We do a broad search to get diverse healthy options
-        query = f"healthy nutritious food for kids {goal} fruits vegetables whole grains lean protein"
-        docs = self.vectorstore.similarity_search(query, k=20)
-
-        # Filter for only A and B grade foods and collect unique ones
-        healthy_foods = []
-        seen_names = set()
-        for doc in docs:
-            name = doc.metadata.get("name", "")
-            grade = doc.metadata.get("health_grade", "")
-            if name and grade in ["A", "B"] and name not in seen_names:
-                seen_names.add(name)
-                healthy_foods.append(
-                    {
-                        "name": name,
-                        "description": self._extract_description(doc.page_content),
-                        "grade": grade,
-                    }
-                )
-
-        # If we don't have enough from similarity search, add fallback options
-        if len(healthy_foods) < k:
-            fallbacks = [
-                {"name": "Fruit Platter", "description": "Natural sweetness, rich in vitamins", "grade": "A"},
-                {"name": "Vegetable Salad", "description": "Great source of dietary fibre", "grade": "A"},
-                {"name": "Plain Yoghurt", "description": "High in calcium and kid-friendly", "grade": "B"},
-                {"name": "Whole Grain Bread", "description": "Long-lasting energy from whole grains", "grade": "A"},
-                {"name": "Grilled Chicken", "description": "Lean protein for strong muscles", "grade": "A"},
-            ]
-            for fb in fallbacks:
-                if fb["name"] not in seen_names:
-                    healthy_foods.append(fb)
-                    if len(healthy_foods) >= k + 5:
-                        break
-
+        """Get a list of healthy foods that have Wikimedia images (random selection, not based on input food)."""
+        # Whitelist of healthy foods that have guaranteed Wikimedia images
+        # Only foods with health_grade A or B are included
+        healthy_foods_with_images = [
+            {"name": "Apple", "description": "Natural sweetness, rich in vitamins", "grade": "A"},
+            {"name": "Banana", "description": "Great source of potassium and energy", "grade": "A"},
+            {"name": "Orange", "description": "Packed with vitamin C for immunity", "grade": "A"},
+            {"name": "Grape", "description": "Antioxidant-rich and hydrating", "grade": "A"},
+            {"name": "Strawberry", "description": "Delicious berries full of vitamins", "grade": "A"},
+            {"name": "Watermelon", "description": "Refreshing and hydrating fruit", "grade": "A"},
+            {"name": "Broccoli", "description": "Super vegetable with lots of nutrients", "grade": "A"},
+            {"name": "Carrot", "description": "Great for eyesight and crunchy fun", "grade": "A"},
+            {"name": "Cucumber", "description": "Cool and refreshing vegetable", "grade": "A"},
+            {"name": "Tomato", "description": "Juicy and full of lycopene", "grade": "A"},
+            {"name": "Spinach", "description": "Iron-rich leafy green", "grade": "A"},
+            {"name": "Lettuce", "description": "Light and crispy salad base", "grade": "A"},
+            {"name": "Corn", "description": "Sweet kernels with fibre", "grade": "A"},
+            {"name": "Avocado", "description": "Creamy healthy fats for growing brains", "grade": "A"},
+            {"name": "Blueberry", "description": "Tiny but mighty antioxidant berries", "grade": "A"},
+            {"name": "Raspberry", "description": "Tart and sweet nutrient-packed berries", "grade": "A"},
+            {"name": "Pear", "description": "Sweet and juicy fibre-rich fruit", "grade": "A"},
+            {"name": "Peach", "description": "Soft and sweet summer fruit", "grade": "A"},
+            {"name": "Kiwi", "description": "Tropical fruit loaded with vitamin C", "grade": "A"},
+            {"name": "Mango", "description": "Sweet tropical delight with vitamins", "grade": "A"},
+            {"name": "Pineapple", "description": "Tangy tropical fruit with enzymes", "grade": "A"},
+            {"name": "Plum", "description": "Sweet and tart stone fruit", "grade": "A"},
+            {"name": "Papaya", "description": "Tropical fruit great for digestion", "grade": "A"},
+            {"name": "Beans", "description": "Protein-packed legumes", "grade": "A"},
+            {"name": "Salad", "description": "Fresh mixed greens for health", "grade": "A"},
+            {"name": "Vegetable Salad", "description": "Great source of dietary fibre", "grade": "A"},
+            {"name": "Fruit Platter", "description": "Natural sweetness, rich in vitamins", "grade": "A"},
+            {"name": "Plain Yoghurt", "description": "High in calcium and kid-friendly", "grade": "B"},
+            {"name": "Grilled Chicken", "description": "Lean protein for strong muscles", "grade": "A"},
+            {"name": "Fish", "description": "Omega-3 rich protein for brain health", "grade": "A"},
+        ]
+        
         # Randomly select k items to ensure variety across scans
         import random
-        if len(healthy_foods) > k:
-            selected = random.sample(healthy_foods, k)
+        if len(healthy_foods_with_images) > k:
+            selected = random.sample(healthy_foods_with_images, k)
         else:
-            selected = healthy_foods[:k]
+            selected = healthy_foods_with_images[:k]
 
         # Return without grade info (frontend doesn't need it)
         return [
             {"name": item["name"], "description": item["description"]}
             for item in selected
-        ] if selected else self._get_fallback_alternatives()
+        ]
 
     def _extract_description(self, text: str) -> str:
         """Extract a short description from recipe text."""
