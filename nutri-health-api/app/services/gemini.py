@@ -42,12 +42,17 @@ For nutritional_info fields (carbohydrates, protein, fats), each must be an obje
 - "amount": numeric estimate with unit only (e.g. "12.5g")
 - "description": one simple sentence explaining what it helps with (no emojis)
 
+For assessment_score (CRITICAL - follow these rules strictly):
+- Score 1 (UNHEALTHY): Foods high in sugar, unhealthy fats, or refined carbs with little nutritional value. Examples: donuts, candy, sugary drinks, french fries, potato chips, ice cream, pastries, deep-fried foods. These should be rare treats only.
+- Score 2 (MODERATE): Foods with some nutritional value but also significant amounts of fat, sugar, salt, or refined carbs. Examples: burgers, pizza, hot dogs, regular pasta, white bread, processed snacks. Okay occasionally but not daily.
+- Score 3 (HEALTHY): Whole foods rich in nutrients, fiber, vitamins, and minerals. Examples: fruits, vegetables, whole grains, lean proteins, nuts, legumes, dairy. Great for everyday eating.
+
 For assessment:
 - Max 3 sentences: praise something good, suggest one pairing, encouraging close
 - At most 4 emojis naturally placed
 
 For alternatives:
-- Exactly 2 options if the food is unhealthy or moderate, otherwise 0
+- Exactly 2 options if the food is unhealthy (score 1) or moderate (score 2), otherwise 0
 - Each name must start with a relevant food emoji (e.g. "🍎 Apple Slices")
 - 1-2 key benefits in child-friendly language in the description
 
