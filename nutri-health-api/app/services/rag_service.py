@@ -73,10 +73,11 @@ class RAGService:
     def get_alternatives(self, food_name: str, goal: str = "grow tall", k: int = 3) -> List[Dict]:
         """Get a list of healthy foods that have Wikimedia images (random selection, not based on input food).
         
-        IMPORTANT: Food names must EXACTLY match the keys in scan.py's wikimedia_food_map dictionary.
+        IMPORTANT: Food names must EXACTLY match the keys in scan.py's wikimedia_food_urls dictionary.
         Only use lowercase names that are guaranteed to have images.
+        This method IGNORES the vector store and always returns from the whitelist.
         """
-        # Whitelist of healthy foods with EXACT name matching to wikimedia_food_map in scan.py
+        # Whitelist of healthy foods with EXACT name matching to wikimedia_food_urls in scan.py
         # All names must be lowercase to match the mapping dictionary
         healthy_foods_with_images = [
             {"name": "apple", "description": "Natural sweetness, rich in vitamins"},
@@ -118,7 +119,7 @@ class RAGService:
         else:
             selected = healthy_foods_with_images[:k]
 
-        # Return exactly as defined - names must match wikimedia_food_map keys
+        # Return exactly as defined - names must match wikimedia_food_urls keys (lowercase)
         return selected
 
     def _extract_description(self, text: str) -> str:

@@ -5,6 +5,7 @@ Handles the /scan endpoint for food image analysis
 
 import logging
 import os
+import requests
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -140,101 +141,111 @@ async def scan_food(
             "fish": "🐟",
         }
         
-        rewritten_alternatives = []
+        # Store the original clean name for image lookup, and create display name with emoji
+        processed_alternatives = []
         for alt in rag_alternatives:
-            alt_name = alt.get("name", "").lower()
+            original_name = alt.get("name", "").lower()  # Keep clean lowercase name for lookup
+            
             # Find matching emoji
             emoji = "🍽️"  # default emoji
             for key, value in emoji_map.items():
-                if key == alt_name or key in alt_name or alt_name in key:
+                if key == original_name or key in original_name or original_name in key:
                     emoji = value
                     break
             
-            # Capitalize name properly
-            display_name = alt.get("name", "").title()
-            rewritten_alternatives.append({
-                "name": f"{emoji} {display_name}",
+            # Create display name with emoji
+            display_name = f"{emoji} {alt.get('name', '').title()}"
+            
+            processed_alternatives.append({
+                "original_name": original_name,  # Store clean name for image lookup
+                "name": display_name,            # Display name with emoji
                 "description": alt.get("description", "A healthy and tasty choice")
             })
         
-        # Mapping of food names to Wikimedia Commons file names (must match the whitelist in rag_service.py)
-        wikimedia_food_map = {
-            "apple": "Apple_with_cut.jpg",
-            "banana": "Bananas_single.jpg",
-            "orange": "Orange_blossom_wb.jpg",
-            "grape": "Grapes_-_green_one_layer.jpg",
-            "strawberry": "Strawberry_closeup.jpg",
-            "watermelon": "Watermelon_cross_section.jpg",
-            "broccoli": "Broccoli_flower.jpg",
-            "carrot": "Carrots_variety.jpg",
-            "cucumber": "Cucumber_slices.jpg",
-            "tomato": "Tomato_red.jpg",
+        # Mapping from standardized food name to Wikimedia Commons filename
+        # We store only the filename and fetch the real URL dynamically via API
+        WIKIMEDIA_FILE_MAP = {
+            "apple": "Apples.jpg",
+            "banana": "Banana-Single.jpg",
+            "orange": "Orange_blossom_2.jpg",
+            "grape": "Grapes_-_green_and_red.jpg",
+            "strawberry": "Fragaria_'Ananassa'_Garten_Erdbeere.jpg",
+            "watermelon": "Watermelon_stylized.jpg",
+            "broccoli": "Broccoli_closeup.jpg",
+            "carrot": "Carrots_of_many_colors.jpg",
+            "cucumber": "Cucumbers.jpg",
+            "tomato": "Tomato_je.jpg",
             "spinach": "Spinach_leaves.jpg",
-            "lettuce": "Lettuce_head.jpg",
-            "corn": "Sweet_corn.jpg",
-            "avocado": "Avocado_cut.jpg",
-            "blueberry": "Blueberries_fresh.jpg",
-            "raspberry": "Raspberries_fresh.jpg",
-            "pear": "Pear_green.jpg",
-            "peach": "Peach_fruit.jpg",
-            "kiwi": "Kiwi_fruit_cut.jpg",
-            "mango": "Mango_fruit.jpg",
-            "pineapple": "Pineapple_whole.jpg",
-            "plum": "Plum_fruit.jpg",
-            "papaya": "Papaya_cut.jpg",
-            "beans": "Green_beans.jpg",
-            "salad": "Green_salad.jpg",
-            "vegetable salad": "Vegetable_salad.jpg",
-            "fruit platter": "Fruit_platter.jpg",
-            "plain yoghurt": "Plain_yogurt.jpg",
+            "lettuce": "Lettuce_leaves.jpg",
+            "corn": "Corn_on_the_cob.jpg",
+            "avocado": "Avocado_open_and_closed.jpg",
+            "blueberry": "Blueberries.jpg",
+            "raspberry": "Raspberries.jpg",
+            "pear": "Pears.jpg",
+            "peach": "Peaches_-_whole_and_halved.jpg",
+            "kiwi": "Kiwi_fruit.jpg",
+            "mango": "Mango_frucht.jpg",
+            "pineapple": "Pineapple_and_cross_section.jpg",
+            "plum": "Cherries.jpg",  # Using cherries as fallback for plum
+            "papaya": "Papaya_cross_section.jpg",
+            "beans": "Peas_in_a_pod.jpg",
+            "salad": "Lettuce_leaves.jpg",
+            "vegetable salad": "Lettuce_leaves.jpg",
+            "fruit platter": "Apples.jpg",
+            "plain yoghurt": "Yogurt_with_fruit.jpg",
             "grilled chicken": "Grilled_chicken.jpg",
-            "fish": "Fresh_fish.jpg",
+            "fish": "Salmon_fillet.jpg",
         }
         
-        import hashlib
-        
-        for i, alt in enumerate(rewritten_alternatives):
-            alt_name = alt.get("name", "").lower()
-            # Find matching Wikimedia image from the map (exact match or keyword match)
-            wikimedia_file = None
-            
-            # First try exact match
-            if alt_name in wikimedia_food_map:
-                wikimedia_file = wikimedia_food_map[alt_name]
-            else:
-                # Then try keyword match
-                for key, value in wikimedia_food_map.items():
-                    if key in alt_name or alt_name in key:
-                        wikimedia_file = value
-                        break
-            
-            # Build Wikimedia Commons URL using MediaWiki API for reliable image retrieval
-            if wikimedia_file:
-                # Use MediaWiki API to get the actual image URL
-                api_url = f"https://commons.wikimedia.org/w/api.php?action=query&titles=File:{wikimedia_file}&prop=imageinfo&iiprop=url&format=json"
-                try:
-                    import aiohttp
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(api_url) as resp:
-                            if resp.status == 200:
-                                data = await resp.json()
-                                pages = data.get("query", {}).get("pages", {})
-                                for page_id, page_data in pages.items():
-                                    if "imageinfo" in page_data:
-                                        alt["image_url"] = page_data["imageinfo"][0]["url"]
-                                        break
-                                    elif "missing" in page_data:
-                                        # File doesn't exist, use fallback
-                                        break
-                except Exception as e:
-                    logger.warning(f"Failed to fetch image URL from Wikimedia API: {e}")
-                    # Fallback to direct URL construction
-                    alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{wikimedia_file[0].lower()}/{wikimedia_file}"
-            else:
-                # This should not happen since we control the whitelist, but just in case
-                logger.warning(f"No image mapping found for: {alt_name}")
-                alt["image_url"] = None
+        def get_wikimedia_image_url(filename: str) -> str | None:
+            """Fetch real image URL from Wikimedia API to avoid hardcoded paths."""
+            try:
+                api_url = "https://commons.wikimedia.org/w/api.php"
+                params = {
+                    "action": "query",
+                    "titles": f"File:{filename}",
+                    "prop": "imageinfo",
+                    "iiprop": "url",
+                    "format": "json"
+                }
+                response = requests.get(api_url, params=params, timeout=5)
+                response.raise_for_status()
+                data = response.json()
                 
+                pages = data.get("query", {}).get("pages", {})
+                page_data = next(iter(pages.values()), {})
+                
+                if "imageinfo" in page_data and len(page_data["imageinfo"]) > 0:
+                    return page_data["imageinfo"][0]["url"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch image URL for {filename}: {e}")
+            return None
+        
+        for alt in processed_alternatives:
+            # Use the stored original_name for exact matching
+            image_key = alt.get("original_name", "")
+            filename = WIKIMEDIA_FILE_MAP.get(image_key)
+            
+            image_url = None
+            if filename:
+                image_url = get_wikimedia_image_url(filename)
+            
+            if image_url:
+                alt["image_url"] = image_url
+            else:
+                # Fallback to generic healthy food image if specific one fails
+                logger.warning(f"No image mapping found for: {image_key}")
+                alt["image_url"] = None
+        
+        # Remove the internal 'original_name' field before returning
+        rewritten_alternatives = []
+        for alt in processed_alternatives:
+            rewritten_alternatives.append({
+                "name": alt["name"],
+                "description": alt["description"],
+                "image_url": alt.get("image_url")
+            })
+        
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
