@@ -138,15 +138,42 @@ export default function AnalysisScreen() {
           })
         : [];
 
+      // For HEALTHY or MODERATE foods, show encouraging messages instead of alternatives
+      const encouragingMessages: Record<string, RecommendedFood[]> = {
+        'HEALTHY': [
+          {
+            id: 'encourage-healthy-1',
+            name: '🌟 Super Star!',
+            description: 'You made an amazing healthy choice! Keep up the great work, little hero!',
+            image: 'https://image.pollinations.ai/prompt/healthy%20kid%20superhero%20celebrating%20food%20photography%20white%20background?model=flux&width=512&height=512'
+          }
+        ],
+        'MODERATE': [
+          {
+            id: 'encourage-moderate-1',
+            name: '👍 Good Job!',
+            description: 'You\'re on the right track! Small changes make big differences!',
+            image: 'https://image.pollinations.ai/prompt/happy%20kid%20thumbs%20up%20food%20photography%20white%20background?model=flux&width=512&height=512'
+          }
+        ]
+      };
+
+      // Use encouraging messages when no alternatives are available for HEALTHY/MODERATE foods
+      let displayRecommendedFoods: RecommendedFood[] = recommendedFoods;
+      if (recommendedFoods.length === 0 && (rating === 'HEALTHY' || rating === 'MODERATE')) {
+        displayRecommendedFoods = encouragingMessages[rating];
+      }
+
       const result: AnalysisResult = {
         rating,
         label: labelMap[rating],
         mascotMessage: mascotMessages[rating],
-        recommendedFoods
+        recommendedFoods: displayRecommendedFoods
       };
 
-      // Handle empty alternatives
-      if (recommendedFoods.length === 0) {
+      // Handle empty alternatives - only show unavailable message for UNHEALTHY foods
+      // For HEALTHY/MODERATE, we already show encouraging messages
+      if (displayRecommendedFoods.length === 0 && rating === 'UNHEALTHY') {
         if (DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE) {
           setAlternativesUnavailable(true);
         } else if (DEBUG_FORCE_NO_ALTERNATIVES_RESULT) {
