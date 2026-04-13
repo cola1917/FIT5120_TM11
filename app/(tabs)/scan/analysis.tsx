@@ -125,12 +125,17 @@ export default function AnalysisScreen() {
 
       // Map alternatives from backend
       const recommendedFoods: RecommendedFood[] = scanResponse.alternatives && scanResponse.alternatives.length > 0
-        ? scanResponse.alternatives.map((alt, index) => ({
-            id: `alt-${index}`,
-            name: alt.name,
-            description: alt.description || 'A healthier option for you!',
-            image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80'
-          }))
+        ? scanResponse.alternatives.map((alt, index) => {
+            if (!alt.image && !alt.imageUrl) {
+              throw new Error(`Missing image for alternative food: ${alt.name}`);
+            }
+            return {
+              id: `alt-${index}`,
+              name: alt.name,
+              description: alt.description || 'A healthier option for you!',
+              image: alt.image || alt.imageUrl!
+            };
+          })
         : [];
 
       const result: AnalysisResult = {

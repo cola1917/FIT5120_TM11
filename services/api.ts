@@ -30,6 +30,8 @@ export interface ScanResponse {
   alternatives: Array<{
     name: string;
     description?: string;
+    image?: string;
+    imageUrl?: string;
   }>;
 }
 
