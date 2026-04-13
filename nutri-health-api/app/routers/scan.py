@@ -5,11 +5,17 @@ Handles the /scan endpoint for food image analysis
 
 import logging
 import os
+from urllib.parse import quote
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.scan import ScanResponse, ErrorResponse
 from app.services.gemini import gemini_service
+from app.services.alternative_rules import (
+    TARGET_ALTERNATIVE_COUNT,
+    clean_food_name_for_image,
+    infer_food_category,
+)
 from app.services.cache import hash_image, get_cached_result, cache_result
 from app.services.rag_service import rag_service
 from app.auth import get_current_user
@@ -24,6 +30,11 @@ ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 def _is_recognised(result: dict) -> bool:
     return result.get("confidence", 0) > 0 and result.get("food_name", "").strip().lower() != "food item"
+
+
+def get_food_image_url(food_name: str) -> str:
+    encoded = quote(clean_food_name_for_image(food_name))
+    return f"https://image.pollinations.ai/prompt/{encoded}%20food%20photography%20white%20background?model=flux&width=512&height=512"
 
 
 @router.post(
@@ -100,13 +111,30 @@ async def scan_food(
 
     # Set recognised flag
     result["recognised"] = _is_recognised(result)
+    source_category = infer_food_category(result.get("food_name", ""))
 
-    # Enrich alternatives with RAG and rewrite in child-friendly language
-    if rag_service.is_ready and result["recognised"]:
+    # For healthy foods, hide alternatives entirely.
+    if result["recognised"] and int(result.get("assessment_score", 3) or 3) >= 3:
+        result["alternatives"] = []
+
+    # For moderate/unhealthy recognised foods, build healthier swaps from rules/RAG and then rewrite.
+    elif result["recognised"]:
         food_name = result.get("food_name", "")
-        rag_alternatives = rag_service.get_alternatives(food_name, k=3)
-        rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
-        result["alternatives"] = rewritten_alternatives
+        candidate_alternatives = rag_service.get_alternatives(
+            food_name,
+            k=6,
+            target_count=TARGET_ALTERNATIVE_COUNT,
+        )
+        rewritten_alternatives = await gemini_service.rewrite_alternatives(
+            food_name,
+            source_category,
+            candidate_alternatives,
+        )
+        normalized_alternatives = []
+        for alt in rewritten_alternatives[:TARGET_ALTERNATIVE_COUNT]:
+            alt["image_url"] = get_food_image_url(alt.get("name", ""))
+            normalized_alternatives.append(alt)
+        result["alternatives"] = normalized_alternatives
 
     # Cache the result
     if bool(os.getenv("CACHE_AI_RESPONSE", True)):

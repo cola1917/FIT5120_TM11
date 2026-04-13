@@ -29,6 +29,7 @@ class Alternative(BaseModel):
     """Healthier alternative suggestion"""
     name: str = Field(..., description="Name of the alternative food")
     description: Optional[str] = Field(None, description="Child-friendly description with emoji")
+    image_url: Optional[str] = Field(None, description="Food image URL from Pollinations AI")
 
     class Config:
         extra = "allow"

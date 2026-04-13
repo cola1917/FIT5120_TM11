@@ -25,10 +25,14 @@ services:
       dockerfile: Dockerfile
     container_name: nutrihealth-api
     restart: unless-stopped
+    # Load host `.env` into the container (OPENAI_API_KEY, SECRET_KEY, etc.)
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-your-database-url-here}
+      # Default matches the `db` service above; override in `.env` if needed.
+      DATABASE_URL: ${DATABASE_URL:-postgresql://nutrihealth:nutrihealth_dev_password@db:5432/nutrihealth}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-your_gemini_api_key_here}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
@@ -38,9 +42,9 @@ services:
       QWEN_VL_STREAM: ${QWEN_VL_STREAM:-false}
       QWEN_VL_ENABLE_THINKING: ${QWEN_VL_ENABLE_THINKING:-false}
       QWEN_VL_THINKING_BUDGET: ${QWEN_VL_THINKING_BUDGET:-81920}
-      CACHE_AI_REPSONSE: ${CACHE_AI_REPSONSE}
-      CORS_ORIGINS: ${CORS_ORIGINS}
-      ENVIRONMENT: ${ENVIRONMENT}
+      CACHE_AI_RESPONSE: ${CACHE_AI_RESPONSE:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8081,http://localhost:19006}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
     depends_on:
       db:
         condition: service_healthy
