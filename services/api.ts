@@ -32,6 +32,7 @@ export interface ScanResponse {
     description?: string;
     image?: string;
     imageUrl?: string;
+    image_url?: string;
   }>;
 }
 
