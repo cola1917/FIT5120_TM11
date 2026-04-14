@@ -147,14 +147,6 @@ export default function AnalysisScreen() {
             description: 'You made an amazing healthy choice! Keep up the great work, little hero!',
             image: 'https://image.pollinations.ai/prompt/healthy%20kid%20superhero%20celebrating%20food%20photography%20white%20background?model=flux&width=512&height=512'
           }
-        ],
-        'MODERATE': [
-          {
-            id: 'encourage-moderate-1',
-            name: '👍 Good Job!',
-            description: 'You\'re on the right track! Small changes make big differences!',
-            image: 'https://image.pollinations.ai/prompt/happy%20kid%20thumbs%20up%20food%20photography%20white%20background?model=flux&width=512&height=512'
-          }
         ]
       };
 
