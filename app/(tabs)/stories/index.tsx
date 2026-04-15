@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.74;
 const CARD_HEIGHT = height * 0.48;
+const CARD_SPACING = (width - CARD_WIDTH) / 2;
 
 // Local mascot image used for the bottom reading helper area.
 const readingMascot = require('../../../assets/images/nutriheroes_reading.png');
@@ -166,6 +167,12 @@ export default function StoriesScreen() {
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
             contentContainerStyle={styles.listContent}
+            snapToInterval={CARD_WIDTH + CARD_SPACING - 40}
+            getItemLayout={(_, index) => ({
+              length: (CARD_WIDTH + CARD_SPACING - 4),
+              offset: (CARD_WIDTH + CARD_SPACING - 4) * index,
+              index,
+            })}
           />
         </View>
 
