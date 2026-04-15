@@ -28,6 +28,7 @@ class DashScopeOpenAISettings(BaseSettings):
         env_file=_API_ROOT / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        case_sensitive=False,
     )
 
     dashscope_api_key: str = ""
@@ -44,9 +45,20 @@ class DashScopeOpenAISettings(BaseSettings):
     openai_vision_fallback_model: str = "gpt-4o"
     openai_text_model: str = "gpt-4o-mini"
 
+    # Support both naming conventions for Render deployment
+    @property
+    def effective_openai_api_key(self) -> str:
+        import os
+        return (self.openai_api_key or os.getenv("OPENAI_API_KEY", "")).strip()
+
+    @property
+    def effective_dashscope_api_key(self) -> str:
+        import os
+        return (self.dashscope_api_key or os.getenv("DASHSCOPE_API_KEY", "")).strip()
+
     @property
     def is_configured(self) -> bool:
-        return bool(self.dashscope_api_key.strip())
+        return bool(self.effective_dashscope_api_key)
 
 
 @lru_cache
@@ -59,10 +71,11 @@ def get_dashscope_openai_client() -> Optional["OpenAI"]:
     from openai import OpenAI
 
     s = get_dashscope_settings()
-    if not s.is_configured:
+    api_key = s.effective_dashscope_api_key
+    if not api_key:
         return None
     return OpenAI(
-        api_key=s.dashscope_api_key.strip(),
+        api_key=api_key,
         base_url=s.dashscope_base_url,
     )
 
@@ -72,9 +85,10 @@ def get_openai_client() -> Optional["OpenAI"]:
     from openai import OpenAI
 
     s = get_dashscope_settings()
-    if not s.openai_api_key.strip():
+    api_key = s.effective_openai_api_key
+    if not api_key:
         return None
-    return OpenAI(api_key=s.openai_api_key.strip())
+    return OpenAI(api_key=api_key)
 
 
 def dashscope_chat_extra_body() -> dict:
