@@ -10,14 +10,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const TOKEN_KEY = 'auth_token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
 // Use your computer's LAN IP for Expo Go testing
-//const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-const BACKEND_URL = 'http://10.192.56.70:8000';
-//const BACKEND_URL = 'http://192.168.100.238:8000';
+const BACKEND_URL = 'https://fit5120-tm11.onrender.com';
+//const BACKEND_URL = 'http://10.192.56.70:8000';
+//onst BACKEND_URL = 'http://192.168.100.238:8000';
 
 // Hardcoded credentials (for demo only)
-const DEMO_USERNAME = 'demo';
+const DEMO_USERNAME = 'demousername';
+//const DEMO_USERNAME = 'demo';
 //const DEMO_USERNAME = process.env.EXPO_PUBLIC_USERNAME || '';
-const DEMO_PASSWORD = 'demo123';
+const DEMO_PASSWORD = 'demopassword123';
+//const DEMO_PASSWORD = 'demo123';
 //const DEMO_PASSWORD = process.env.EXPO_PUBLIC_PASSWORD || '';
 
 interface TokenResponse {
