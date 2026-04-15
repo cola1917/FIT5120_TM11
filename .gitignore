@@ -182,3 +182,4 @@ expo-env.d.ts
 # generated native folders
 /ios
 /android
+Nothing should be ignored based on the provided file changes. The modification of 'nutri-health-api/app/config/vision_llm.py' is a source code file change, which does not require any new ignore rules.
