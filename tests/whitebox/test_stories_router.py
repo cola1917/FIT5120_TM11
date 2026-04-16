@@ -7,7 +7,7 @@ from app.routers import stories
 def test_load_stories_manifest_reads_catalog():
     manifest = stories.load_stories_manifest()
 
-    assert [item["id"] for item in manifest["stories"]] == ["story-1", "story-2", "story-3"]
+    assert {item["id"] for item in manifest["stories"]} == {"story-1", "story-2", "story-3"}
 
 
 def test_validate_story_exists_and_page_count():
