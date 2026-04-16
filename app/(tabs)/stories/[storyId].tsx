@@ -1,7 +1,8 @@
-import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl, getAuthHeaders } from '@/services/stories';
-import { router, useLocalSearchParams } from 'expo-router';
+import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl, getAuthHeaders, getStories } from '@/services/stories';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { ArrowLeft, Pause, Play } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
+import { AutoSizeText, ResizeTextMode } from 'react-native-auto-size-text';
 import {
   ActivityIndicator,
   Alert,
@@ -31,6 +32,7 @@ interface Story {
 
 export default function StoryReaderScreen() {
   const { storyId } = useLocalSearchParams<{ storyId: string }>();
+  const navigation = useNavigation();
 
   const [story, setStory] = useState<Story | null>(null);
   const [storyTextData, setStoryTextData] = useState<StoryTextData | null>(null);
@@ -48,11 +50,15 @@ export default function StoryReaderScreen() {
 
     try {
       // Fetch story metadata and text content
-      const textData = await getStoryText(storyId);
+      const [stories, textData] = await Promise.all([
+        getStories(),
+        getStoryText(storyId),
+      ]);
+      const foundStory = stories.find(s => s.id === storyId);
       
       setStory({
         id: storyId,
-        title: storyId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        title: foundStory?.title || '',
         pageCount: textData.pages.length,
       });
       setStoryTextData(textData);
@@ -229,6 +235,12 @@ export default function StoryReaderScreen() {
     }
   };
 
+  const handleBackPress = async () => {
+    await cleanupAudio();
+    navigation.goBack();
+  };
+
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -278,13 +290,19 @@ export default function StoryReaderScreen() {
 
         <View style={styles.heroOverlay} />
 
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => handleBackPress()}>
           <ArrowLeft size={20} color="#2D241F" />
         </TouchableOpacity>
 
         <View style={styles.heroContent}>
           <View style={styles.titleBubble}>
-            <Text style={styles.storyTitle}>{story.title}</Text>
+            <AutoSizeText
+              mode={ResizeTextMode.max_lines}
+              numberOfLines={2}
+              fontSize={24}
+              style={styles.storyTitle}>
+              {story.title}
+            </AutoSizeText>
           </View>
 
           <TouchableOpacity
@@ -397,6 +415,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.92)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 9999,
   },
   heroContent: {
     ...StyleSheet.absoluteFillObject,

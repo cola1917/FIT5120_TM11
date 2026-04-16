@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { scanFood, ApiError } from '../../../services/api';
+import { AutoSizeText, ResizeTextMode } from 'react-native-auto-size-text';
 
 interface RecommendedFood {
   id: string;
@@ -334,9 +335,14 @@ export default function AnalysisScreen() {
         <View
           style={[styles.labelBadge, { backgroundColor: `${ratingColor}30` }]}
         >
-          <Text style={[styles.labelText, { color: ratingColor }]}>
+          <AutoSizeText 
+            style={[styles.labelText, { color: ratingColor }]}
+            mode={ResizeTextMode.max_lines}
+            numberOfLines={1}
+            fontSize={13}
+            >
             😦 {analysisResult.label}
-          </Text>
+          </AutoSizeText>
         </View>
       </View>
 
@@ -494,7 +500,7 @@ const styles = StyleSheet.create({
   labelBadge: {
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: 12,
     marginBottom: 8,
   },
   labelText: {

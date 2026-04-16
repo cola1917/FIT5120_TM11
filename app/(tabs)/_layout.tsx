@@ -46,14 +46,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
         }}
       />
-
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
-        }}
-      />
     </Tabs>
   );
 }
