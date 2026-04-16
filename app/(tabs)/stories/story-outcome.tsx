@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Speech from 'expo-speech';
 import { ArrowLeft, Pause, Play } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,15 +9,84 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getStoryText } from '@/services/stories';
+import { getAuthHeaders, getStoryOutcomeAudioUrl, getStoryText } from '@/services/stories';
+import { Audio } from 'expo-av';
 
 export default function StoryOutcomeScreen() {
-  const { storyId } = useLocalSearchParams<{ storyId?: string }>();
+  const { storyId } = useLocalSearchParams<{ storyId: string }>();
 
   const [outcome, setOutcome] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
+  const [audioState, setAudioState] = useState<'playing'| 'idle' | 'error'>('idle');
+
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  const loadAuthHeaders = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      setAuthHeaders(headers);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
+  const setupAudio = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+    } catch (err) {
+      console.error('Failed to setup audio:', err);
+    }
+  };
+
+  const cleanupAudio = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      setAudioState('idle');
+    } catch (err) {
+      console.error('Failed to cleanup audio:', err);
+    }
+  };
+
+  const playAudioForPage = async () => {
+    try {
+      // Stop any currently playing audio
+      await cleanupAudio();
+
+      const audioUrl = getStoryOutcomeAudioUrl(storyId);
+      
+      // Create and load the sound
+      const { sound } = await Audio.Sound.createAsync(
+        {
+          uri: audioUrl,
+          headers: authHeaders || undefined,
+        },
+        { shouldPlay: true }
+      );
+
+      soundRef.current = sound;
+      setAudioState('playing');
+
+      // Set up callback for when audio finishes
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setAudioState('idle');
+        }
+      });
+    } catch (err) {
+      console.error('Failed to play audio:', err);
+      setAudioState('error');
+    }
+  }
 
   useEffect(() => {
     const loadOutcome = async () => {
@@ -41,53 +109,35 @@ export default function StoryOutcomeScreen() {
         setLoading(false);
       }
     };
-
+    loadAuthHeaders();
     loadOutcome();
+    setupAudio();
 
     return () => {
-      Speech.stop();
+      cleanupAudio();
     };
   }, [storyId]);
 
-  const handleToggleReadOutcome = () => {
+  const handleToggleReadOutcome = async () => {
     if (!outcome) {
       Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
       return;
     }
 
-    if (isSpeaking) {
-      Speech.stop();
-      setIsSpeaking(false);
-      return;
+    if (audioState === 'idle' || audioState === 'error') {
+      await playAudioForPage();
+    } else if (audioState === 'playing') {
+      await cleanupAudio();
     }
 
     if (!outcome.trim()) {
       Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
       return;
     }
-
-    try {
-      Speech.speak(outcome, {
-        language: 'en-US',
-        rate: 0.9,
-        pitch: 1.0,
-        onStart: () => setIsSpeaking(true),
-        onDone: () => setIsSpeaking(false),
-        onStopped: () => setIsSpeaking(false),
-        onError: () => {
-          setIsSpeaking(false);
-          Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
-        },
-      });
-    } catch {
-      setIsSpeaking(false);
-      Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
-    }
   };
 
   const handleGoHome = () => {
-    Speech.stop();
-    setIsSpeaking(false);
+    cleanupAudio();
     router.replace('/stories');
   };
 
@@ -136,7 +186,7 @@ export default function StoryOutcomeScreen() {
             style={[styles.primaryButton, { backgroundColor: '#E77A1F' }]}
             onPress={handleToggleReadOutcome}
           >
-            {isSpeaking ? (
+            {audioState === 'playing' ? (
               <View style={styles.buttonContent}>
                 <Pause size={18} color="#FFFFFF" />
                 <Text style={styles.primaryButtonText}>Pause Reading</Text>

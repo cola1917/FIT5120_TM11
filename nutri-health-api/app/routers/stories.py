@@ -168,7 +168,6 @@ async def get_story_page_image(
     
     return FileResponse(image_path, media_type="image/jpeg")
 
-
 @router.get("/{story_id}/pages/{page_number}/audio")
 async def get_story_page_audio(
     story_id: str,
@@ -204,6 +203,38 @@ async def get_story_page_audio(
     
     # Construct path to page audio
     audio_path = os.path.join(STORIES_DIR, story_id, "pages", f"page-{page_number}.wav")
+    if os.path.exists(audio_path):
+        return FileResponse(audio_path)
+    if os.path.exists(audio_path_alt := audio_path.rstrip('.wav') + '.WAV'):
+        return FileResponse(audio_path_alt)
+    logger.error(f"Page audio not found at {audio_path} or {audio_path_alt}")
+    raise HTTPException(status_code=404, detail='Page audio not found')
+
+@router.get("/{story_id}/outcome/audio")
+async def get_story_outcome_audio(
+    story_id: str,
+):
+    """
+    Get the audio file for the outcome of a story.
+    
+    Args:
+        story_id: The unique identifier for the story
+        
+    Returns:
+        FileResponse: The outcome audio file
+        
+    Raises:
+        HTTPException: 404 if story, or audio not found
+        HTTPException: 400 if page_number is invalid
+    """
+    logger.info(f"Requested page outcome audio for story '{story_id}'")
+    
+    # Validate story exists
+    if not validate_story_exists(story_id):
+        raise HTTPException(status_code=404, detail=f"Story '{story_id}' not found")
+    
+    # Construct path to page audio
+    audio_path = os.path.join(STORIES_DIR, story_id, "pages", f"outcome.wav")
     if os.path.exists(audio_path):
         return FileResponse(audio_path)
     if os.path.exists(audio_path_alt := audio_path.rstrip('.wav') + '.WAV'):
