@@ -7,9 +7,13 @@
  * View has its own independent responder — no shared gesture state.
  *
  * On missed drop: shrinks and despawns.
+ *
+ * Performance: Wrapped in React.memo so parent re-renders (timer ticks,
+ * other ingredient spawns/despawns) don't interrupt this component's
+ * Reanimated animations running on the UI thread.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, Dimensions, Text, GestureResponderEvent } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -46,7 +50,7 @@ interface FallingIngredientProps {
   onDespawn: (id: string) => void;
 }
 
-export default function FallingIngredient({
+function FallingIngredientInner({
   id,
   ingredient,
   laneIndex,
@@ -72,11 +76,25 @@ export default function FallingIngredient({
   const isCaughtRef = useRef(false);
   const isDespawningRef = useRef(false);
 
+  // Store callbacks in refs so animation completion callbacks always use latest
+  const onDespawnRef = useRef(onDespawn);
+  onDespawnRef.current = onDespawn;
+  const onCatchRef = useRef(onCatch);
+  onCatchRef.current = onCatch;
+
+  // Store plateZone in ref so responder handlers always see latest value
+  const plateZoneRef = useRef(plateZone);
+  plateZoneRef.current = plateZone;
+
   // Touch start position (absolute screen coords) for computing drag delta
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   // Fall Y value at the moment the drag started
   const fallYAtDragStart = useRef(0);
+
+  const handleDespawn = useCallback((ingredientId: string) => {
+    onDespawnRef.current(ingredientId);
+  }, []);
 
   useEffect(() => {
     // Start fall animation
@@ -85,7 +103,7 @@ export default function FallingIngredient({
       { duration: fallDuration, easing: Easing.linear },
       (finished) => {
         if (finished && !isCaughtRef.current && !isDespawningRef.current) {
-          runOnJS(onDespawn)(id);
+          runOnJS(handleDespawn)(id);
         }
       }
     );
@@ -100,18 +118,19 @@ export default function FallingIngredient({
     );
   }, []);
 
-  const isInsidePlateZone = (fingerX: number, fingerY: number): boolean => {
-    if (!plateZone) return false;
-    const cx = plateZone.x + plateZone.width / 2;
-    const cy = plateZone.y + plateZone.height / 2;
+  const isInsidePlateZone = useCallback((fingerX: number, fingerY: number): boolean => {
+    const zone = plateZoneRef.current;
+    if (!zone) return false;
+    const cx = zone.x + zone.width / 2;
+    const cy = zone.y + zone.height / 2;
     const dx = fingerX - cx;
     const dy = fingerY - cy;
     return Math.sqrt(dx * dx + dy * dy) <= PLATE_CATCH_RADIUS;
-  };
+  }, []);
 
   // ─── Responder handlers ──────────────────────────────────────────────────────
 
-  const handleGrant = (evt: GestureResponderEvent) => {
+  const handleGrant = useCallback((evt: GestureResponderEvent) => {
     if (isCaughtRef.current || isDespawningRef.current) return;
 
     touchStartX.current = evt.nativeEvent.pageX;
@@ -120,16 +139,16 @@ export default function FallingIngredient({
     fallYAtDragStart.current = fallY.value;
     // Pause fall at current position
     fallY.value = fallY.value;
-  };
+  }, []);
 
-  const handleMove = (evt: GestureResponderEvent) => {
+  const handleMove = useCallback((evt: GestureResponderEvent) => {
     if (isCaughtRef.current || isDespawningRef.current) return;
 
     dragX.value = evt.nativeEvent.pageX - touchStartX.current;
     dragY.value = evt.nativeEvent.pageY - touchStartY.current;
-  };
+  }, []);
 
-  const handleRelease = (evt: GestureResponderEvent) => {
+  const handleRelease = useCallback((evt: GestureResponderEvent) => {
     if (isCaughtRef.current || isDespawningRef.current) return;
 
     const fingerX = evt.nativeEvent.pageX;
@@ -141,7 +160,7 @@ export default function FallingIngredient({
       isCaughtRef.current = true;
       dragX.value = 0;
       dragY.value = 0;
-      onCatch(id);
+      onCatchRef.current(id);
     } else {
       // Missed — shrink and despawn
       isDespawningRef.current = true;
@@ -149,19 +168,21 @@ export default function FallingIngredient({
       dragY.value = 0;
       scale.value = withTiming(0, { duration: 150, easing: Easing.in(Easing.ease) }, (finished) => {
         if (finished) {
-          runOnJS(onDespawn)(id);
+          runOnJS(handleDespawn)(id);
         }
       });
     }
-  };
+  }, [id, isInsidePlateZone, handleDespawn]);
 
-  const handleTerminate = () => {
+  const handleTerminate = useCallback(() => {
     // Gesture was stolen by another responder — reset drag state
     if (!isCaughtRef.current && !isDespawningRef.current) {
       dragX.value = 0;
       dragY.value = 0;
     }
-  };
+  }, []);
+
+  const shouldSetResponder = useCallback(() => !isCaughtRef.current && !isDespawningRef.current, []);
 
   // ─── Animated style ──────────────────────────────────────────────────────────
 
@@ -188,8 +209,8 @@ export default function FallingIngredient({
         animatedStyle,
       ]}
       // Native responder system — each View is an independent responder
-      onStartShouldSetResponder={() => !isCaughtRef.current && !isDespawningRef.current}
-      onMoveShouldSetResponder={() => !isCaughtRef.current && !isDespawningRef.current}
+      onStartShouldSetResponder={shouldSetResponder}
+      onMoveShouldSetResponder={shouldSetResponder}
       onResponderGrant={handleGrant}
       onResponderMove={handleMove}
       onResponderRelease={handleRelease}
@@ -199,6 +220,19 @@ export default function FallingIngredient({
     </Animated.View>
   );
 }
+
+/**
+ * Memoized FallingIngredient — only re-renders when its own identity props change.
+ * Since id, ingredient, laneIndex, and fallDuration are stable for the lifetime
+ * of a given ingredient, this effectively prevents re-renders from parent state
+ * changes (timer ticks, other ingredient spawns/despawns).
+ */
+const FallingIngredient = React.memo(FallingIngredientInner, (prev, next) => {
+  // Only re-render if the ingredient identity changes (which shouldn't happen)
+  return prev.id === next.id;
+});
+
+export default FallingIngredient;
 
 const styles = StyleSheet.create({
   ingredient: {

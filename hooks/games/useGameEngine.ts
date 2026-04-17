@@ -3,6 +3,10 @@
  *
  * Manages: game phase, timer, ingredient spawning, plate state,
  * meal completion, scoring, and difficulty progression.
+ *
+ * Performance: State is split into separate pieces so that timer ticks
+ * don't cause ingredient list re-renders, and ingredient list changes
+ * don't cause HUD re-renders. Callbacks use refs for stable identity.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -34,18 +38,6 @@ export interface ActiveIngredient {
   fallDuration: number;
 }
 
-export interface GameState {
-  gamePhase: GamePhase;
-  timeRemaining: number;
-  totalScore: number;
-  activeIngredients: ActiveIngredient[];
-  plateIngredients: IngredientDefinition[];
-  lastMealScore: number | null;
-  showMealScore: boolean;
-  highScore: number;
-  isNewHighScore: boolean;
-}
-
 export interface GameActions {
   startGame: () => void;
   resetGame: () => void;
@@ -53,20 +45,18 @@ export interface GameActions {
   despawnIngredient: (id: string) => void;
 }
 
-const initialState: GameState = {
-  gamePhase: 'idle',
-  timeRemaining: ROUND_DURATION_SECONDS,
-  totalScore: 0,
-  activeIngredients: [],
-  plateIngredients: [],
-  lastMealScore: null,
-  showMealScore: false,
-  highScore: 0,
-  isNewHighScore: false,
-};
-
-export function useGameEngine(): GameState & GameActions {
-  const [state, setState] = useState<GameState>(initialState);
+export function useGameEngine() {
+  // ─── Split state for performance ─────────────────────────────────────────────
+  // Timer state is separate so ticking doesn't re-render ingredient list
+  const [gamePhase, setGamePhase] = useState<GamePhase>('idle');
+  const [timeRemaining, setTimeRemaining] = useState(ROUND_DURATION_SECONDS);
+  const [totalScore, setTotalScore] = useState(0);
+  const [activeIngredients, setActiveIngredients] = useState<ActiveIngredient[]>([]);
+  const [plateIngredients, setPlateIngredients] = useState<IngredientDefinition[]>([]);
+  const [lastMealScore, setLastMealScore] = useState<number | null>(null);
+  const [showMealScore, setShowMealScore] = useState(false);
+  const [highScore, setHighScore] = useState(0);
+  const [isNewHighScore, setIsNewHighScore] = useState(false);
 
   // Refs for intervals (avoid stale closures)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -76,12 +66,12 @@ export function useGameEngine(): GameState & GameActions {
   const activeIngredientsRef = useRef<ActiveIngredient[]>([]);
   const plateIngredientsRef = useRef<IngredientDefinition[]>([]);
   const isMealCompletingRef = useRef(false);
+  const gamePhaseRef = useRef<GamePhase>('idle');
 
   // Lane occupancy: laneIndex → count of ingredients currently in that lane
   const laneCountsRef = useRef<number[]>(new Array(NUM_LANES).fill(0));
 
   // Lane blocking: laneIndex → number of remaining spawns this lane is blocked for
-  // After spawning in a lane, it is blocked for LANE_BLOCK_COUNT subsequent spawns.
   const laneBlockCountdownRef = useRef<number[]>(new Array(NUM_LANES).fill(0));
 
   // ─── Cleanup ────────────────────────────────────────────────────────────────
@@ -100,7 +90,7 @@ export function useGameEngine(): GameState & GameActions {
   useEffect(() => {
     // Load high score on mount
     getHighScore(GAME_ID).then((hs) => {
-      setState((prev) => ({ ...prev, highScore: hs }));
+      setHighScore(hs);
     });
     return clearAllIntervals;
   }, [clearAllIntervals]);
@@ -109,27 +99,29 @@ export function useGameEngine(): GameState & GameActions {
 
   const endGame = useCallback(async () => {
     clearAllIntervals();
+    gamePhaseRef.current = 'game_over';
     const finalScore = totalScoreRef.current;
     const isNew = await saveGameScore(GAME_ID, finalScore);
     const hs = await getHighScore(GAME_ID);
-
-    setState((prev) => ({
-      ...prev,
-      gamePhase: 'game_over',
-      timeRemaining: 0,
-      activeIngredients: [],
-      plateIngredients: [],
-      showMealScore: false,
-      highScore: hs,
-      isNewHighScore: isNew,
-    }));
 
     activeIngredientsRef.current = [];
     plateIngredientsRef.current = [];
     laneCountsRef.current = new Array(NUM_LANES).fill(0);
     laneBlockCountdownRef.current = new Array(NUM_LANES).fill(0);
     isMealCompletingRef.current = false;
+
+    setGamePhase('game_over');
+    setTimeRemaining(0);
+    setActiveIngredients([]);
+    setPlateIngredients([]);
+    setShowMealScore(false);
+    setHighScore(hs);
+    setIsNewHighScore(isNew);
   }, [clearAllIntervals]);
+
+  // Keep endGame ref current for timer closure
+  const endGameRef = useRef(endGame);
+  endGameRef.current = endGame;
 
   // ─── Spawner ─────────────────────────────────────────────────────────────────
 
@@ -138,6 +130,9 @@ export function useGameEngine(): GameState & GameActions {
     const interval = getCurrentSpawnInterval(elapsed);
 
     spawnerRef.current = setTimeout(() => {
+      // Bail if game is no longer playing
+      if (gamePhaseRef.current !== 'playing') return;
+
       // Check if we can spawn
       const active = activeIngredientsRef.current;
       if (active.length >= MAX_ACTIVE_INGREDIENTS) {
@@ -187,10 +182,7 @@ export function useGameEngine(): GameState & GameActions {
       laneCountsRef.current[laneIndex] += 1;
       activeIngredientsRef.current = [...active, newIngredient];
 
-      setState((prev) => ({
-        ...prev,
-        activeIngredients: activeIngredientsRef.current,
-      }));
+      setActiveIngredients(activeIngredientsRef.current);
 
       scheduleNextSpawn();
     }, interval);
@@ -208,35 +200,33 @@ export function useGameEngine(): GameState & GameActions {
     laneCountsRef.current = new Array(NUM_LANES).fill(0);
     laneBlockCountdownRef.current = new Array(NUM_LANES).fill(0);
     isMealCompletingRef.current = false;
+    gamePhaseRef.current = 'playing';
 
-    setState((prev) => ({
-      ...prev,
-      gamePhase: 'playing',
-      timeRemaining: ROUND_DURATION_SECONDS,
-      totalScore: 0,
-      activeIngredients: [],
-      plateIngredients: [],
-      lastMealScore: null,
-      showMealScore: false,
-      isNewHighScore: false,
-    }));
+    setGamePhase('playing');
+    setTimeRemaining(ROUND_DURATION_SECONDS);
+    setTotalScore(0);
+    setActiveIngredients([]);
+    setPlateIngredients([]);
+    setLastMealScore(null);
+    setShowMealScore(false);
+    setIsNewHighScore(false);
 
-    // Start countdown timer
+    // Start countdown timer — only updates timeRemaining, not ingredients
     timerRef.current = setInterval(() => {
       elapsedSecondsRef.current += 1;
-      setState((prev) => {
-        const newTime = prev.timeRemaining - 1;
+      setTimeRemaining((prev) => {
+        const newTime = prev - 1;
         if (newTime <= 0) {
-          endGame();
+          endGameRef.current();
           return prev;
         }
-        return { ...prev, timeRemaining: newTime };
+        return newTime;
       });
     }, 1000);
 
     // Start spawner
     scheduleNextSpawn();
-  }, [clearAllIntervals, scheduleNextSpawn, endGame]);
+  }, [clearAllIntervals, scheduleNextSpawn]);
 
   // ─── Reset Game ──────────────────────────────────────────────────────────────
 
@@ -249,12 +239,18 @@ export function useGameEngine(): GameState & GameActions {
     laneCountsRef.current = new Array(NUM_LANES).fill(0);
     laneBlockCountdownRef.current = new Array(NUM_LANES).fill(0);
     isMealCompletingRef.current = false;
+    gamePhaseRef.current = 'idle';
 
     getHighScore(GAME_ID).then((hs) => {
-      setState({
-        ...initialState,
-        highScore: hs,
-      });
+      setGamePhase('idle');
+      setTimeRemaining(ROUND_DURATION_SECONDS);
+      setTotalScore(0);
+      setActiveIngredients([]);
+      setPlateIngredients([]);
+      setLastMealScore(null);
+      setShowMealScore(false);
+      setHighScore(hs);
+      setIsNewHighScore(false);
     });
   }, [clearAllIntervals]);
 
@@ -275,6 +271,8 @@ export function useGameEngine(): GameState & GameActions {
     } catch (_) {}
   }, []);
 
+  const completeMealRef = useRef<(plate: IngredientDefinition[]) => void>(() => {});
+
   const catchIngredient = useCallback((id: string) => {
     const active = activeIngredientsRef.current;
     const target = active.find((i) => i.id === id);
@@ -294,15 +292,12 @@ export function useGameEngine(): GameState & GameActions {
 
     // Check for meal completion — clear plate immediately, show score popup briefly
     if (newPlate.length === PLATE_CAPACITY) {
-      completeMeal(newPlate);
+      completeMealRef.current(newPlate);
     } else {
-      setState((prev) => ({
-        ...prev,
-        activeIngredients: activeIngredientsRef.current,
-        plateIngredients: newPlate,
-      }));
+      setActiveIngredients(activeIngredientsRef.current);
+      setPlateIngredients(newPlate);
     }
-  }, []);
+  }, [playCatchIngredientSound]);
 
   // ─── Complete Meal ───────────────────────────────────────────────────────────
 
@@ -334,24 +329,21 @@ export function useGameEngine(): GameState & GameActions {
     plateIngredientsRef.current = [];
     isMealCompletingRef.current = false;
 
-    setState((prev) => ({
-      ...prev,
-      activeIngredients: activeIngredientsRef.current,
-      totalScore: totalScoreRef.current,
-      plateIngredients: [],
-      lastMealScore: mealScore,
-      showMealScore: true,
-    }));
+    setActiveIngredients(activeIngredientsRef.current);
+    setTotalScore(totalScoreRef.current);
+    setPlateIngredients([]);
+    setLastMealScore(mealScore);
+    setShowMealScore(true);
 
     // Hide score popup after 1s (plate is already accepting ingredients)
     setTimeout(() => {
-      setState((prev) => ({
-        ...prev,
-        showMealScore: false,
-        lastMealScore: null,
-      }));
+      setShowMealScore(false);
+      setLastMealScore(null);
     }, 1000);
-  }, []);
+  }, [playMealCompleteSound]);
+
+  // Keep completeMealRef current
+  completeMealRef.current = completeMeal;
 
   // ─── Despawn Ingredient ──────────────────────────────────────────────────────
 
@@ -363,14 +355,19 @@ export function useGameEngine(): GameState & GameActions {
     activeIngredientsRef.current = active.filter((i) => i.id !== id);
     laneCountsRef.current[target.laneIndex] = Math.max(0, laneCountsRef.current[target.laneIndex] - 1);
 
-    setState((prev) => ({
-      ...prev,
-      activeIngredients: activeIngredientsRef.current,
-    }));
+    setActiveIngredients(activeIngredientsRef.current);
   }, []);
 
   return {
-    ...state,
+    gamePhase,
+    timeRemaining,
+    totalScore,
+    activeIngredients,
+    plateIngredients,
+    lastMealScore,
+    showMealScore,
+    highScore,
+    isNewHighScore,
     startGame,
     resetGame,
     catchIngredient,
