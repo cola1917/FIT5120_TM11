@@ -11,35 +11,35 @@
 
 ## White-box Summary
 
-| 汇总信息项 | 描述 | 示例内容 |
+| Summary Item | Description | Example |
 | --- | --- | --- |
-| Test Scope | 哪些核心模块或函数被测试了。 | Nutrient calculation, XP conversion, Persona filtering. |
-| Tooling | 使用的工具。 | Pytest, Pytest-cov. |
-| Code Coverage | 最核心指标。 | 87% Line Coverage (证明大部分代码路径都跑过了)。 |
-| Execution Environment | 运行环境。 | GitHub Actions (Ubuntu-latest) / Local Dev Server. |
-| Edge Case Logic | 边界值处理情况。 | Null inputs, Zero values, Out-of-range nutrient data. |
+| Test Scope | Which core modules or functions were tested. | Nutrient calculation, XP conversion, Persona filtering. |
+| Tooling | Tools used for testing. | Pytest, Pytest-cov. |
+| Code Coverage | Primary coverage indicator. | 87% Line Coverage (showing that most code paths were exercised). |
+| Execution Environment | Environment where tests were run. | GitHub Actions (Ubuntu-latest) / Local Dev Server. |
+| Edge Case Logic | How boundary and edge cases were handled. | Null inputs, Zero values, Out-of-range nutrient data. |
 
 ## API Test Summary
 
-| 汇总信息项 | 描述 | 示例内容 |
+| Summary Item | Description | Example |
 | --- | --- | --- |
-| Endpoint Coverage | 测试了哪些接口。 | /auth/login, /food/scan, /goals/recommend. |
-| Status Code Distribution | 响应状态分布。 | 100% 200/201 Success Rate. |
-| Performance (P95) | 真实用户感知延迟。 | Avg: 180ms / P95: 320ms (测量自 Android Client). |
-| Data Integrity | 数据一致性验证。 | JSON schema matches the design; no missing fields. |
-| Resilience (Weak Net) | 弱网表现。 | Simulated 3G: 100% sync success with retry logic. |
+| Endpoint Coverage | Which endpoints were tested. | /auth/login, /food/scan, /goals/recommend. |
+| Status Code Distribution | Distribution of response statuses. | 100% 200/201 Success Rate. |
+| Performance (P95) | User-perceived latency. | Avg: 180ms / P95: 320ms (measured from Android Client). |
+| Data Integrity | Data consistency validation. | JSON schema matches the design; no missing fields. |
+| Resilience (Weak Net) | Behavior under poor network conditions. | Simulated 3G: 100% sync success with retry logic. |
 
 ## Additional Quality Metrics
 
-| Metric | 描述 | 示例内容 |
+| Metric | Description | Example |
 | --- | --- | --- |
-| Test Pass Rate | 测试通过率。 | 132/135 (97.8%). |
-| Flaky Test Count | 近期有波动的用例数量。 | 2 flaky tests in last 10 runs. |
-| Regression Count | 本次引入的回归数量。 | 0 known regressions. |
-| Security Gate | 依赖与镜像安全检查摘要。 | 0 Critical, 1 High vulnerability. |
-| Contract Drift | 接口契约偏移情况。 | 0 schema drift in 24 endpoints. |
-| Retry Success Rate | 重试机制有效性。 | 98.6% recovered after retry. |
-| Error Budget Consumption | 错误预算消耗。 | 18% of monthly budget consumed. |
+| Test Pass Rate | Overall test pass rate. | 132/135 (97.8%). |
+| Flaky Test Count | Number of recently unstable test cases. | 2 flaky tests in last 10 runs. |
+| Regression Count | Number of regressions introduced in this run. | 0 known regressions. |
+| Security Gate | Summary of dependency and image security checks. | 0 Critical, 1 High vulnerability. |
+| Contract Drift | API contract deviation status. | 0 schema drift in 24 endpoints. |
+| Retry Success Rate | Effectiveness of retry mechanisms. | 98.6% recovered after retry. |
+| Error Budget Consumption | Error budget usage. | 18% of monthly budget consumed. |
 
 ## Risks and Next Actions
 
