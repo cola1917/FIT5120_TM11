@@ -1,6 +1,9 @@
 /**
  * Plate — The player's plate at the bottom of the screen
  * Shows up to 3 caught ingredient slots in a triangle arrangement.
+ *
+ * Performance: Wrapped in React.memo so it only re-renders when
+ * plateIngredients actually change, not on timer ticks or ingredient spawns.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -83,7 +86,7 @@ function IngredientSlot({ ingredient, position }: IngredientSlotProps) {
   );
 }
 
-export default function Plate({ plateIngredients, onPlateLayout }: PlateProps) {
+function PlateInner({ plateIngredients, onPlateLayout }: PlateProps) {
   const handleLayout = (event: LayoutChangeEvent) => {
     const { x, y, width, height } = event.nativeEvent.layout;
     onPlateLayout({ x, y, width, height });
@@ -106,6 +109,9 @@ export default function Plate({ plateIngredients, onPlateLayout }: PlateProps) {
     </View>
   );
 }
+
+const Plate = React.memo(PlateInner);
+export default Plate;
 
 const styles = StyleSheet.create({
   wrapper: {

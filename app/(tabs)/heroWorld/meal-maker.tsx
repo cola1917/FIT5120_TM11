@@ -1,5 +1,9 @@
 /**
  * Meal Maker — Game Screen
+ *
+ * Performance: Callbacks passed to child components are stabilized with
+ * useCallback so that React.memo on children (FallingIngredient, ScoreDisplay,
+ * Plate) can skip re-renders effectively.
  */
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
@@ -163,8 +167,9 @@ export default function MealMakerScreen() {
       return () => {
         stopMenuMusic();
         stopRoundMusic();
+        resetGame();
       };
-    }, [playMenuMusic, stopMenuMusic, stopRoundMusic])
+    }, [playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
   );
 
   useEffect(() => {
@@ -172,7 +177,7 @@ export default function MealMakerScreen() {
       playRoundMusic();
     } else if (gamePhase === 'idle' || gamePhase === 'game_over') {
       // Stop round → resume menu
-      stopRoundMusic();
+      // stopRoundMusic();
     }
   }, [gamePhase, playRoundMusic, stopRoundMusic, playMenuMusic]);
 
@@ -188,19 +193,19 @@ export default function MealMakerScreen() {
 
   // ─── Navigation ──────────────────────────────────────────────────────────────
 
-  const handlePlayAgain = () => {
+  const handlePlayAgain = useCallback(() => {
     resetGame();
     setTimeout(() => startGame(), 100);
-  };
+  }, [resetGame, startGame]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     resetGame();
     router.back();
-  };
+  }, [resetGame, router]);
 
-  const handleStartGame = () => {
+  const handleStartGame = useCallback(() => {
     startGame();
-  };
+  }, [startGame]);
 
   return (
     <GestureHandlerRootView style={styles.root}>

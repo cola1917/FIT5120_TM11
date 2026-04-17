@@ -1,6 +1,9 @@
 /**
  * ScoreDisplay — HUD component showing score, timer, and back button.
  * During a round, shows a back arrow instead of the drawer toggle.
+ *
+ * Performance: Wrapped in React.memo so it only re-renders when
+ * score or timeRemaining actually change, not on ingredient list updates.
  */
 
 import React from 'react';
@@ -23,7 +26,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function ScoreDisplay({ score, timeRemaining, onBack }: ScoreDisplayProps) {
+function ScoreDisplayInner({ score, timeRemaining, onBack }: ScoreDisplayProps) {
   const insets = useSafeAreaInsets();
   const isUrgent = timeRemaining <= 10;
 
@@ -48,6 +51,9 @@ export default function ScoreDisplay({ score, timeRemaining, onBack }: ScoreDisp
     </View>
   );
 }
+
+const ScoreDisplay = React.memo(ScoreDisplayInner);
+export default ScoreDisplay;
 
 const styles = StyleSheet.create({
   container: {
