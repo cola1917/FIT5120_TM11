@@ -4,9 +4,10 @@ import { Typography } from "@/constants/fonts";
 import { Radius } from "@/constants/radius";
 import { Spacing } from "@/constants/spacing";
 import { ChevronRight, Gamepad2 } from "lucide-react-native";
-import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import React from "react";
 
 
 const GAME_ID = 'xx';
@@ -89,7 +90,7 @@ export default function HeroWorldScreen() {
         <View style={styles.bannerContainer}>
           <View style={styles.bannerImageContainer}>
             <Image
-              source={require('../../../assets/images/nutriheroes_icon.png')}
+              source={require('../../../assets/images/nutriheroes_logo.png')}
               style={styles.bannerImage}
               resizeMode='contain'
             />
@@ -126,16 +127,14 @@ export default function HeroWorldScreen() {
             <Gamepad2 color={styles.sectionHeaderText.color} size={Spacing["2xl"]} style={{margin: Spacing.xs}}></Gamepad2>
             <Text style={styles.sectionHeaderText}>Fun & Games</Text>
           </View>
-          <View>
-            <FlatList
-              data={GAMES}
-              renderItem={renderGameTile}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              contentContainerStyle={styles.grid}
-              columnWrapperStyle={styles.row}
-              showsVerticalScrollIndicator={false}
-            />
+          <View style={styles.grid}>
+            <View style={styles.row}>
+              {GAMES.map((game) => (
+                <View style={{width: '50%'}} key={game.id}>
+                  {renderGameTile({ item: game })}
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -157,13 +156,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerImageContainer: {
-    width: '80%',
-    borderRadius: Spacing.xl,
-    shadowColor: Colors.shadow,
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 3
+    width: '100%',
   },
   bannerImage: {
     width: '100%',
@@ -189,6 +182,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.on_primary,
     borderRadius: Spacing.xl,
     flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   cardTextContainer: {
     alignItems: 'flex-start',
@@ -231,9 +229,9 @@ const styles = StyleSheet.create({
   row: {
     gap: CARD_GAP,
     marginBottom: CARD_GAP,
+    flexDirection: 'row'
   },
   gameCard: {
-    width: '50%',
     backgroundColor: Colors.surface_container_lowest,
     borderRadius: Radius.card,
     padding: Spacing.lg,
