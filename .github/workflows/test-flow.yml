@@ -1,0 +1,229 @@
+name: Test Flow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      # Allows manual runs against a custom deployed API endpoint.
+      api_base_url:
+        description: API base URL for smoke tests
+        type: string
+        default: https://fit5120-tm11.onrender.com
+
+env:
+  DEFAULT_API_BASE_URL: https://fit5120-tm11.onrender.com
+
+jobs:
+  whitebox:
+    name: White-box Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Run frontend typecheck
+        continue-on-error: true
+        run: npx tsc --noEmit
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install white-box test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          python -m pip install pytest-cov
+          python -m pip install -r nutri-health-api/requirements.txt
+
+      - name: Run white-box tests
+        run: bash tests/whitebox/scripts/run_whitebox.sh
+
+      - name: Upload white-box artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whitebox-artifacts
+          path: |
+            tests/reports/artifacts/whitebox_coverage.json
+            tests/reports/artifacts/whitebox_junit.xml
+            tests/reports/artifacts/whitebox_metrics.json
+          if-no-files-found: warn
+
+  api-smoke:
+    name: API Smoke Tests
+    runs-on: ubuntu-latest
+    needs: whitebox
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run API smoke tests
+        env:
+          # For push/PR use default endpoint; manual runs can override via input.
+          API_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.api_base_url || env.DEFAULT_API_BASE_URL }}
+        run: bash tests/api-deploy/scripts/api_smoke_test.sh
+
+      - name: Upload API smoke metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-smoke-metrics
+          path: tests/reports/artifacts/api_metrics.json
+          if-no-files-found: warn
+
+  api-regression:
+    name: API Regression Tests
+    runs-on: ubuntu-latest
+    needs: api-smoke
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run API regression tests
+        env:
+          # Regression tests require auth credentials but still avoid OpenAI success-path calls.
+          API_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.api_base_url || env.DEFAULT_API_BASE_URL }}
+          API_USERNAME: ${{ secrets.API_USERNAME }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD }}
+        run: bash tests/api-deploy/scripts/api_regression_test.sh
+
+      - name: Upload API regression metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-regression-metrics
+          path: tests/reports/artifacts/api_metrics.json
+          if-no-files-found: warn
+
+  report-pr:
+    name: Generate Test Report (PR)
+    runs-on: ubuntu-latest
+    needs:
+      - whitebox
+      - api-smoke
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download white-box artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: whitebox-artifacts
+          path: .
+
+      - name: Download API smoke metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: api-smoke-metrics
+          path: .
+
+      - name: Generate markdown report
+        env:
+          TEST_TRIGGER_SOURCE: ${{ github.event_name }}
+          TEST_EXECUTION_ENVIRONMENT: GitHub Actions
+          TEST_COMMIT_SHA: ${{ github.sha }}
+          TEST_BRANCH_NAME: ${{ github.ref_name }}
+          TEST_API_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.api_base_url || env.DEFAULT_API_BASE_URL }}
+        run: bash tests/reports/scripts/generate_report.sh
+
+      - name: Upload generated report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-pr
+          path: |
+            tests/reports/history/*.md
+            tests/reports/artifacts/*.json
+            tests/reports/artifacts/*.xml
+          if-no-files-found: warn
+
+      - name: Display report in job summary
+        if: always()
+        run: |
+          latest_report=$(ls -t tests/reports/history/*.md 2>/dev/null | head -1)
+          if [[ -f "$latest_report" ]]; then
+            cat "$latest_report" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  report-full:
+    name: Generate Test Report (Push/Manual)
+    runs-on: ubuntu-latest
+    needs:
+      - whitebox
+      - api-regression
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download white-box artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: whitebox-artifacts
+          path: tests/reports/artifacts
+
+      - name: Download API regression metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: api-regression-metrics
+          path: tests/reports/artifacts
+
+      - name: Generate markdown report
+        env:
+          TEST_TRIGGER_SOURCE: ${{ github.event_name }}
+          TEST_EXECUTION_ENVIRONMENT: GitHub Actions
+          TEST_COMMIT_SHA: ${{ github.sha }}
+          TEST_BRANCH_NAME: ${{ github.ref_name }}
+          TEST_API_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.api_base_url || env.DEFAULT_API_BASE_URL }}
+        run: bash tests/reports/scripts/generate_report.sh
+
+      - name: Upload generated report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-full
+          path: |
+            tests/reports/history/*.md
+            tests/reports/artifacts/*.json
+            tests/reports/artifacts/*.xml
+          if-no-files-found: warn
+
+      - name: Display report in job summary
+        if: always()
+        run: |
+          latest_report=$(ls -t tests/reports/history/*.md 2>/dev/null | head -1)
+          if [[ -f "$latest_report" ]]; then
+            cat "$latest_report" >> $GITHUB_STEP_SUMMARY
+          fi
