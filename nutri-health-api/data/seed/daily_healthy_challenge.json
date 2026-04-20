@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "task_name": "Strong Bone Milk",
+    "tips": "Drink your milk today!",
+    "feedback": "Your bones are getting hard as rocks!"
+  },
+  {
+    "id": 2,
+    "task_name": "Power Up Water",
+    "tips": "Take a big sip of water!",
+    "feedback": "Your body is clean and fresh inside!"
+  },
+  {
+    "id": 3,
+    "task_name": "Immune Shield Fruit",
+    "tips": "Eat a piece of sweet fruit!",
+    "feedback": "You just built a shield against germs!"
+  },
+  {
+    "id": 4,
+    "task_name": "Happy Tummy Veggies",
+    "tips": "Finish your green veggies!",
+    "feedback": "Your tummy will dance and poop easily!"
+  },
+  {
+    "id": 5,
+    "task_name": "Sparkling White Teeth",
+    "tips": "Say no to sugary drinks!",
+    "feedback": "Your teeth stay white and monster-free!"
+  },
+  {
+    "id": 6,
+    "task_name": "Brain Battery Breakfast",
+    "tips": "Eat a healthy breakfast!",
+    "feedback": "Your brain is 100% charged for play!"
+  },
+  {
+    "id": 7,
+    "task_name": "Light Body, No Junk",
+    "tips": "Skip the greasy snacks!",
+    "feedback": "You feel light enough to fly today!"
+  },
+  {
+    "id": 8,
+    "task_name": "Eat Meat and Eggs",
+    "tips": "Eat your meat and eggs!",
+    "feedback": "You found the blocks to grow taller!"
+  },
+  {
+    "id": 9,
+    "task_name": "Long-Lasting Grains",
+    "tips": "Try some brown bread or rice!",
+    "feedback": "Your energy will last all day long!"
+  },
+  {
+    "id": 10,
+    "task_name": "Eat Fish for Brain",
+    "tips": "Have some yummy fish!",
+    "feedback": "Your brain gears are spinning faster!"
+  },
+  {
+    "id": 11,
+    "task_name": "Slow Chew, Happy Tummy",
+    "tips": "Chew slowly and enjoy!",
+    "feedback": "Your tummy feels comfy and happy!"
+  },
+  {
+    "id": 12,
+    "task_name": "Rainbow Plate Hero",
+    "tips": "Eat 3 different colors!",
+    "feedback": "You collected rainbow power for your body!"
+  },
+  {
+    "id": 13,
+    "task_name": "Strong Heart, No Fry",
+    "tips": "Choose grilled, not fried!",
+    "feedback": "Your heart engine is pumping strong!"
+  },
+  {
+    "id": 14,
+    "task_name": "Super Strength Greens",
+    "tips": "Eat your dark leafy greens!",
+    "feedback": "You are getting muscles as strong as iron!"
+  },
+  {
+    "id": 15,
+    "task_name": "Smart Brain Nuts",
+    "tips": "Have a handful of nuts!",
+    "feedback": "Your mind is getting super sharp!"
+  },
+  {
+    "id": 16,
+    "task_name": "Early Rest, Sweet Dreams",
+    "tips": "Don't eat too much at night!",
+    "feedback": "You're ready for the best sleep ever!"
+  }
+]

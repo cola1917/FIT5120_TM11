@@ -19,8 +19,10 @@ This data dictionary provides a comprehensive description of the Nutri-Health sy
    - [cn_gpcnme GPC Standard Code Table](#6-cn_gpcnme-gpc-standard-code-table)
    - [cn_food_tags Food Tags Table](#7-cn_food_tags-food-tags-table)
    - [remote_alternative Alternative Options Table](#8-remote_alternative-alternative-options-table)
-2. [Application Initialization Tables](#application-initialization-tables)
-   - [app_init_state Initialization State Table](#app_init_state-initialization-state-table)
+2. [Daily Challenge Tables](#daily-challenge-tables)
+  - [daily_healthy_challenge Daily Task Table](#1-daily_healthy_challenge-daily-task-table)
+3. [Application Initialization Tables](#application-initialization-tables)
+  - [app_init_state Initialization State Table](#app_init_state-initialization-state-table)
 
 ---
 
@@ -266,6 +268,32 @@ swap_reason_en="Lower sodium, higher fiber", swap_score=9
 
 ---
 
+## Daily Challenge Tables
+
+### 1. daily_healthy_challenge Daily Task Table
+
+**Table Name**: `daily_healthy_challenge`  
+**Purpose**: Stores the Daily Healthy Challenge task list shown in the app, including the user-facing tip and feedback text  
+**Record Count**: 16 records
+
+| Field | Data Type | Constraints | Nullable | Description |
+|-------|-----------|-------------|----------|-------------|
+| `id` | INTEGER | PK | ✗ | Auto-increment task identifier |
+| `task_name` | VARCHAR(128) | UK | ✗ | Display title of the challenge, e.g., "Strong Bone Milk" |
+| `tips` | TEXT | - | ✗ | Short instruction shown to the user |
+| `feedback` | TEXT | - | ✗ | Positive feedback shown after task completion |
+
+**Indexes**:
+- PK: `id`
+- UK: `task_name` (unique constraint)
+
+**Usage Notes**:
+- The table is seeded at startup together with the other database tables.
+- The content is intentionally child-friendly and should stay short and playful.
+- `task_name` is the stable display key for frontend rendering and should not be duplicated.
+
+---
+
 ## Application Initialization Tables
 
 ### app_init_state Initialization State Table
@@ -276,14 +304,15 @@ swap_reason_en="Lower sodium, higher fiber", swap_score=9
 
 | Field | Data Type | Constraints | Nullable | Description |
 |-------|-----------|-------------|----------|-------------|
-| `seed_key` | VARCHAR(64) | PK | ✗ | Unique identifier key for seed import, specified by SEED_KEY environment variable |
-| `initialized_at` | TIMESTAMP | - | ✗ | Initialization timestamp |
+| `init_key` | TEXT | PK | ✗ | Unique identifier key for startup seed import, specified by the `SEED_KEY` environment variable |
+| `init_value` | TEXT | - | ✗ | Seed state value, typically `completed` |
+| `updated_at` | TIMESTAMP | - | ✗ | Last update timestamp for the seed marker |
 
 **Indexes**: 
-- PK: `seed_key`
+- PK: `init_key`
 
 **Usage Notes**:
-- On app startup, first check if this table contains a record with the corresponding `seed_key`
+- On app startup, first check if this table contains a record with the corresponding `init_key`
 - If exists, skip seed data import (even if `SEED_ON_STARTUP=true`)
 - Prevents accidental re-import of data on multiple restarts
 - Supports multiple independent seed import scenarios (distinguished by different `SEED_KEY` values)
@@ -322,6 +351,8 @@ cn_fdes (1) ──→ (N) cn_food_tags
 
 cn_fdes (1) ──→ (N) remote_alternative (as original food)
 cn_fdes (1) ──→ (N) remote_alternative (as suggested food)
+
+daily_healthy_challenge is a standalone reference table and does not participate in CN foreign-key relationships.
 ```
 
 ### Data Flow
@@ -335,11 +366,11 @@ ETL Transformation (build_seed_payload.py)
   ├─ Generate food_tags (Allergens, characteristics)
   └─ Build remote_alternative (Health swaps)
   ↓
-Seed JSON Files (data/seed/*.json)
+Seed JSON Files (data/seed/*.json, including daily_healthy_challenge.json)
   ↓
 Database Load (seed_db.py)
   ↓
-PostgreSQL 8 Tables
+PostgreSQL database tables
   ↓
 Application API Queries
   ↓
@@ -358,6 +389,7 @@ Scanner App Frontend (Expo App)
 | cn_fdes | 9,202 | ~5s | Food master table |
 | cn_nutval | 174,838 | ~30s | Nutrient values (primary) |
 | cn_wght | 15,271 | ~3s | Serving size definitions |
+| daily_healthy_challenge | 16 | ~50ms | Daily challenge task list |
 | cn_food_tags | 15,258 | ~3s | Tags |
 | remote_alternative | 13,017 | ~2s | Alternative options |
 | **Total** | **238,019** | **~45s** | **Complete Import** |

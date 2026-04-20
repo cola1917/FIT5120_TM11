@@ -71,6 +71,8 @@ def test_seed_catalog_tables_happy_path(monkeypatch):
     db = FakeDB()
 
     def fake_load(table_name):
+        if table_name == "daily_healthy_challenge":
+            return [{"id": 1, "task_name": "Strong Bone Milk", "tips": "Drink your milk today!", "feedback": "Your bones are getting hard as rocks!"}]
         if table_name == "cn_ctgnme":
             return [{"ctgcd": "A", "ctgnm": "Fruit"}]
         return []
@@ -79,9 +81,11 @@ def test_seed_catalog_tables_happy_path(monkeypatch):
 
     counts = seed.seed_catalog_tables(db, truncate_before_load=False)
 
+    assert counts["daily_healthy_challenge"] == 1
     assert counts["cn_ctgnme"] == 1
     assert counts["cn_gpcnme"] == 0
     assert db.committed == 1
+    assert any("INSERT INTO daily_healthy_challenge" in sql for sql, _ in db.calls)
     assert any("INSERT INTO cn_ctgnme" in sql for sql, _ in db.calls)
 
 

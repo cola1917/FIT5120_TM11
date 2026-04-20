@@ -18,6 +18,7 @@ Put files in the following folders.
 ## 4) Final seed payloads (database-ready)
 - Path: data/seed/
 - ETL scripts write final JSON for DB initialization here.
+- Current payloads include the CN catalog tables plus `daily_healthy_challenge.json` for the app task list.
 
 ## 5) ETL code
 - Path: app/etl/
@@ -57,6 +58,7 @@ Outputs:
 5. Default startup init behavior
 - On startup, service always runs table init (`create_all`).
 - By default, startup does not import seed data (`SEED_ON_STARTUP=false`).
+- When seed import is enabled, startup loads both the CN catalog tables and `daily_healthy_challenge` from `data/seed/`.
 - After first successful seed, marker `app_init_state.init_key=cn2026_v1` is stored.
 - Next startups skip seed automatically if marker exists.
 - If no seed data is loaded, change the startup config and restart the service to trigger a one-time import.

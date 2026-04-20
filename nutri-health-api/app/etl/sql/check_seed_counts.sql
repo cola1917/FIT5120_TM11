@@ -5,6 +5,7 @@
 WITH expected AS (
     SELECT *
     FROM (VALUES
+        ('daily_healthy_challenge'::text, 16::bigint),
         ('cn_ctgnme'::text, 25::bigint),
         ('cn_gpcnme'::text, 131::bigint),
         ('cn_nutdes'::text, 19::bigint),
@@ -16,6 +17,8 @@ WITH expected AS (
     ) AS t(table_name, expected_rows)
 ),
 actual AS (
+    SELECT 'daily_healthy_challenge'::text AS table_name, COUNT(*)::bigint AS actual_rows FROM daily_healthy_challenge
+    UNION ALL
     SELECT 'cn_ctgnme'::text AS table_name, COUNT(*)::bigint AS actual_rows FROM cn_ctgnme
     UNION ALL SELECT 'cn_gpcnme', COUNT(*)::bigint FROM cn_gpcnme
     UNION ALL SELECT 'cn_nutdes', COUNT(*)::bigint FROM cn_nutdes

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 SEED_DIR = Path(__file__).resolve().parents[2] / "data" / "seed"
 
 TABLE_INSERT_ORDER = [
+    "daily_healthy_challenge",
     "cn_ctgnme",
     "cn_gpcnme",
     "cn_nutdes",
@@ -37,6 +38,7 @@ TABLE_TRUNCATE_ORDER = [
     "cn_nutdes",
     "cn_gpcnme",
     "cn_ctgnme",
+    "daily_healthy_challenge",
 ]
 
 INIT_STATE_TABLE_SQL = """

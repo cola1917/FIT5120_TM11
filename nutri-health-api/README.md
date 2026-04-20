@@ -148,6 +148,48 @@ Health check endpoint.
 }
 ```
 
+### Daily Challenge API
+
+The daily healthy challenge flow is exposed under `/daily-challenge`.
+
+#### GET /daily-challenge/next
+
+Returns one random task. Use `exclude_id` to avoid repeating the current task after a "Try Another" tap.
+
+Example:
+```http
+GET /daily-challenge/next?exclude_id=3
+```
+
+Response:
+```json
+{
+   "id": 5,
+   "task_name": "Sparkling White Teeth",
+   "tips": "Say no to sugary drinks!"
+}
+```
+
+#### POST /daily-challenge/complete
+
+Returns the completion feedback for the chosen task.
+
+Request body:
+```json
+{
+   "id": 5
+}
+```
+
+Response:
+```json
+{
+   "id": 5,
+   "task_name": "Sparkling White Teeth",
+   "feedback": "Your teeth stay white and monster-free!"
+}
+```
+
 ### GET /admin/cleanup-cache
 
 Manually trigger cache cleanup (removes expired entries).
@@ -171,6 +213,15 @@ Manually trigger cache cleanup (removes expired entries).
 | response_data | JSONB | Cached scan results |
 | created_at | DateTime | Creation timestamp |
 | expires_at | DateTime | Expiration timestamp (TTL: 1 day) |
+
+### daily_healthy_challenge Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | Integer | Primary key |
+| task_name | String(128) | Unique challenge title |
+| tips | Text | Short user-facing task tip |
+| feedback | Text | Completion feedback message |
 
 ## Deployment
 

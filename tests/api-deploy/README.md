@@ -14,6 +14,7 @@ Planned checks:
 - API starts successfully
 - /health returns healthy status
 - basic auth-required endpoint behavior is correct
+- daily challenge endpoints return tasks, support exclude_id, and return completion feedback
 
 Notes:
 - Token and authenticated scan checks run only when API_USERNAME/API_PASSWORD are supplied.
