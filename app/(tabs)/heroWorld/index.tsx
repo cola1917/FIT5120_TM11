@@ -90,7 +90,7 @@ export default function HeroWorldScreen() {
         <View style={styles.bannerContainer}>
           <View style={styles.bannerImageContainer}>
             <Image
-              source={require('../../../assets/images/nutriheroes_logo_tight.png')}
+              source={require('../../../assets/images/nutriheroes_logo.png')}
               style={styles.bannerImage}
               resizeMode='contain'
             />
