@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 
 import pytest
@@ -70,36 +71,34 @@ def single_row_session(daily_challenge_module):
         db.close()
 
 
-@pytest.mark.asyncio
-async def test_get_next_challenge_returns_random_task(daily_challenge_module, sqlite_session):
-    result = await daily_challenge_module.get_next_challenge(exclude_id=None, db=sqlite_session)
+def test_get_next_challenge_returns_random_task(daily_challenge_module, sqlite_session):
+    result = asyncio.run(daily_challenge_module.get_next_challenge(exclude_id=None, db=sqlite_session))
 
     assert result.id in {1, 2, 3}
     assert result.task_name
     assert result.tips
 
 
-@pytest.mark.asyncio
-async def test_get_next_challenge_excludes_current_task(daily_challenge_module, sqlite_session):
-    result = await daily_challenge_module.get_next_challenge(exclude_id=1, db=sqlite_session)
+def test_get_next_challenge_excludes_current_task(daily_challenge_module, sqlite_session):
+    result = asyncio.run(daily_challenge_module.get_next_challenge(exclude_id=1, db=sqlite_session))
 
     assert result.id in {2, 3}
     assert result.id != 1
 
 
-@pytest.mark.asyncio
-async def test_get_next_challenge_raises_when_no_task_available(daily_challenge_module, single_row_session):
+def test_get_next_challenge_raises_when_no_task_available(daily_challenge_module, single_row_session):
     with pytest.raises(HTTPException) as exc_info:
-        await daily_challenge_module.get_next_challenge(exclude_id=1, db=single_row_session)
+        asyncio.run(daily_challenge_module.get_next_challenge(exclude_id=1, db=single_row_session))
 
     assert exc_info.value.status_code == 404
 
 
-@pytest.mark.asyncio
-async def test_complete_challenge_returns_feedback(daily_challenge_module, sqlite_session):
-    result = await daily_challenge_module.complete_challenge(
-        payload=daily_challenge_module.DailyChallengeCompleteRequest(id=2),
-        db=sqlite_session,
+def test_complete_challenge_returns_feedback(daily_challenge_module, sqlite_session):
+    result = asyncio.run(
+        daily_challenge_module.complete_challenge(
+            payload=daily_challenge_module.DailyChallengeCompleteRequest(id=2),
+            db=sqlite_session,
+        )
     )
 
     assert result.id == 2
@@ -107,12 +106,13 @@ async def test_complete_challenge_returns_feedback(daily_challenge_module, sqlit
     assert result.feedback == "Your body is clean and fresh inside!"
 
 
-@pytest.mark.asyncio
-async def test_complete_challenge_raises_for_missing_id(daily_challenge_module, sqlite_session):
+def test_complete_challenge_raises_for_missing_id(daily_challenge_module, sqlite_session):
     with pytest.raises(HTTPException) as exc_info:
-        await daily_challenge_module.complete_challenge(
-            payload=daily_challenge_module.DailyChallengeCompleteRequest(id=999),
-            db=sqlite_session,
+        asyncio.run(
+            daily_challenge_module.complete_challenge(
+                payload=daily_challenge_module.DailyChallengeCompleteRequest(id=999),
+                db=sqlite_session,
+            )
         )
 
     assert exc_info.value.status_code == 404

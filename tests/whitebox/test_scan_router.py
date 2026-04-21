@@ -16,9 +16,9 @@ def load_scan_module(monkeypatch):
 def test_is_recognised_logic(monkeypatch):
     scan_module = load_scan_module(monkeypatch)
 
-    assert scan_module._is_recognised({"confidence": 0.8, "food_name": "Apple"}) is True
-    assert scan_module._is_recognised({"confidence": 0.0, "food_name": "Apple"}) is False
-    assert scan_module._is_recognised({"confidence": 0.8, "food_name": "food item"}) is False
+    assert scan_module._is_recognised({"confidence": 0.8, "food_name": "Apple", "is_food": True, "reject_reason": "none"}) is True
+    assert scan_module._is_recognised({"confidence": 0.0, "food_name": "Apple", "is_food": True, "reject_reason": "none"}) is False
+    assert scan_module._is_recognised({"confidence": 0.8, "food_name": "food item", "is_food": True, "reject_reason": "none"}) is False
 
 
 def test_get_food_image_url_encodes_name(monkeypatch):
