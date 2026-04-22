@@ -89,7 +89,7 @@ const GOALS: Goal[] = [
   },
   {
     id: 'think',
-    title: 'BRAINIAC BLAST',
+    title: 'SMART BOOST',
     subtitle: 'Genius Mode!',
     icon: Lightbulb,
     gradient: ['#401500', '#dc2626'],
