@@ -1,5 +1,5 @@
 /**
- * Meal Maker — Game Screen
+ * Meal Maker â€” Game Screen
  *
  * Performance: Callbacks passed to child components are stabilized with
  * useCallback so that React.memo on children (FallingIngredient, ScoreDisplay,
@@ -12,10 +12,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Audio } from 'expo-av';
+import { Info, Play, Star } from 'lucide-react-native';
 
 import { useGameEngine } from '@/hooks/games/useGameEngine';
 import ScoreDisplay from '@/components/games/meal-maker/ScoreDisplay';
@@ -35,6 +37,7 @@ interface PlateZone {
   width: number;
   height: number;
 }
+
 
 export default function MealMakerScreen() {
   const router = useRouter();
@@ -58,7 +61,7 @@ export default function MealMakerScreen() {
   const [plateZone, setPlateZone] = useState<PlateZone | null>(null);
   const plateWrapperRef = useRef<View>(null);
 
-  // ─── AUDIO ────────────────────────────────────────────────
+  // â”€â”€â”€ AUDIO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const menuSoundRef = useRef<Audio.Sound | null>(null);
   const isMenuPlayingRef = useRef(false);
@@ -175,12 +178,12 @@ export default function MealMakerScreen() {
     if (gamePhase === 'playing') {
       playRoundMusic();
     } else if (gamePhase === 'idle' || gamePhase === 'game_over') {
-      // Stop round → resume menu
+      // Stop round â†’ resume menu
       // stopRoundMusic();
     }
   }, [gamePhase, playRoundMusic, stopRoundMusic, playMenuMusic]);
 
-  // ─── Plate Layout ────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Plate Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handlePlateLayout = useCallback((_zone: { x: number; y: number; width: number; height: number }) => {
     if (plateWrapperRef.current) {
@@ -190,7 +193,7 @@ export default function MealMakerScreen() {
     }
   }, []);
 
-  // ─── Navigation ──────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handlePlayAgain = useCallback(() => {
     resetGame();
@@ -230,22 +233,42 @@ export default function MealMakerScreen() {
 
           {gamePhase === 'idle' && (
             <View style={styles.idleContainer}>
-              <Text style={styles.idleEmoji}>🍽️</Text>
+              <Image
+                source={require('../../../assets/images/nutriheroes_logo.png')}
+                style={styles.heroImage}
+                resizeMode="contain"
+              />
+
               <Text style={styles.idleTitle}>Meal Maker</Text>
-              <Text style={styles.idleSubtitle}>
-                Drag falling ingredients onto your plate to build healthy meals!
-              </Text>
-              {highScore > 0 && (
-                <Text style={styles.idleHighScore}>⭐ Best: {highScore}</Text>
-              )}
+              <Text style={styles.idleSubtitle}>Drag foods to build{'\n'}healthy meals!</Text>
+
+              <View style={styles.scoreCard}>
+                <View style={styles.scoreItem}>
+                  <Star size={46} color="#F5A623" fill="#FFD15C" />
+                  <View>
+                    <Text style={styles.scoreLabel}>BEST SCORE</Text>
+                    <Text style={styles.scoreValue}>{highScore || 25}</Text>
+                  </View>
+                </View>
+
+
+              </View>
               <TouchableOpacity style={styles.startButton} onPress={handleStartGame} activeOpacity={0.85}>
-                <Text style={styles.startButtonText}>Start Game</Text>
+                <View style={styles.playIconCircle}>
+                  <Play size={28} color="#C83A08" fill="#C83A08" />
+                </View>
+                <Text style={styles.startButtonText}>START GAME</Text>
               </TouchableOpacity>
+
+              <View style={styles.tipCard}>
+                <Info size={22} color="#6F6A5F" fill="#6F6A5F" />
+                <Text style={styles.tipText}>Pick healthy foods to earn points{'\n'}and beat your best score!</Text>
+              </View>
             </View>
           )}
         </View>
 
-        {(gamePhase === 'playing' || gamePhase === 'idle') && (
+        {gamePhase === 'playing' && (
           <View style={styles.plateArea} ref={plateWrapperRef}>
             <Plate
               plateIngredients={plateIngredients}
@@ -254,7 +277,7 @@ export default function MealMakerScreen() {
           </View>
         )}
 
-        {/* Meal Score Popup — centered at top of game field, above everything */}
+        {/* Meal Score Popup â€” centered at top of game field, above everything */}
         {gamePhase === 'playing' && (
           <View style={styles.scorePopupContainer} pointerEvents="none">
             <MealScorePopup
@@ -300,26 +323,60 @@ const styles = StyleSheet.create({
   },
   idleContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
-    gap: Spacing.md,
+    paddingTop: Spacing['2xl'],
+    gap: Spacing.lg,
+    backgroundColor: '#FFFDF4',
   },
-  idleEmoji: { fontSize: 80 },
+  heroImage: {
+    width: '92%',
+    height: 210,
+    marginTop: Spacing.md,
+  },
   idleTitle: {
     ...Typography.displaySmall,
     color: Colors.on_surface,
     textAlign: 'center',
+    fontSize: 42,
+    fontWeight: '900',
   },
   idleSubtitle: {
     ...Typography.bodyLarge,
     color: Colors.on_surface_variant,
     textAlign: 'center',
-    maxWidth: 280,
+    fontSize: 22,
+    lineHeight: 30,
   },
-  idleHighScore: {
-    ...Typography.titleMedium,
-    color: Colors.primary,
+  scoreCard: {
+    width: '100%',
+    maxWidth: 390,
+    minHeight: 96,
+    borderRadius: 24,
+    backgroundColor: '#F7F1E6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+  },
+  scoreItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.lg,
+  },
+  scoreLabel: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#3F3D38',
+    letterSpacing: 0,
+  },
+  scoreValue: {
+    fontSize: 30,
+    fontWeight: '900',
+    color: '#B5471F',
+    textAlign: 'center',
   },
   scorePopupContainer: {
     position: 'absolute',
@@ -330,15 +387,53 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   startButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing['2xl'],
+    width: '92%',
+    maxWidth: 360,
+    height: 96,
+    borderRadius: 32,
+    backgroundColor: '#C83A08',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.lg,
     marginTop: Spacing.md,
+    shadowColor: '#7A2204',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  playIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   startButtonText: {
-    ...Typography.labelLarge,
     color: Colors.on_primary,
-    fontSize: 20,
+    fontSize: 26,
+    fontWeight: '900',
+  },
+  tipCard: {
+    width: '92%',
+    maxWidth: 370,
+    borderRadius: 20,
+    backgroundColor: '#F7F1E6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.lg,
+  },
+  tipText: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#4F4A43',
   },
 });
+
+
+
