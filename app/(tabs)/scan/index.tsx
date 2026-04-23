@@ -1,4 +1,6 @@
 import AppHeader from '@/components/app_header';
+import { Colors } from '@/constants/colors';
+import { Spacing } from '@/constants/spacing';
 import { router } from 'expo-router';
 import { Camera, CircleArrowDown, QrCode, Utensils, Zap } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
@@ -128,9 +130,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F8EC',
   },
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 120,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
     backgroundColor: '#F6F8EC',
     flexGrow: 1,
   },
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
   },
   scanButton: {
     marginBottom: 24,
-    backgroundColor: '#B45309',
+    backgroundColor: Colors.secondary_dim,
     borderRadius: 26,
     minHeight: 78,
     flexDirection: 'row',

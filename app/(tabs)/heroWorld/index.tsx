@@ -87,17 +87,13 @@ export default function HeroWorldScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader/>
 
-        <View style={styles.bannerContainer}>
-          <View style={styles.bannerImageContainer}>
-            <Image
-              source={require('../../../assets/images/nutriheroes_logo.png')}
-              style={styles.bannerImage}
-              resizeMode='contain'
-            />
-          </View>
-          <View style={styles.bannerTextContainer}>
-            <Text style={styles.bannerText}>🌎 Hero World</Text>
-          </View>
+        <Image
+          source={require('../../../assets/images/nutriheroes_logo.png')}
+          style={styles.bannerImage}
+          resizeMode='contain'
+        />
+        <View style={styles.bannerTextContainer}>
+          <Text style={styles.bannerText}>🌎 Hero World</Text>
         </View>
 
         {/* Daily Challenge */}
@@ -152,16 +148,10 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     flexGrow: 1,
   },
-  bannerContainer: {
-    alignItems: 'center',
-  },
-  bannerImageContainer: {
-    width: '80%',
-  },
   bannerImage: {
-    position: 'relative',
     top: -Spacing["2xl"],
     width: '100%',
+    pointerEvents: 'none'
   },
   bannerTextContainer: {
     position: 'relative',
@@ -173,7 +163,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing["2xl"],
     paddingVertical: Spacing.md,
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   bannerText: {
     color: Colors.secondary_dim,

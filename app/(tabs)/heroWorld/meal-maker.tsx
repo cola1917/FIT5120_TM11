@@ -242,27 +242,27 @@ export default function MealMakerScreen() {
               <Text style={styles.idleTitle}>Meal Maker</Text>
               <Text style={styles.idleSubtitle}>Drag foods to build{'\n'}healthy meals!</Text>
 
-              <View style={styles.scoreCard}>
-                <View style={styles.scoreItem}>
-                  <Star size={46} color="#F5A623" fill="#FFD15C" />
-                  <View>
-                    <Text style={styles.scoreLabel}>BEST SCORE</Text>
-                    <Text style={styles.scoreValue}>{highScore || 25}</Text>
+              {highScore > 0 && (
+                <View style={styles.scoreCard}>
+                  <View style={styles.scoreItem}>
+                    <Star size={46} color="#F5A623" fill="#FFD15C" />
+                    <View>
+                      <Text style={styles.scoreLabel}>BEST SCORE</Text>
+                      <Text style={styles.scoreValue}>{highScore || 25}</Text>
+                    </View>
                   </View>
                 </View>
-
-
-              </View>
+              )}
               <TouchableOpacity style={styles.startButton} onPress={handleStartGame} activeOpacity={0.85}>
                 <View style={styles.playIconCircle}>
-                  <Play size={28} color="#C83A08" fill="#C83A08" />
+                  <Play size={28} color={Colors.secondary_dim} fill={Colors.secondary_dim} />
                 </View>
                 <Text style={styles.startButtonText}>START GAME</Text>
               </TouchableOpacity>
 
               <View style={styles.tipCard}>
                 <Info size={22} color="#6F6A5F" fill="#6F6A5F" />
-                <Text style={styles.tipText}>Pick healthy foods to earn points{'\n'}and beat your best score!</Text>
+                <Text style={styles.tipText}>Pick healthy foods to earn points and beat your best score!</Text>
               </View>
             </View>
           )}
@@ -330,8 +330,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFDF4',
   },
   heroImage: {
-    width: '92%',
-    height: 210,
+    height: 160,
     marginTop: Spacing.md,
   },
   idleTitle: {
@@ -391,7 +390,7 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     height: 96,
     borderRadius: 32,
-    backgroundColor: '#C83A08',
+    backgroundColor: Colors.secondary_dim,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
