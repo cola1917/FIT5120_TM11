@@ -14,9 +14,9 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-  // Navigation
+import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-  // Audio
+import { Audio } from 'expo-av';
 import { Info, Play, Star } from 'lucide-react-native';
 
 import { useGameEngine } from '@/hooks/games/useGameEngine';
@@ -63,10 +63,10 @@ export default function MealMakerScreen() {
 
   // Audio
 
-  // Audio
+  const menuSoundRef = useRef<Audio.Sound | null>(null);
   const isMenuPlayingRef = useRef(false);
 
-  // Audio
+  const roundSoundRef = useRef<Audio.Sound | null>(null);
   const isRoundPlayingRef = useRef(false);
 
   const playMenuMusic = useCallback(async () => {
@@ -74,8 +74,8 @@ export default function MealMakerScreen() {
     if (menuSoundRef.current) return;
 
     try {
-  // Audio
-  // Audio
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../../assets/audio/menu-audio.mp3'),
         {
           isLooping: true,
           shouldPlay: true,
@@ -122,8 +122,8 @@ export default function MealMakerScreen() {
         roundSoundRef.current = null;
       }
 
-  // Audio
-  // Audio
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../../assets/audio/round-audio.mp3'),
         {
           isLooping: false,
           shouldPlay: true,
