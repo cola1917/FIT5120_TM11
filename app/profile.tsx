@@ -27,6 +27,215 @@ import {
   deleteUserProfile,
   getAvatarEmoji,
 } from '@/services/userProfile';
+import { FOOD_PREFERENCE_ITEMS, BLACKLIST_ITEMS } from '@/components/profile/FoodPreferencesSelector';
+
+// ─── Food Preferences Display ─────────────────────────────────────────────────
+
+interface FoodPreferencesSummaryProps {
+  profile: UserProfile;
+}
+
+function FoodPreferencesSummary({ profile }: FoodPreferencesSummaryProps) {
+  const prefs = profile.foodPreferences;
+  const hasAnyPreference =
+    prefs && (prefs.likes.length > 0 || prefs.dislikes.length > 0 || prefs.blacklist.length > 0);
+
+  const getEmoji = (id: string, list: typeof FOOD_PREFERENCE_ITEMS | typeof BLACKLIST_ITEMS) => {
+    const found = (list as { id: string; emoji: string }[]).find((i) => i.id === id);
+    return found ? found.emoji : '🍴';
+  };
+
+  return (
+    <View style={prefStyles.section}>
+      <View style={prefStyles.sectionHeader}>
+        <Text style={prefStyles.sectionTitle}>🍽️ Food Preferences</Text>
+        <TouchableOpacity
+          style={prefStyles.editButton}
+          onPress={() => router.push('/preferences-edit' as any)}
+          activeOpacity={0.75}
+        >
+          <Text style={prefStyles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
+
+      {!hasAnyPreference ? (
+        <View style={prefStyles.emptyCard}>
+          <Text style={prefStyles.emptyText}>No preferences set yet.</Text>
+          <TouchableOpacity
+            style={prefStyles.setNowButton}
+            onPress={() => router.push('/preferences-edit' as any)}
+            activeOpacity={0.8}
+          >
+            <Text style={prefStyles.setNowButtonText}>Set Preferences</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={prefStyles.card}>
+          {/* Likes */}
+          {prefs!.likes.length > 0 && (
+            <View style={prefStyles.group}>
+              <Text style={prefStyles.groupLabel}>👍 Likes</Text>
+              <View style={prefStyles.chipRow}>
+                {prefs!.likes.map((item) => (
+                  <View key={item} style={[prefStyles.chip, prefStyles.chipLike]}>
+                    <Text style={prefStyles.chipEmoji}>{getEmoji(item, FOOD_PREFERENCE_ITEMS)}</Text>
+                    <Text style={[prefStyles.chipText, prefStyles.chipTextLike]}>
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Dislikes */}
+          {prefs!.dislikes.length > 0 && (
+            <View style={prefStyles.group}>
+              <Text style={prefStyles.groupLabel}>👎 Dislikes</Text>
+              <View style={prefStyles.chipRow}>
+                {prefs!.dislikes.map((item) => (
+                  <View key={item} style={[prefStyles.chip, prefStyles.chipDislike]}>
+                    <Text style={prefStyles.chipEmoji}>{getEmoji(item, FOOD_PREFERENCE_ITEMS)}</Text>
+                    <Text style={[prefStyles.chipText, prefStyles.chipTextDislike]}>
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Blacklist */}
+          {prefs!.blacklist.length > 0 && (
+            <View style={prefStyles.group}>
+              <Text style={prefStyles.groupLabel}>🚫 Cannot Eat</Text>
+              <View style={prefStyles.chipRow}>
+                {prefs!.blacklist.map((item) => (
+                  <View key={item} style={[prefStyles.chip, prefStyles.chipBlacklist]}>
+                    <Text style={prefStyles.chipEmoji}>{getEmoji(item, BLACKLIST_ITEMS)}</Text>
+                    <Text style={[prefStyles.chipText, prefStyles.chipTextBlacklist]}>
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const prefStyles = StyleSheet.create({
+  section: {
+    gap: Spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: {
+    ...Typography.titleLarge,
+    color: Colors.on_surface,
+  },
+  editButton: {
+    backgroundColor: Colors.primary_container,
+    borderRadius: Radius.badge,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+  },
+  editButtonText: {
+    ...Typography.labelMedium,
+    color: Colors.on_primary_container,
+    fontWeight: '700',
+  },
+  emptyCard: {
+    backgroundColor: Colors.surface_container_lowest,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    alignItems: 'center',
+    gap: Spacing.md,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  emptyText: {
+    ...Typography.bodyMedium,
+    color: Colors.on_surface_variant,
+  },
+  setNowButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.button_secondary,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+  },
+  setNowButtonText: {
+    ...Typography.labelMedium,
+    color: Colors.on_primary,
+    fontWeight: '700',
+  },
+  card: {
+    backgroundColor: Colors.surface_container_lowest,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.base,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  group: {
+    gap: Spacing.sm,
+  },
+  groupLabel: {
+    ...Typography.labelMedium,
+    color: Colors.on_surface_variant,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderRadius: Radius.badge,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+  },
+  chipLike: {
+    backgroundColor: Colors.primary_container,
+  },
+  chipDislike: {
+    backgroundColor: Colors.secondary_container,
+  },
+  chipBlacklist: {
+    backgroundColor: Colors.error_container,
+  },
+  chipEmoji: {
+    fontSize: 14,
+  },
+  chipText: {
+    ...Typography.labelSmall,
+  },
+  chipTextLike: {
+    color: Colors.on_primary_container,
+  },
+  chipTextDislike: {
+    color: Colors.on_secondary_container,
+  },
+  chipTextBlacklist: {
+    color: Colors.on_error_container,
+  },
+});
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -171,6 +380,9 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+
+        {/* Food Preferences */}
+        <FoodPreferencesSummary profile={profile} />
 
         {/* Delete Profile */}
         <TouchableOpacity
