@@ -3,21 +3,20 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
-  useSharedValue,
+  Easing,
   useAnimatedStyle,
+  useSharedValue,
   withRepeat,
   withSequence,
   withTiming,
-  Easing,
 } from 'react-native-reanimated';
+import { Heart, Home, RotateCcw } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
 import { Spacing } from '@/constants/spacing';
 import { Radius } from '@/constants/radius';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface GameOverOverlayProps {
   score: number;
@@ -47,7 +46,7 @@ export default function GameOverOverlay({
         false
       );
     }
-  }, [isNewHighScore]);
+  }, [isNewHighScore, pulseScale]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
@@ -55,31 +54,42 @@ export default function GameOverOverlay({
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.card}>
-        <Text style={styles.title}>{"Time's Up! ⏰"}</Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>Great Job,{`\n`}Hero!</Text>
 
-        <View style={styles.scoreSection}>
-          <Text style={styles.scoreLabel}>Your Score</Text>
+        <Image
+          source={require('../../../assets/images/Game_results_screen.png')}
+          style={styles.heroImage}
+          resizeMode="contain"
+        />
+
+        <Animated.View style={[styles.scoreCard, isNewHighScore && pulseStyle]}>
+          <Text style={styles.scoreLabel}>SCORE</Text>
           <Text style={styles.scoreValue}>{score}</Text>
-        </View>
+          {isNewHighScore && (
+            <View style={styles.newBestBadge}>
+              <Text style={styles.newBestText}>NEW BEST!</Text>
+            </View>
+          )}
+          {!isNewHighScore && (
+            <Text style={styles.bestText}>Best: {highScore}</Text>
+          )}
+        </Animated.View>
 
-        <View style={styles.highScoreRow}>
-          <Text style={styles.highScoreText}>Best: {highScore}</Text>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageText}>You made healthy choices!{`\n`}Keep being awesome!</Text>
+          <Heart size={24} color="#79B95B" fill="#79B95B" />
         </View>
-
-        {isNewHighScore && (
-          <Animated.View style={[styles.newHighScoreBadge, pulseStyle]}>
-            <Text style={styles.newHighScoreText}>🎉 New High Score!</Text>
-          </Animated.View>
-        )}
 
         <View style={styles.buttons}>
           <TouchableOpacity style={styles.primaryButton} onPress={onPlayAgain} activeOpacity={0.85}>
-            <Text style={styles.primaryButtonText}>Play Again</Text>
+            <RotateCcw size={24} color="#FFFFFF" strokeWidth={3} />
+            <Text style={styles.primaryButtonText}>PLAY AGAIN</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.secondaryButton} onPress={onBack} activeOpacity={0.85}>
-            <Text style={styles.secondaryButtonText}>Back to Games</Text>
+            <Home size={22} color="#B64220" fill="#B64220" />
+            <Text style={styles.secondaryButtonText}>BACK TO HERO WORLD</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -90,87 +100,137 @@ export default function GameOverOverlay({
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(242, 249, 234, 0.88)',
-    justifyContent: 'center',
+    backgroundColor: '#FFFDF4',
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 100,
   },
-  card: {
-    width: SCREEN_WIDTH * 0.85,
-    backgroundColor: Colors.surface_container_lowest,
-    borderRadius: Radius.modal,
-    padding: Spacing.xl,
+  content: {
+    width: '100%',
+    maxWidth: 420,
     alignItems: 'center',
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.08,
-    shadowRadius: 40,
-    elevation: 8,
+    paddingHorizontal: Spacing.xl,
     gap: Spacing.md,
   },
   title: {
     ...Typography.displaySmall,
-    color: Colors.on_surface,
+    color: '#A93B1D',
     textAlign: 'center',
+    fontSize: 34,
+    lineHeight: 42,
+    fontWeight: '900',
   },
-  scoreSection: {
+  heroImage: {
+    width: '82%',
+    height: 160,
+    marginTop: -Spacing.sm,
+    marginBottom: -Spacing.md,
+  },
+  scoreCard: {
+    width: '66%',
+    minHeight: 128,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#F0DDC6',
+    backgroundColor: '#FFFDF8',
     alignItems: 'center',
-    marginTop: Spacing.sm,
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
   },
   scoreLabel: {
-    ...Typography.titleMedium,
-    color: Colors.on_surface_variant,
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#3E3A35',
+    letterSpacing: 0,
   },
   scoreValue: {
-    ...Typography.headlineLarge,
-    color: Colors.primary,
-    marginTop: Spacing.xs,
+    fontSize: 56,
+    lineHeight: 64,
+    fontWeight: '900',
+    color: '#B64220',
   },
-  highScoreRow: {
-    marginTop: Spacing.xs,
-  },
-  highScoreText: {
-    ...Typography.titleLarge,
-    color: Colors.on_surface_variant,
-  },
-  newHighScoreBadge: {
-    backgroundColor: Colors.secondary_container,
+  newBestBadge: {
+    backgroundColor: '#5FAC45',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    marginTop: Spacing.xs,
+    paddingVertical: Spacing.xs,
   },
-  newHighScoreText: {
-    ...Typography.headlineMedium,
-    color: Colors.on_secondary_container,
+  newBestText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  bestText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.on_surface_variant,
+  },
+  messageCard: {
+    width: '100%',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#D8EDC7',
+    backgroundColor: '#F4FAEC',
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  messageText: {
+    flexShrink: 1,
+    color: '#2F6B2E',
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: '800',
     textAlign: 'center',
   },
   buttons: {
     width: '100%',
-    gap: Spacing.sm,
+    gap: Spacing.md,
     marginTop: Spacing.md,
   },
   primaryButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.md,
+    height: 58,
+    borderRadius: 22,
+    backgroundColor: '#C83A08',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    shadowColor: '#7A2204',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.22,
+    shadowRadius: 0,
+    elevation: 4,
   },
   primaryButtonText: {
-    ...Typography.labelLarge,
-    color: Colors.on_primary,
+    color: '#FFFFFF',
     fontSize: 18,
+    fontWeight: '900',
   },
   secondaryButton: {
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.md,
+    height: 50,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#F0DDC6',
+    backgroundColor: '#FFF9EC',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.outline_variant,
+    justifyContent: 'center',
+    gap: Spacing.sm,
   },
   secondaryButtonText: {
-    ...Typography.labelLarge,
-    color: Colors.on_surface_variant,
-    fontSize: 18,
+    color: '#B64220',
+    fontSize: 16,
+    fontWeight: '900',
   },
 });
+
