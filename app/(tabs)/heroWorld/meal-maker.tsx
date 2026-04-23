@@ -1,5 +1,5 @@
 /**
- * Meal Maker â€” Game Screen
+ * Meal Maker - Game Screen
  *
  * Performance: Callbacks passed to child components are stabilized with
  * useCallback so that React.memo on children (FallingIngredient, ScoreDisplay,
@@ -14,9 +14,9 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
+  // Navigation
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Audio } from 'expo-av';
+  // Audio
 import { Info, Play, Star } from 'lucide-react-native';
 
 import { useGameEngine } from '@/hooks/games/useGameEngine';
@@ -61,12 +61,12 @@ export default function MealMakerScreen() {
   const [plateZone, setPlateZone] = useState<PlateZone | null>(null);
   const plateWrapperRef = useRef<View>(null);
 
-  // â”€â”€â”€ AUDIO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Audio
 
-  const menuSoundRef = useRef<Audio.Sound | null>(null);
+  // Audio
   const isMenuPlayingRef = useRef(false);
 
-  const roundSoundRef = useRef<Audio.Sound | null>(null);
+  // Audio
   const isRoundPlayingRef = useRef(false);
 
   const playMenuMusic = useCallback(async () => {
@@ -74,8 +74,8 @@ export default function MealMakerScreen() {
     if (menuSoundRef.current) return;
 
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../../assets/audio/menu-audio.mp3'),
+  // Audio
+  // Audio
         {
           isLooping: true,
           shouldPlay: true,
@@ -122,8 +122,8 @@ export default function MealMakerScreen() {
         roundSoundRef.current = null;
       }
 
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../../assets/audio/round-audio.mp3'),
+  // Audio
+  // Audio
         {
           isLooping: false,
           shouldPlay: true,
@@ -178,12 +178,12 @@ export default function MealMakerScreen() {
     if (gamePhase === 'playing') {
       playRoundMusic();
     } else if (gamePhase === 'idle' || gamePhase === 'game_over') {
-      // Stop round â†’ resume menu
+      // Stop round music and resume menu music if needed.
       // stopRoundMusic();
     }
   }, [gamePhase, playRoundMusic, stopRoundMusic, playMenuMusic]);
 
-  // â”€â”€â”€ Plate Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Plate layout
 
   const handlePlateLayout = useCallback((_zone: { x: number; y: number; width: number; height: number }) => {
     if (plateWrapperRef.current) {
@@ -193,7 +193,7 @@ export default function MealMakerScreen() {
     }
   }, []);
 
-  // â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Navigation
 
   const handlePlayAgain = useCallback(() => {
     resetGame();
@@ -277,7 +277,7 @@ export default function MealMakerScreen() {
           </View>
         )}
 
-        {/* Meal Score Popup â€” centered at top of game field, above everything */}
+        {/* Meal score popup, centered near the top of the game field. */}
         {gamePhase === 'playing' && (
           <View style={styles.scorePopupContainer} pointerEvents="none">
             <MealScorePopup
