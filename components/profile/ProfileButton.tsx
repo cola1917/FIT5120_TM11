@@ -35,9 +35,7 @@ export default function ProfileButton() {
 
   const loadAvatar = useCallback(async () => {
     const profile = await getUserProfile();
-    if (profile) {
-      setProfile(profile);
-    }
+    setProfile(profile ?? undefined);
   }, []);
 
   useFocusEffect(

@@ -34,9 +34,7 @@ export const FOOD_PREFERENCE_ITEMS: { id: FoodPreferenceItem; emoji: string; lab
   { id: 'rice', emoji: '🍚', label: 'Rice' },
   { id: 'bread', emoji: '🍞', label: 'Bread' },
   { id: 'noodles', emoji: '🍜', label: 'Noodles' },
-  { id: 'chicken', emoji: '🍗', label: 'Chicken' },
-  { id: 'beef', emoji: '🥩', label: 'Beef' },
-  { id: 'pork', emoji: '🥓', label: 'Pork' },
+  { id: 'meat', emoji: '🥩', label: 'Meat' },
   { id: 'fish', emoji: '🐟', label: 'Fish' },
   { id: 'dairy', emoji: '🧀', label: 'Dairy' },
 ];
@@ -45,7 +43,7 @@ export const BLACKLIST_ITEMS: { id: BlacklistItem; emoji: string; label: string 
   { id: 'egg', emoji: '🥚', label: 'Egg' },
   { id: 'bread', emoji: '🍞', label: 'Bread' },
   { id: 'milk', emoji: '🥛', label: 'Milk' },
-  { id: 'peanut', emoji: '🥜', label: 'Peanut' },
+  { id: 'pork', emoji: '🥓', label: 'Pork' },
   { id: 'seafood', emoji: '🦐', label: 'Seafood' },
   { id: 'nuts', emoji: '🌰', label: 'Nuts' },
 ];

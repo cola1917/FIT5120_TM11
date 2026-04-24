@@ -40,7 +40,7 @@ import {
 } from '@/components/profile/FoodPreferencesSelector';
 
 
-// ─── Avatar Carousel ──────────────────────────────────────────────────────────
+// Avatar Carousel
 
 interface AvatarCarouselProps {
   selectedAvatar: AvatarId;
@@ -110,7 +110,7 @@ const avatarStyles = StyleSheet.create({
   },
 });
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// Main Screen
 
 export default function ProfileCreateScreen() {
   const insets = useSafeAreaInsets();
