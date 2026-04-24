@@ -19,14 +19,14 @@ import { Spacing } from '@/constants/spacing';
 import { Radius } from '@/constants/radius';
 import { FoodPreferenceItem, BlacklistItem } from '@/services/userProfile';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 export type LikeDislikeState = 'like' | 'dislike' | 'none';
 
 export type LikeDislikeMap = Record<FoodPreferenceItem, LikeDislikeState>;
 export type BlacklistMap = Record<BlacklistItem, boolean>;
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 export const FOOD_PREFERENCE_ITEMS: { id: FoodPreferenceItem; emoji: string; label: string }[] = [
   { id: 'fruits', emoji: '🍓', label: 'Fruits' },
@@ -34,9 +34,7 @@ export const FOOD_PREFERENCE_ITEMS: { id: FoodPreferenceItem; emoji: string; lab
   { id: 'rice', emoji: '🍚', label: 'Rice' },
   { id: 'bread', emoji: '🍞', label: 'Bread' },
   { id: 'noodles', emoji: '🍜', label: 'Noodles' },
-  { id: 'chicken', emoji: '🍗', label: 'Chicken' },
-  { id: 'beef', emoji: '🥩', label: 'Beef' },
-  { id: 'pork', emoji: '🥓', label: 'Pork' },
+  { id: 'meat', emoji: '🥩', label: 'Meat' },
   { id: 'fish', emoji: '🐟', label: 'Fish' },
   { id: 'dairy', emoji: '🧀', label: 'Dairy' },
 ];
@@ -45,12 +43,12 @@ export const BLACKLIST_ITEMS: { id: BlacklistItem; emoji: string; label: string 
   { id: 'egg', emoji: '🥚', label: 'Egg' },
   { id: 'bread', emoji: '🍞', label: 'Bread' },
   { id: 'milk', emoji: '🥛', label: 'Milk' },
-  { id: 'peanut', emoji: '🥜', label: 'Peanut' },
+  { id: 'pork', emoji: '🥓', label: 'Pork' },
   { id: 'seafood', emoji: '🦐', label: 'Seafood' },
   { id: 'nuts', emoji: '🌰', label: 'Nuts' },
 ];
 
-// ─── Default State Factories ──────────────────────────────────────────────────
+// Default State Factories
 
 export function createDefaultLikeDislikeMap(): LikeDislikeMap {
   const map = {} as LikeDislikeMap;
@@ -68,7 +66,7 @@ export function createDefaultBlacklistMap(): BlacklistMap {
   return map;
 }
 
-// ─── Like/Dislike Tile ────────────────────────────────────────────────────────
+// Like/Dislike Tile
 
 interface LikeDislikeTileProps {
   emoji: string;
@@ -112,7 +110,7 @@ function LikeDislikeTile({ emoji, label, state, onPress }: LikeDislikeTileProps)
   );
 }
 
-// ─── Blacklist Tile ───────────────────────────────────────────────────────────
+// Blacklist Tile
 
 interface BlacklistTileProps {
   emoji: string;
@@ -205,7 +203,7 @@ const tileStyles = StyleSheet.create({
   },
 });
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Main Component
 
 interface FoodPreferencesSelectorProps {
   likeDislikeMap: LikeDislikeMap;
