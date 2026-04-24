@@ -84,7 +84,7 @@ export default function CameraScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={[styles.permissionContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Camera access needed</Text>
           <Text style={styles.permissionText}>
@@ -105,7 +105,7 @@ export default function CameraScreen() {
 
   if (DEBUG_FORCE_CAMERA_UNAVAILABLE || cameraError) {
     return (
-      <View style={[styles.permissionContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Unable to access camera</Text>
           <Text style={styles.permissionText}>
@@ -135,7 +135,7 @@ export default function CameraScreen() {
         }}
       />
 
-      <View style={[styles.overlay, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.overlay, { paddingTop: insets.top }]}>
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.topButton} onPress={() => router.back()}>
             <Text style={styles.topButtonText}>Back</Text>

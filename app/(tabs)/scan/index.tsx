@@ -33,7 +33,7 @@ export default function ScanScreen() {
   }, []);
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Shared app header used across main pages */}
         <AppHeader />
@@ -128,14 +128,14 @@ function StepCard({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F8EC',
+    backgroundColor: Colors.surface,
   },
   container: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.lg,
-    backgroundColor: '#F6F8EC',
-    flexGrow: 1,
+    backgroundColor: Colors.surface,
+    // flexGrow: 1,
   },
   bannerContainer: {
     alignItems: 'center',

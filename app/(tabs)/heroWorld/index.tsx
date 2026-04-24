@@ -80,7 +80,7 @@ export default function HeroWorldScreen() {
   };
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader/>
 

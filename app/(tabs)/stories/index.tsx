@@ -183,7 +183,7 @@ export default function StoriesScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#E77A1F" />
           <Text style={styles.loadingText}>Loading stories...</Text>
@@ -194,7 +194,7 @@ export default function StoriesScreen() {
 
   if (error) {
     return (
-      <View style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.centered}>
           <Text style={styles.errorTitle}>Oops!</Text>
           <Text style={styles.errorText}>{error}</Text>
@@ -207,7 +207,7 @@ export default function StoriesScreen() {
   }
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.container}>
         {/* Shared app header used across main pages */}
         <AppHeader />
