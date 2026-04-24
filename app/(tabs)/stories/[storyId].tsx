@@ -1,6 +1,6 @@
 import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl, getAuthHeaders, getStories } from '@/services/stories';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { ArrowLeft, Pause, Play } from 'lucide-react-native';
+import { ArrowLeft, Loader, Pause, Play, TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { AutoSizeText, ResizeTextMode } from 'react-native-auto-size-text';
 import {
@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Audio } from 'expo-av';
+import { Spacing } from '@/constants/spacing';
+import { Radius } from '@/constants/radius';
+import { Colors } from '@/constants/colors';
 
 interface StoryPage {
   storyText: string;
@@ -40,7 +43,7 @@ export default function StoryReaderScreen() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
-  const [audioState, setAudioState] = useState<'playing'| 'idle' | 'error'>('idle');
+  const [audioState, setAudioState] = useState<'playing' | 'loading' | 'idle' | 'error'>('idle');
 
   const soundRef = useRef<Audio.Sound | null>(null);
 
@@ -129,6 +132,7 @@ export default function StoryReaderScreen() {
     try {
       // Stop any currently playing audio
       await cleanupAudio();
+      setAudioState('loading');
 
       const audioUrl = getStoryPageAudioUrl(storyId, pageNumber);
       
@@ -203,15 +207,6 @@ export default function StoryReaderScreen() {
     // If last page, just stay idle
   };
 
-  const handleOpenFoodFact = () => {
-    if (!story) return;
-
-    router.push({
-      pathname: '/stories/food-fact',
-      params: { storyId: story.id },
-    });
-  };
-
   const handleViewOutcome = () => {
     if (!story) return;
 
@@ -239,6 +234,13 @@ export default function StoryReaderScreen() {
     await cleanupAudio();
     navigation.goBack();
   };
+
+  const iconForAudioState = () => {
+    if (audioState === 'playing') return (<Pause size={18} color="#FFFFFF" />);
+    if (audioState === 'idle') return (<Play size={18} color="#FFFFFF" />);
+    if (audioState === 'loading') return (<Loader size={18} color={'#FFFFFF'} />);
+    if (audioState === 'error') return (<TriangleAlert size={18} color={'#FFFFFF'} />);
+  }
 
 
   if (loading) {
@@ -282,49 +284,23 @@ export default function StoryReaderScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.heroCard}>
-        <Image
-          source={{ uri: imageUrl, headers: authHeaders || undefined }}
-          style={styles.coverImage}
-          resizeMode="cover"
-        />
-
-        <View style={styles.heroOverlay} />
-
         <TouchableOpacity style={styles.backButton} onPress={() => handleBackPress()}>
           <ArrowLeft size={20} color="#2D241F" />
         </TouchableOpacity>
 
-        <View style={styles.heroContent}>
-          <View style={styles.titleBubble}>
-            <AutoSizeText
-              mode={ResizeTextMode.max_lines}
-              numberOfLines={2}
-              fontSize={24}
-              style={styles.storyTitle}>
-              {story.title}
-            </AutoSizeText>
-          </View>
+        {/* Spacer */}
+        {/* <View style={{flex: 1}}></View> */}
 
-          <TouchableOpacity
-            style={[styles.listenButton, { backgroundColor: '#E77A1F' }]}
-            onPress={handleListenPress}
-          >
-            {audioState === 'playing' ? (
-              <Pause size={18} color="#FFFFFF" />
-            ) : (
-              <Play size={18} color="#FFFFFF" />
-            )}
-            <Text style={styles.listenButtonText}>
-              {audioState === 'playing' ? 'Pause' : 'Listen'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.introCard}>
-        <Text style={styles.introText}>
-          Page {currentPage + 1} of {story.pageCount}
-        </Text>
+        <TouchableOpacity
+          style={[styles.listenButton, { backgroundColor: '#E77A1F' }]}
+          onPress={handleListenPress}
+          disabled={audioState === 'loading'}
+        >
+          {iconForAudioState()}
+          <Text style={styles.listenButtonText}>
+            {audioState === 'playing' ? 'Pause' : 'Listen'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.pagesContainer}>
@@ -334,7 +310,7 @@ export default function StoryReaderScreen() {
           </Text>
 
           <Text style={styles.pageText}>{currentPageData.storyText}</Text>
-
+          
           <Image
             source={{ uri: imageUrl, headers: authHeaders || undefined }}
             style={styles.pageImage}
@@ -384,34 +360,25 @@ export default function StoryReaderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F5E9',
+    backgroundColor: Colors.surface,
   },
   content: {
     paddingBottom: 120,
   },
   heroCard: {
-    height: 330,
     margin: 16,
     marginTop: 34,
     borderRadius: 28,
     overflow: 'hidden',
-    backgroundColor: '#DDD',
-  },
-  coverImage: {
-    width: '100%',
-    height: '100%',
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.18)',
+    backgroundColor: Colors.surface_dim,
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   backButton: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
+    margin: Spacing.sm,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: Radius.badge,
     backgroundColor: 'rgba(255,255,255,0.92)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -423,70 +390,39 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 72,
   },
-  titleBubble: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 18,
-    maxWidth: '90%',
-  },
-  storyTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#2D241F',
-    textAlign: 'center',
-    lineHeight: 32,
-  },
   listenButton: {
     alignSelf: 'center',
+    margin: Spacing.sm,
+    marginLeft: 'auto',
     minWidth: 150,
-    paddingHorizontal: 24,
     paddingVertical: 14,
-    borderRadius: 999,
+    borderRadius: Radius.button_primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   listenButtonText: {
-    color: '#FFFFFF',
+    color: Colors.on_secondary,
     fontSize: 18,
     fontWeight: '900',
-  },
-  introCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#FFF8E1',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 2,
-    borderColor: '#F2DFC0',
-  },
-  introText: {
-    textAlign: 'center',
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#705D50',
-    fontWeight: '700',
   },
   pagesContainer: {
     paddingHorizontal: 16,
   },
   pageCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.surface_bright,
     borderRadius: 24,
-    padding: 18,
     borderWidth: 2,
     borderColor: '#F1E3C8',
     marginBottom: 16,
   },
   pageNumber: {
+    paddingLeft: Spacing.spacing_4,
+    paddingTop: Spacing.spacing_4,
     fontSize: 13,
     fontWeight: '800',
     color: '#8B6F47',
-    marginBottom: 12,
   },
   pageText: {
     fontSize: 22,
@@ -494,11 +430,13 @@ const styles = StyleSheet.create({
     color: '#2D241F',
     fontWeight: '500',
     marginBottom: 16,
+    padding: Spacing.spacing_4
   },
   pageImage: {
     width: '100%',
-    height: 220,
-    borderRadius: 18,
+    aspectRatio: 1,
+    borderBottomLeftRadius: Radius.card,
+    borderBottomRightRadius: Radius.card,
     backgroundColor: '#EAEAEA',
   },
   factPromptCard: {

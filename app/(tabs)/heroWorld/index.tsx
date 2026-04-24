@@ -8,6 +8,7 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import React from "react";
+import { AutoSizeText, ResizeTextMode } from "react-native-auto-size-text";
 
 
 const GAME_ID = 'xx';
@@ -27,7 +28,7 @@ const GAMES: GameTile[] = [
     id: GAME_ID,
     title: 'Meal Maker',
     emoji: '🍽️',
-    description: 'Catch falling ingredients to build healthy meals!',
+    description: 'Build healthy meals!',
     route: '/(tabs)/heroWorld/meal-maker',
     available: true,
   },
@@ -65,17 +66,12 @@ export default function HeroWorldScreen() {
         <Text style={[styles.cardTitle, !item.available && styles.cardTitleDisabled]}>
           {item.title}
         </Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
+        <AutoSizeText fontSize={16} mode={ResizeTextMode.max_lines} style={styles.cardDescription} numberOfLines={2}>
           {item.description}
-        </Text>
+        </AutoSizeText>
         {item.available && highScore > 0 && (
           <View style={styles.highScoreBadge}>
             <Text style={styles.highScoreText}>⭐ Best: {highScore}</Text>
-          </View>
-        )}
-        {!item.available && (
-          <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonText}>Soon</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -87,17 +83,13 @@ export default function HeroWorldScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader/>
 
-        <View style={styles.bannerContainer}>
-          <View style={styles.bannerImageContainer}>
-            <Image
-              source={require('../../../assets/images/nutriheroes_logo.png')}
-              style={styles.bannerImage}
-              resizeMode='contain'
-            />
-          </View>
-          <View style={styles.bannerTextContainer}>
-            <Text style={styles.bannerText}>🌎 Hero World</Text>
-          </View>
+        <Image
+          source={require('../../../assets/images/nutriheroes_logo_tight.png')}
+          style={styles.bannerImage}
+          resizeMode='contain'
+        />
+        <View style={styles.bannerTextContainer}>
+          <Text style={styles.bannerText}>🌎 Hero World</Text>
         </View>
 
         {/* Daily Challenge */}
@@ -130,7 +122,7 @@ export default function HeroWorldScreen() {
           <View style={styles.grid}>
             <View style={styles.row}>
               {GAMES.map((game) => (
-                <View style={{width: '50%'}} key={game.id}>
+                <View style={{width: '50%', height: 'auto'}} key={game.id}>
                   {renderGameTile({ item: game })}
                 </View>
               ))}
@@ -152,28 +144,23 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     flexGrow: 1,
   },
-  bannerContainer: {
-    alignItems: 'center',
-  },
-  bannerImageContainer: {
-    width: '80%',
-  },
   bannerImage: {
-    position: 'relative',
-    top: -Spacing["2xl"],
-    width: '100%',
+    alignSelf: 'center',
+    width: '80%',
+    height: '30%',
   },
   bannerTextContainer: {
     position: 'relative',
-    top: -Spacing["4xl"],
+    top: -Spacing.lg,
     backgroundColor: Colors.on_primary,
     borderRadius: Radius.badge,
     borderWidth: Spacing.spacing_1,
     borderColor: '#E8D7C7',
     paddingHorizontal: Spacing["2xl"],
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   bannerText: {
     color: Colors.secondary_dim,

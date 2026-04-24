@@ -13,13 +13,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Animated,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Audio } from 'expo-av';
-import { Info, Play, Star } from 'lucide-react-native';
+import { BookOpen, Play, Star } from 'lucide-react-native';
 
 import { useGameEngine } from '@/hooks/games/useGameEngine';
+import AboutModal from '@/components/games/meal-maker/AboutModal';
 import ScoreDisplay from '@/components/games/meal-maker/ScoreDisplay';
 import FallingIngredient from '@/components/games/meal-maker/FallingIngredient';
 import Plate from '@/components/games/meal-maker/Plate';
@@ -37,7 +39,6 @@ interface PlateZone {
   width: number;
   height: number;
 }
-
 
 export default function MealMakerScreen() {
   const router = useRouter();
@@ -59,6 +60,7 @@ export default function MealMakerScreen() {
   } = useGameEngine();
 
   const [plateZone, setPlateZone] = useState<PlateZone | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
   const plateWrapperRef = useRef<View>(null);
 
   // Audio
@@ -70,19 +72,12 @@ export default function MealMakerScreen() {
   const isRoundPlayingRef = useRef(false);
 
   const playMenuMusic = useCallback(async () => {
-    // Prevent duplicate playback
     if (menuSoundRef.current) return;
-
     try {
       const { sound } = await Audio.Sound.createAsync(
         require('../../../assets/audio/menu-audio.mp3'),
-        {
-          isLooping: true,
-          shouldPlay: true,
-          volume: 0.7,
-        }
+        { isLooping: true, shouldPlay: true, volume: 0.7 }
       );
-
       menuSoundRef.current = sound;
       isMenuPlayingRef.current = true;
     } catch (_) {}
@@ -90,51 +85,27 @@ export default function MealMakerScreen() {
 
   const stopMenuMusic = useCallback(async () => {
     const sound = menuSoundRef.current;
-    // Immediately clear ref (prevents overlap)
     menuSoundRef.current = null;
     isMenuPlayingRef.current = false;
-
     if (!sound) return;
-
-    try {
-      await sound.stopAsync();
-    } catch (_) {}
-
-    try {
-      await sound.unloadAsync();
-    } catch (_) {}
-
-    menuSoundRef.current = null;
-    isMenuPlayingRef.current = false;
+    try { await sound.stopAsync(); } catch (_) {}
+    try { await sound.unloadAsync(); } catch (_) {}
   }, []);
 
   const playRoundMusic = useCallback(async () => {
-    // Prevent duplicates
     if (isRoundPlayingRef.current) return;
-
     try {
-      // Stop menu music first
       await stopMenuMusic();
-
-      // Clean up existing round sound
       if (roundSoundRef.current) {
         await roundSoundRef.current.unloadAsync().catch(() => {});
         roundSoundRef.current = null;
       }
-
       const { sound } = await Audio.Sound.createAsync(
         require('../../../assets/audio/round-audio.mp3'),
-        {
-          isLooping: false,
-          shouldPlay: true,
-          volume: 0.5
-        }
+        { isLooping: false, shouldPlay: true, volume: 0.5 }
       );
-
       roundSoundRef.current = sound;
       isRoundPlayingRef.current = true;
-
-      // When round music finishes naturally, reset state
       sound.setOnPlaybackStatusUpdate((status) => {
         if (!status.isLoaded) return;
         if (status.didJustFinish) {
@@ -148,24 +119,15 @@ export default function MealMakerScreen() {
   const stopRoundMusic = useCallback(async () => {
     const sound = roundSoundRef.current;
     if (!sound) return;
-
-    try {
-      await sound.stopAsync();
-    } catch (_) {}
-
-    try {
-      await sound.unloadAsync();
-    } catch (_) {}
-
+    try { await sound.stopAsync(); } catch (_) {}
+    try { await sound.unloadAsync(); } catch (_) {}
     roundSoundRef.current = null;
     isRoundPlayingRef.current = false;
   }, []);
 
-  // Handle screen focus / blur correctly
   useFocusEffect(
     useCallback(() => {
       playMenuMusic();
-
       return () => {
         stopMenuMusic();
         stopRoundMusic();
@@ -177,11 +139,8 @@ export default function MealMakerScreen() {
   useEffect(() => {
     if (gamePhase === 'playing') {
       playRoundMusic();
-    } else if (gamePhase === 'idle' || gamePhase === 'game_over') {
-      // Stop round music and resume menu music if needed.
-      // stopRoundMusic();
     }
-  }, [gamePhase, playRoundMusic, stopRoundMusic, playMenuMusic]);
+  }, [gamePhase, playRoundMusic]);
 
   // Plate layout
 
@@ -209,13 +168,29 @@ export default function MealMakerScreen() {
     startGame();
   }, [startGame]);
 
+  // Render
+
+  const scale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    // Defines a loop: Scale to 1.1, then back to 1
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.05, duration: 400, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 400, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <View style={styles.container}>
+
+        {/* HUD */}
         {gamePhase === 'playing' && (
           <ScoreDisplay score={totalScore} timeRemaining={timeRemaining} onBack={handleBack} />
         )}
 
+        {/* Game field */}
         <View style={styles.gameField}>
           {gamePhase === 'playing' &&
             activeIngredients.map((item) => (
@@ -231,6 +206,7 @@ export default function MealMakerScreen() {
               />
             ))}
 
+          {/* Idle / start screen */}
           {gamePhase === 'idle' && (
             <View style={styles.idleContainer}>
               <Image
@@ -242,32 +218,44 @@ export default function MealMakerScreen() {
               <Text style={styles.idleTitle}>Meal Maker</Text>
               <Text style={styles.idleSubtitle}>Drag foods to build{'\n'}healthy meals!</Text>
 
-              <View style={styles.scoreCard}>
-                <View style={styles.scoreItem}>
-                  <Star size={46} color="#F5A623" fill="#FFD15C" />
-                  <View>
-                    <Text style={styles.scoreLabel}>BEST SCORE</Text>
-                    <Text style={styles.scoreValue}>{highScore || 25}</Text>
+              {highScore > 0 && (
+                <View style={styles.scoreCard}>
+                  <View style={styles.scoreItem}>
+                    <Star size={46} color="#F5A623" fill="#FFD15C" />
+                    <View>
+                      <Text style={styles.scoreLabel}>BEST SCORE</Text>
+                      <Text style={styles.scoreValue}>{highScore}</Text>
+                    </View>
                   </View>
                 </View>
+              )}
 
+              <Animated.View style={{...styles.startButtonContainer, transform: [{scale}], alignItems: 'center'}}>
+                <TouchableOpacity style={styles.startButton} onPress={handleStartGame} activeOpacity={0.85}>
+                  <View style={styles.playIconCircle}>
+                    <Play size={28} color={Colors.secondary_dim} fill={Colors.secondary_dim} />
+                  </View>
+                  <Text style={styles.startButtonText}>START GAME</Text>
+                </TouchableOpacity>
+              </Animated.View>
 
-              </View>
-              <TouchableOpacity style={styles.startButton} onPress={handleStartGame} activeOpacity={0.85}>
-                <View style={styles.playIconCircle}>
-                  <Play size={28} color="#C83A08" fill="#C83A08" />
-                </View>
-                <Text style={styles.startButtonText}>START GAME</Text>
+              {/* How to Play button */}
+              <TouchableOpacity
+                style={styles.aboutButton}
+                onPress={() => setShowAbout(true)}
+                activeOpacity={0.8}
+              >
+                <BookOpen size={20} color="#4F4A43" />
+                <Text style={styles.aboutButtonText}>How to Play</Text>
               </TouchableOpacity>
-
-              <View style={styles.tipCard}>
-                <Info size={22} color="#6F6A5F" fill="#6F6A5F" />
-                <Text style={styles.tipText}>Pick healthy foods to earn points{'\n'}and beat your best score!</Text>
-              </View>
             </View>
           )}
         </View>
 
+        {/* About modal */}
+        <AboutModal visible={showAbout} onClose={() => setShowAbout(false)} />
+
+        {/* Plate area */}
         {gamePhase === 'playing' && (
           <View style={styles.plateArea} ref={plateWrapperRef}>
             <Plate
@@ -277,7 +265,7 @@ export default function MealMakerScreen() {
           </View>
         )}
 
-        {/* Meal score popup, centered near the top of the game field. */}
+        {/* Meal score popup */}
         {gamePhase === 'playing' && (
           <View style={styles.scorePopupContainer} pointerEvents="none">
             <MealScorePopup
@@ -287,6 +275,7 @@ export default function MealMakerScreen() {
           </View>
         )}
 
+        {/* Game over overlay */}
         {gamePhase === 'game_over' && (
           <GameOverOverlay
             score={totalScore}
@@ -321,6 +310,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.lg,
     zIndex: 0,
   },
+
+  // Idle screen
   idleContainer: {
     flex: 1,
     alignItems: 'center',
@@ -330,8 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFDF4',
   },
   heroImage: {
-    width: '92%',
-    height: 210,
+    height: 160,
     marginTop: Spacing.md,
   },
   idleTitle: {
@@ -370,7 +360,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     color: '#3F3D38',
-    letterSpacing: 0,
   },
   scoreValue: {
     fontSize: 30,
@@ -378,25 +367,20 @@ const styles = StyleSheet.create({
     color: '#B5471F',
     textAlign: 'center',
   },
-  scorePopupContainer: {
-    position: 'absolute',
-    top: 80, // below the HUD
-    left: 0,
-    right: 0,
+  startButtonContainer: {
     alignItems: 'center',
-    zIndex: 20,
   },
   startButton: {
     width: '92%',
     maxWidth: 360,
-    height: 96,
+    padding: Spacing.lg,
     borderRadius: 32,
-    backgroundColor: '#C83A08',
+    backgroundColor: Colors.secondary_dim,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.lg,
-    marginTop: Spacing.md,
+    marginVertical: Spacing.md,
     shadowColor: '#7A2204',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.25,
@@ -416,24 +400,29 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '900',
   },
-  tipCard: {
-    width: '92%',
-    maxWidth: 370,
-    borderRadius: 20,
-    backgroundColor: '#F7F1E6',
+  aboutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.base,
-    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
+    backgroundColor: '#F0EBE0',
   },
-  tipText: {
-    fontSize: 16,
-    lineHeight: 22,
+  aboutButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
     color: '#4F4A43',
+    fontFamily: 'BeVietnamPro-Medium',
+  },
+
+  // Playing overlays
+  scorePopupContainer: {
+    position: 'absolute',
+    top: 80,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 20,
   },
 });
-
-
-

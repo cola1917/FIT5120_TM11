@@ -9,7 +9,33 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type AvatarId = 'apple' | 'broccoli' | 'carrot';
+export type AvatarId = 'hero' | 'princess';
+
+export type FoodPreferenceItem =
+  | 'fruits'
+  | 'vegetables'
+  | 'rice'
+  | 'bread'
+  | 'noodles'
+  | 'chicken'
+  | 'beef'
+  | 'pork'
+  | 'fish'
+  | 'dairy';
+
+export type BlacklistItem =
+  | 'egg'
+  | 'bread'
+  | 'milk'
+  | 'peanut'
+  | 'seafood'
+  | 'nuts';
+
+export interface FoodPreferences {
+  likes: FoodPreferenceItem[];
+  dislikes: FoodPreferenceItem[];
+  blacklist: BlacklistItem[];
+}
 
 export interface UserProfile {
   username: string;
@@ -17,6 +43,7 @@ export interface UserProfile {
   age: number;
   highScores: Record<string, number>;
   totalPoints: number;
+  foodPreferences?: FoodPreferences;
 }
 
 // ─── Storage Keys ────────────────────────────────────────────────────────────
@@ -56,7 +83,8 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
 export async function createUserProfile(
   username: string,
   avatarId: AvatarId,
-  age: number
+  age: number,
+  foodPreferences?: FoodPreferences
 ): Promise<UserProfile> {
   const profile: UserProfile = {
     username,
@@ -64,6 +92,7 @@ export async function createUserProfile(
     age,
     highScores: {},
     totalPoints: 0,
+    foodPreferences,
   };
   await saveUserProfile(profile);
   return profile;
@@ -129,42 +158,4 @@ export async function addTotalPoints(points: number): Promise<void> {
   if (!profile) return;
   profile.totalPoints = Math.max(0, profile.totalPoints + points);
   await saveUserProfile(profile);
-}
-
-// ─── Avatar Helpers ───────────────────────────────────────────────────────────
-
-export const AVATAR_OPTIONS: AvatarId[] = ['apple', 'broccoli', 'carrot'];
-
-/**
- * Returns the emoji representation for an avatar ID.
- * Used as a placeholder until real avatar images are available.
- */
-export function getAvatarEmoji(avatarId: AvatarId): string {
-  switch (avatarId) {
-    case 'apple':
-      return '🍎';
-    case 'broccoli':
-      return '🥦';
-    case 'carrot':
-      return '🥕';
-    default:
-      return '🍎';
-  }
-}
-
-/**
- * Returns the profile button emoji for an avatar ID.
- * Slightly different from the avatar image — used in the header button.
- */
-export function getAvatarButtonEmoji(avatarId: AvatarId): string {
-  switch (avatarId) {
-    case 'apple':
-      return '🍏';
-    case 'broccoli':
-      return '🌿';
-    case 'carrot':
-      return '🧡';
-    default:
-      return '🍏';
-  }
 }

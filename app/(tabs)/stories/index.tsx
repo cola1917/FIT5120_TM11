@@ -290,7 +290,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 20,
     backgroundColor: Colors.surface,
   },
   storyIntro: {

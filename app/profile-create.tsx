@@ -1,13 +1,15 @@
 /**
  * Profile Creation Screen
  *
- * Shown when no user profile exists. Collects username, avatar, and age.
+ * Shown when no user profile exists. Collects username, avatar, age,
+ * and food preferences (likes/dislikes + blacklist).
  * All data is stored locally — no backend calls.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,10 +23,24 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
 import { Spacing } from '@/constants/spacing';
 import { Radius } from '@/constants/radius';
-import { AvatarId, AVATAR_OPTIONS, createUserProfile, getAvatarEmoji } from '@/services/userProfile';
+import {
+  AvatarId,
+  BlacklistItem,
+  FoodPreferenceItem,
+  FoodPreferences,
+  createUserProfile,
+} from '@/services/userProfile';
+import {
+  FoodPreferencesSelector,
+  LikeDislikeMap,
+  LikeDislikeState,
+  BlacklistMap,
+  createDefaultLikeDislikeMap,
+  createDefaultBlacklistMap,
+} from '@/components/profile/FoodPreferencesSelector';
 
 
-// ─── Avatar Carousel ──────────────────────────────────────────────────────────
+// Avatar Carousel
 
 interface AvatarCarouselProps {
   selectedAvatar: AvatarId;
@@ -34,22 +50,28 @@ interface AvatarCarouselProps {
 function AvatarCarousel({ selectedAvatar, onAvatarChange }: AvatarCarouselProps) {
   return (
     <View style={avatarStyles.container}>
-      {AVATAR_OPTIONS.map((avatarId) => {
-        const isSelected = avatarId === selectedAvatar;
-        return (
-          <TouchableOpacity
-            key={avatarId}
-            style={[avatarStyles.avatarItem, isSelected && avatarStyles.avatarItemSelected]}
-            onPress={() => onAvatarChange(avatarId)}
-            activeOpacity={0.8}
-          >
-            <Text style={avatarStyles.avatarEmoji}>{getAvatarEmoji(avatarId)}</Text>
-            <Text style={[avatarStyles.avatarLabel, isSelected && avatarStyles.avatarLabelSelected]}>
-              {avatarId.charAt(0).toUpperCase() + avatarId.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+      <TouchableOpacity
+        style={[avatarStyles.avatarItem, selectedAvatar === 'hero' && avatarStyles.avatarItemSelected]}
+        onPress={() => onAvatarChange('hero')}
+        activeOpacity={0.3}
+      >
+        <Image
+          source={require('../assets/images/avatar/hero-1.png')}
+          resizeMode='contain'
+          style={styles.avatarImage}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[avatarStyles.avatarItem, selectedAvatar === 'princess' && avatarStyles.avatarItemSelected]}
+        onPress={() => onAvatarChange('princess')}
+        activeOpacity={0.3}
+      >
+        <Image
+          source={require('../assets/images/avatar/princess-1.png')}
+          resizeMode='contain'
+          style={styles.avatarImage}
+        />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -61,18 +83,18 @@ const avatarStyles = StyleSheet.create({
     gap: Spacing.md,
   },
   avatarItem: {
-    width: '30%',
+    width: '40%',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md, 
     borderRadius: Radius.card,
     borderWidth: 2,
     borderColor: Colors.outline_variant,
     backgroundColor: Colors.surface_container_lowest,
+    opacity: 0.5
   },
   avatarItemSelected: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary_container,
+    opacity: 1
   },
   avatarEmoji: {
     fontSize: 52,
@@ -88,16 +110,19 @@ const avatarStyles = StyleSheet.create({
   },
 });
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// Main Screen
 
 export default function ProfileCreateScreen() {
   const [username, setUsername] = useState('');
-  const [avatarId, setAvatarId] = useState<AvatarId>('apple');
+  const [avatarId, setAvatarId] = useState<AvatarId>('hero');
   const [ageString, setAgeString] = useState('10');
-  const [age, setAge] = useState(10);
   const [usernameError, setUsernameError] = useState('');
   const [ageError, setAgeError] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Food preferences state
+  const [likeDislikeMap, setLikeDislikeMap] = useState<LikeDislikeMap>(createDefaultLikeDislikeMap);
+  const [blacklistMap, setBlacklistMap] = useState<BlacklistMap>(createDefaultBlacklistMap);
 
   const validateUsername = (value: string): string => {
     if (!value.trim()) return 'Username is required.';
@@ -113,6 +138,27 @@ export default function ProfileCreateScreen() {
     return '';
   };
 
+  const handleLikeDislikeChange = (item: FoodPreferenceItem, state: LikeDislikeState) => {
+    setLikeDislikeMap((prev) => ({ ...prev, [item]: state }));
+  };
+
+  const handleBlacklistChange = (item: BlacklistItem, selected: boolean) => {
+    setBlacklistMap((prev) => ({ ...prev, [item]: selected }));
+  };
+
+  const buildFoodPreferences = (): FoodPreferences => {
+    const likes: FoodPreferenceItem[] = [];
+    const dislikes: FoodPreferenceItem[] = [];
+    for (const [item, state] of Object.entries(likeDislikeMap) as [FoodPreferenceItem, LikeDislikeState][]) {
+      if (state === 'like') likes.push(item);
+      else if (state === 'dislike') dislikes.push(item);
+    }
+    const blacklist: BlacklistItem[] = (Object.entries(blacklistMap) as [BlacklistItem, boolean][])
+      .filter(([, selected]) => selected)
+      .map(([item]) => item);
+    return { likes, dislikes, blacklist };
+  };
+
   const handleCreate = async () => {
     const uErr = validateUsername(username);
     const age = Number.parseInt(ageString);
@@ -124,7 +170,8 @@ export default function ProfileCreateScreen() {
 
     setCreating(true);
     try {
-      await createUserProfile(username.trim(), avatarId, age);
+      const foodPreferences = buildFoodPreferences();
+      await createUserProfile(username.trim(), avatarId, age, foodPreferences);
       router.replace('/scan');
     } catch {
       Alert.alert('Error', 'Could not create profile. Please try again.');
@@ -192,6 +239,22 @@ export default function ProfileCreateScreen() {
             autoCorrect={false}
           />
           {!!ageError && <Text style={styles.errorText}>{ageError}</Text>}
+        </View>
+
+        {/* Food Preferences */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Food Preferences</Text>
+          <Text style={styles.hintText}>
+            Tell us what you like, dislike, and what you cannot eat. You can always skip this.
+          </Text>
+          <View style={styles.preferencesContainer}>
+            <FoodPreferencesSelector
+              likeDislikeMap={likeDislikeMap}
+              blacklistMap={blacklistMap}
+              onLikeDislikeChange={handleLikeDislikeChange}
+              onBlacklistChange={handleBlacklistChange}
+            />
+          </View>
         </View>
 
         {/* Create Button */}
@@ -271,6 +334,16 @@ const styles = StyleSheet.create({
   hintText: {
     ...Typography.labelSmall,
     color: Colors.on_surface_variant,
+  },
+  avatarImage: {
+    width: '100%',
+    height: 150
+  },
+  preferencesContainer: {
+    backgroundColor: Colors.surface_container_low,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    marginTop: Spacing.xs,
   },
   createButton: {
     backgroundColor: Colors.primary,

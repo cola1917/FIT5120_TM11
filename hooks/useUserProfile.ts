@@ -12,13 +12,14 @@ import {
   deleteUserProfile,
   getUserProfile,
   AvatarId,
+  FoodPreferences,
 } from '@/services/userProfile';
 
 export interface UseUserProfileResult {
   profile: UserProfile | null;
   loading: boolean;
   reload: () => Promise<void>;
-  create: (username: string, avatarId: AvatarId, age: number) => Promise<void>;
+  create: (username: string, avatarId: AvatarId, age: number, foodPreferences?: FoodPreferences) => Promise<void>;
   remove: () => Promise<void>;
 }
 
@@ -41,8 +42,8 @@ export function useUserProfile(): UseUserProfileResult {
   }, [reload]);
 
   const create = useCallback(
-    async (username: string, avatarId: AvatarId, age: number) => {
-      const p = await createUserProfile(username, avatarId, age);
+    async (username: string, avatarId: AvatarId, age: number, foodPreferences?: FoodPreferences) => {
+      const p = await createUserProfile(username, avatarId, age, foodPreferences);
       setProfile(p);
     },
     []
