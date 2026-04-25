@@ -12,7 +12,7 @@ import {
   ShieldPlus,
   Smile
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -29,6 +29,8 @@ import GrowUpDetail from '../../components/goal/GrowUpDetail';
 import SeeClearDetail from '../../components/goal/SeeClearDetail';
 import ThinkFastDetail from '../../components/goal/ThinkFastDetail';
 import type { Alternative, Goal, SuperFood, TryLess } from '../../components/goal/types';
+import { getUserProfile } from '../../services/userProfile';
+import { getRecommendations, type RecommendationResponse } from '../../services/recommendations';
 
 // Re-export types for backward compatibility with imports like `import { Goal } from '../types'`
 export type { Alternative, Goal, SuperFood, TryLess };
@@ -191,8 +193,45 @@ const GOALS: Goal[] = [
 
 export default function GoalScreen() {
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
+  const [recLoading, setRecLoading] = useState(false);
 
   const selectedGoal = GOALS.find(g => g.id === selectedGoalId);
+
+  useEffect(() => {
+    if (!selectedGoalId) {
+      setRecommendations(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchRecs = async () => {
+      setRecLoading(true);
+      setRecommendations(null);
+      try {
+        const profile = await getUserProfile();
+        const prefs = profile?.foodPreferences;
+
+        const data = await getRecommendations(
+          selectedGoalId,
+          prefs?.likes ?? [],
+          prefs?.dislikes ?? [],
+          prefs?.blacklist ?? []
+        );
+
+        if (!cancelled) setRecommendations(data);
+      } catch {
+        // API failed: keep recommendations null so components fall back to static GOALS data
+        if (!cancelled) setRecommendations(null);
+      } finally {
+        if (!cancelled) setRecLoading(false);
+      }
+    };
+
+    fetchRecs();
+    return () => { cancelled = true; };
+  }, [selectedGoalId]);
 
   const renderGoalList = () => (
     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -249,19 +288,25 @@ export default function GoalScreen() {
   const renderGoalDetail = () => {
     if (!selectedGoal) return null;
 
+    const detailProps = {
+      onBack: () => setSelectedGoalId(null),
+      recommendations,
+      recLoading,
+    };
+
     switch (selectedGoal.id) {
       case 'grow':
-        return <GrowUpDetail goal={selectedGoal} onBack={() => setSelectedGoalId(null)} />;
+        return <GrowUpDetail goal={selectedGoal} {...detailProps} />;
       case 'see':
-        return <SeeClearDetail goal={selectedGoal} onBack={() => setSelectedGoalId(null)} />;
+        return <SeeClearDetail goal={selectedGoal} {...detailProps} />;
       case 'think':
-        return <ThinkFastDetail goal={selectedGoal} onBack={() => setSelectedGoalId(null)} />;
+        return <ThinkFastDetail goal={selectedGoal} {...detailProps} />;
       case 'fight':
-        return <FightGermsDetail goal={selectedGoal} onBack={() => setSelectedGoalId(null)} />;
+        return <FightGermsDetail goal={selectedGoal} {...detailProps} />;
       case 'feel':
-        return <FeelGoodDetail goal={selectedGoal} onBack={() => setSelectedGoalId(null)} />;
+        return <FeelGoodDetail goal={selectedGoal} {...detailProps} />;
       case 'strong':
-        return <BeStrongDetail goal={selectedGoal} onBack={() => setSelectedGoalId(null)} />;
+        return <BeStrongDetail goal={selectedGoal} {...detailProps} />;
       default:
         return (
           <View style={styles.detailFallback}>

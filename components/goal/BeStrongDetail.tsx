@@ -1,19 +1,40 @@
 import React from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  Image, 
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+  Text,
+  Image,
   ScrollView,
   Dimensions,
-  TouchableOpacity
+  TouchableOpacity,
 } from 'react-native';
 import { ArrowRight, Star, ArrowLeft } from 'lucide-react-native';
 import type { Goal } from './types';
+import type { RecommendationResponse } from '../../services/recommendations';
 
 const { width } = Dimensions.get('window');
 
-export default function BeStrongDetail({ goal, onBack }: { goal: Goal; onBack?: () => void }) {
+interface Props {
+  goal: Goal;
+  onBack?: () => void;
+  recommendations?: RecommendationResponse | null;
+  recLoading?: boolean;
+}
+
+export default function BeStrongDetail({ goal, onBack, recommendations, recLoading }: Props) {
+  const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
+    name: f.name,
+    description: `Grade ${f.grade}`,
+    image: f.image_url,
+  })) ?? goal.superFoods;
+
+  const sf0 = displaySuperFoods[0] ?? goal.superFoods[0];
+  const sf1 = displaySuperFoods[1] ?? goal.superFoods[1];
+  const sf2 = displaySuperFoods[2] ?? goal.superFoods[2];
+
+  const tinyHeroFoods = recommendations?.tiny_hero_foods ?? [];
+  const tryLessFoods = recommendations?.try_less_foods ?? [];
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Custom Back Button */}
@@ -35,51 +56,73 @@ export default function BeStrongDetail({ goal, onBack }: { goal: Goal; onBack?: 
           <Text style={styles.sectionTitle}>Good Choice</Text>
         </View>
 
-        <View style={styles.grid}>
-          {/* Main Card */}
-          <View style={styles.mainCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>GOOD CHOICE</Text>
+        {recLoading ? (
+          <ActivityIndicator color="#3F51B5" size="large" style={{ marginVertical: 24 }} />
+        ) : (
+          <View style={styles.grid}>
+            {/* Main Card */}
+            <View style={styles.mainCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>GOOD CHOICE</Text>
+                </View>
+                <Text style={styles.foodNameLarge}>{sf0.name}</Text>
               </View>
-              <Text style={styles.foodNameLarge}>{goal.superFoods[0].name}</Text>
-            </View>
-            <View style={styles.mainImageContainer}>
-              <Image 
-                source={{ uri: goal.superFoods[0].image }} 
-                style={styles.mainImage} 
-                resizeMode="cover"
-              />
-            </View>
-            <Text style={styles.descriptionText}>{goal.superFoods[0].description}</Text>
-          </View>
-
-          {/* Row of smaller cards */}
-          <View style={styles.row}>
-            <View style={styles.smallCard}>
-              <View style={styles.smallImageContainer}>
-                <Image 
-                  source={{ uri: goal.superFoods[1].image }} 
-                  style={styles.smallImage} 
-                  resizeMode="contain"
-                />
+              <View style={styles.mainImageContainer}>
+                <Image source={{ uri: sf0.image }} style={styles.mainImage} resizeMode="cover" />
               </View>
-              <Text style={styles.foodNameSmall}>{goal.superFoods[1].name}</Text>
+              <Text style={styles.descriptionText}>{sf0.description}</Text>
             </View>
 
-            <View style={styles.smallCard}>
-              <View style={styles.smallImageContainer}>
-                <Image 
-                  source={{ uri: goal.superFoods[2].image }} 
-                  style={styles.smallImage} 
-                  resizeMode="contain"
-                />
+            {/* Row of smaller cards */}
+            <View style={styles.row}>
+              <View style={styles.smallCard}>
+                <View style={styles.smallImageContainer}>
+                  <Image source={{ uri: sf1.image }} style={styles.smallImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.foodNameSmall}>{sf1.name}</Text>
               </View>
-              <Text style={styles.foodNameSmall}>{goal.superFoods[2].name}</Text>
+
+              <View style={styles.smallCard}>
+                <View style={styles.smallImageContainer}>
+                  <Image source={{ uri: sf2.image }} style={styles.smallImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.foodNameSmall}>{sf2.name}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
       </View>
+
+      {/* Tiny Hero Challenge */}
+      {(recLoading || tinyHeroFoods.length > 0) && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIndicator, { backgroundColor: '#9C27B0' }]} />
+            <Text style={[styles.sectionTitle, { color: '#9C27B0' }]}>Tiny Hero Challenge</Text>
+          </View>
+          <Text style={styles.challengeSubtitle}>Try these healthy foods — your taste buds might surprise you!</Text>
+          {recLoading ? (
+            <ActivityIndicator color="#9C27B0" size="large" style={{ marginVertical: 24 }} />
+          ) : (
+            <View style={styles.grid}>
+              {tinyHeroFoods.map((food) => (
+                <View key={food.cn_code} style={[styles.mainCard, { borderLeftWidth: 4, borderLeftColor: '#9C27B0', padding: 16 }]}>
+                  <View style={styles.cardHeader}>
+                    <View style={[styles.badge, { backgroundColor: '#9C27B0' }]}>
+                      <Text style={styles.badgeText}>HERO CHALLENGE</Text>
+                    </View>
+                    <Text style={styles.foodNameLarge}>{food.name}</Text>
+                  </View>
+                  <View style={[styles.mainImageContainer, { height: 100 }]}>
+                    <Image source={{ uri: food.image_url }} style={styles.mainImage} resizeMode="cover" />
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Try Less Section */}
       <View style={styles.section}>
@@ -88,28 +131,40 @@ export default function BeStrongDetail({ goal, onBack }: { goal: Goal; onBack?: 
           <Text style={styles.sectionTitle}>Try Less</Text>
         </View>
 
-        <View style={styles.tryLessCard}>
-          <View style={styles.tryLessContent}>
-            <View style={styles.choiceRow}>
-              <View style={styles.badImageContainer}>
-                <Image 
-                  source={{ uri: goal.tryLess.image }} 
-                  style={styles.badImage} 
-                  resizeMode="contain"
-                />
+        {recLoading ? (
+          <ActivityIndicator color="#FF8A65" size="large" style={{ marginVertical: 24 }} />
+        ) : tryLessFoods.length > 0 ? (
+          <View style={styles.grid}>
+            {tryLessFoods.map((food) => (
+              <View key={food.cn_code} style={[styles.smallCard, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }]}>
+                <View style={[styles.smallImageContainer, { width: 64, height: 64 }]}>
+                  <Image source={{ uri: food.image_url }} style={[styles.smallImage, { opacity: 0.7 }]} resizeMode="contain" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.foodNameSmall}>{food.name}</Text>
+                  <View style={[styles.badge, { backgroundColor: '#FFCCBC', marginTop: 4 }]}>
+                    <Text style={[styles.badgeText, { color: '#BF360C' }]}>EAT LESS</Text>
+                  </View>
+                </View>
               </View>
-              <ArrowRight color="#3b82f6" size={24} />
-              <View style={styles.goodImageContainer}>
-                <Image 
-                  source={{ uri: goal.tryLess.alternative.image }} 
-                  style={styles.goodImage} 
-                  resizeMode="contain"
-                />
-              </View>
-            </View>
-            <Text style={styles.tipText}>{goal.tryLess.alternative.tip}</Text>
+            ))}
           </View>
-        </View>
+        ) : (
+          <View style={styles.tryLessCard}>
+            <View style={styles.tryLessContent}>
+              <View style={styles.choiceRow}>
+                <View style={styles.badImageContainer}>
+                  <Image source={{ uri: goal.tryLess.image }} style={styles.badImage} resizeMode="contain" />
+                </View>
+                <ArrowRight color="#3b82f6" size={24} />
+                <View style={styles.goodImageContainer}>
+                  <Image source={{ uri: goal.tryLess.alternative.image }} style={styles.goodImage} resizeMode="contain" />
+                </View>
+              </View>
+              <Text style={styles.tipText}>{goal.tryLess.alternative.tip}</Text>
+            </View>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -179,6 +234,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     color: '#36392c',
+  },
+  challengeSubtitle: {
+    fontSize: 14,
+    color: '#7B1FA2',
+    fontWeight: '600',
+    marginBottom: 16,
+    fontStyle: 'italic',
   },
   grid: {
     gap: 16,

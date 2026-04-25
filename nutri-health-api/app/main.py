@@ -15,7 +15,7 @@ ensure_dotenv_loaded()
 
 from app.database import init_db
 from app.database import SessionLocal
-from app.routers import scan, auth, stories, daily_challenge
+from app.routers import scan, auth, stories, daily_challenge, recommendations
 from app.services.seed import (
     has_seed_been_initialized,
     mark_seed_initialized,
@@ -97,6 +97,7 @@ app.include_router(auth.router)
 app.include_router(scan.router)
 app.include_router(stories.router)
 app.include_router(daily_challenge.router)
+app.include_router(recommendations.router)
 
 
 @app.get("/", tags=["root"])

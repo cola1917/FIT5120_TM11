@@ -64,6 +64,7 @@ def get_dashscope_openai_client() -> Optional["OpenAI"]:
     return OpenAI(
         api_key=s.dashscope_api_key.strip(),
         base_url=s.dashscope_base_url,
+        max_retries=0,
     )
 
 
