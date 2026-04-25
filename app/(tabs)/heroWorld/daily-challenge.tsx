@@ -108,6 +108,10 @@ export default function DailyChallengeScreen() {
     }
   };
 
+  const handleReturnToHeroWorld = () => {
+    router.push('/(tabs)/heroWorld' as any);
+  };
+
   const getImageForTask = (taskName: string) => {
     return TASK_IMAGES[taskName] || DEFAULT_IMAGE;
   };
@@ -212,6 +216,10 @@ export default function DailyChallengeScreen() {
             <TouchableOpacity style={styles.modalButton} onPress={handleCloseFeedback}>
               <Text style={styles.modalButtonText}>AWESOME!</Text>
               <ChevronRight color={Colors.on_primary} size={24} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.returnButton} onPress={handleReturnToHeroWorld}>
+              <Text style={styles.returnButtonText}>⬅ BACK TO HERO WORLD</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -387,6 +395,7 @@ const styles = StyleSheet.create({
     ...Typography.headlineMedium,
     color: Colors.primary,
     fontWeight: "900",
+    textAlign: "center",
   },
   modalBody: {
     alignItems: "center",
@@ -426,6 +435,23 @@ const styles = StyleSheet.create({
   modalButtonText: {
     ...Typography.labelLarge,
     color: Colors.on_primary,
+    fontWeight: "900",
+  },
+  returnButton: {
+    marginTop: Spacing.md,
+    backgroundColor: Colors.surface_container_high,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
+    gap: Spacing.sm,
+    minWidth: 200,
+  },
+  returnButtonText: {
+    ...Typography.labelLarge,
+    color: Colors.on_surface,
     fontWeight: "900",
   },
 });
