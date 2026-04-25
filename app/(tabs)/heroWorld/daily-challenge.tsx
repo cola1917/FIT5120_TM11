@@ -3,7 +3,7 @@ import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/fonts";
 import { Radius } from "@/constants/radius";
 import { Spacing } from "@/constants/spacing";
-import { completeDailyChallenge, getNextDailyChallenge, type DailyChallengeTask } from "@/services/dailyChallenge";
+import { completeDailyChallenge, getNextDailyChallenge, isDailyChallengeCompletedToday, type DailyChallengeTask } from "@/services/dailyChallenge";
 import { useRouter } from "expo-router";
 import { Check, ChevronRight, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
@@ -48,6 +48,7 @@ export default function DailyChallengeScreen() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [completedTaskName, setCompletedTaskName] = useState("");
+  const [alreadyCompletedToday, setAlreadyCompletedToday] = useState(false);
 
   useEffect(() => {
     loadChallenge();
@@ -56,8 +57,14 @@ export default function DailyChallengeScreen() {
   const loadChallenge = async () => {
     try {
       setLoading(true);
-      const data = await getNextDailyChallenge();
-      setChallenge(data);
+      // Check if already completed today
+      const completedToday = await isDailyChallengeCompletedToday();
+      setAlreadyCompletedToday(completedToday);
+      
+      if (!completedToday) {
+        const data = await getNextDailyChallenge();
+        setChallenge(data);
+      }
     } catch (error: any) {
       console.error("Failed to load daily challenge:", error);
       Alert.alert("Error", "Failed to load daily challenge. Please try again.");
@@ -74,6 +81,8 @@ export default function DailyChallengeScreen() {
       setFeedbackMessage(response.feedback);
       setCompletedTaskName(response.task_name);
       setShowFeedbackModal(true);
+      // Mark the challenge as completed for today
+      await markDailyChallengeCompletedToday();
     } catch (error: any) {
       console.error("Failed to complete challenge:", error);
       Alert.alert("Error", "Failed to complete challenge. Please try again.");
@@ -116,6 +125,35 @@ export default function DailyChallengeScreen() {
           <AppHeader />
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading your daily challenge...</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Show completed today screen if already completed
+  if (alreadyCompletedToday) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <AppHeader />
+          <View style={styles.completedContainer}>
+            <View style={styles.completedCard}>
+              <Text style={styles.completedEmoji}>🌟</Text>
+              <Text style={styles.completedTitle}>Wow, you're amazing!</Text>
+              <Text style={styles.completedMessage}>
+                You've finished today's challenge!
+              </Text>
+              <Text style={styles.completedSubMessage}>
+                🎉 Come back tomorrow for a brand new adventure!
+              </Text>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => router.push('/(tabs)/heroWorld' as any)}
+              >
+                <Text style={styles.backButtonText}>Back to Hero World</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -422,6 +460,58 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
   modalButtonText: {
+    ...Typography.labelLarge,
+    color: Colors.on_primary,
+    fontWeight: "900",
+  },
+  completedContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 50,
+  },
+  completedCard: {
+    backgroundColor: Colors.on_primary,
+    borderRadius: Radius.card,
+    padding: Spacing.xl,
+    alignItems: "center",
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    maxWidth: 360,
+  },
+  completedEmoji: {
+    fontSize: 72,
+    marginBottom: Spacing.md,
+  },
+  completedTitle: {
+    ...Typography.headlineMedium,
+    color: Colors.primary,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  completedMessage: {
+    ...Typography.titleLarge,
+    color: Colors.on_surface,
+    textAlign: "center",
+    marginBottom: Spacing.md,
+  },
+  completedSubMessage: {
+    ...Typography.bodyLarge,
+    color: Colors.on_surface_variant,
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+  },
+  backButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
+  },
+  backButtonText: {
     ...Typography.labelLarge,
     color: Colors.on_primary,
     fontWeight: "900",

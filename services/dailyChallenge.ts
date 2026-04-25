@@ -2,11 +2,48 @@
  * Daily Challenge API Service
  * 
  * Handles communication with the Daily Challenge backend endpoints.
+ * Also manages local storage for tracking completed challenges.
  */
 
 import { getToken } from './auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BACKEND_URL = 'https://fit5120-tm11.onrender.com';
+const DAILY_CHALLENGE_COMPLETED_KEY = 'daily_challenge_completed_';
+
+/**
+ * Get the storage key for a specific date
+ */
+function getStorageKeyForDate(date: Date): string {
+  const dateStr = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  return `${DAILY_CHALLENGE_COMPLETED_KEY}${dateStr}`;
+}
+
+/**
+ * Check if the daily challenge has been completed today
+ */
+export async function isDailyChallengeCompletedToday(): Promise<boolean> {
+  try {
+    const todayKey = getStorageKeyForDate(new Date());
+    const value = await AsyncStorage.getItem(todayKey);
+    return value === 'true';
+  } catch (error) {
+    console.error('Error checking daily challenge completion:', error);
+    return false;
+  }
+}
+
+/**
+ * Mark the daily challenge as completed for today
+ */
+export async function markDailyChallengeCompletedToday(): Promise<void> {
+  try {
+    const todayKey = getStorageKeyForDate(new Date());
+    await AsyncStorage.setItem(todayKey, 'true');
+  } catch (error) {
+    console.error('Error marking daily challenge as completed:', error);
+  }
+}
 
 export interface DailyChallengeTask {
   id: number;

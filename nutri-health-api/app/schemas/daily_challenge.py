@@ -37,3 +37,17 @@ class DailyChallengeCompleteResponse(BaseModel):
                 "feedback": "Your bones are getting hard as rocks!",
             }
         }
+
+
+class DailyChallengeStatusResponse(BaseModel):
+    """Response for checking if user has completed today's challenge."""
+    completed_today: bool = Field(..., description="Whether the user has completed today's challenge")
+    message: str | None = Field(None, description="Message to display if challenge is completed")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "completed_today": True,
+                "message": "Great job! You've completed today's challenge. Come back tomorrow for a new one!",
+            }
+        }
