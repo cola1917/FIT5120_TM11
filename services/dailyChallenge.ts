@@ -2,21 +2,27 @@
  * Daily Challenge API Service
  * 
  * Handles communication with the Daily Challenge backend endpoints.
- * Also manages local storage for tracking completed challenges.
+ * Also manages local storage for tracking completed challenges per user.
  */
 
 import { getToken } from './auth';
+import { getUserProfile } from './userProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BACKEND_URL = 'https://fit5120-tm11.onrender.com';
 const DAILY_CHALLENGE_COMPLETED_KEY = 'daily_challenge_completed_';
 
 /**
- * Get the storage key for a specific date
+ * Get the storage key for a specific date and user
  */
-function getStorageKeyForDate(date: Date): string {
+async function getStorageKeyForDate(date: Date): Promise<string> {
   const dateStr = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-  return `${DAILY_CHALLENGE_COMPLETED_KEY}${dateStr}`;
+  
+  // Get current user profile to bind to user
+  const profile = await getUserProfile();
+  const userId = profile?.username || 'anonymous';
+  
+  return `${DAILY_CHALLENGE_COMPLETED_KEY}${userId}_${dateStr}`;
 }
 
 /**
@@ -24,7 +30,7 @@ function getStorageKeyForDate(date: Date): string {
  */
 export async function isDailyChallengeCompletedToday(): Promise<boolean> {
   try {
-    const todayKey = getStorageKeyForDate(new Date());
+    const todayKey = await getStorageKeyForDate(new Date());
     const value = await AsyncStorage.getItem(todayKey);
     return value === 'true';
   } catch (error) {
@@ -38,7 +44,7 @@ export async function isDailyChallengeCompletedToday(): Promise<boolean> {
  */
 export async function markDailyChallengeCompletedToday(): Promise<void> {
   try {
-    const todayKey = getStorageKeyForDate(new Date());
+    const todayKey = await getStorageKeyForDate(new Date());
     await AsyncStorage.setItem(todayKey, 'true');
   } catch (error) {
     console.error('Error marking daily challenge as completed:', error);
