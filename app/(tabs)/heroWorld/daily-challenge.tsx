@@ -3,7 +3,7 @@ import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/fonts";
 import { Radius } from "@/constants/radius";
 import { Spacing } from "@/constants/spacing";
-import { completeDailyChallenge, getNextDailyChallenge, isDailyChallengeCompletedToday, type DailyChallengeTask } from "@/services/dailyChallenge";
+import { completeDailyChallenge, getNextDailyChallenge, isDailyChallengeCompletedToday, markDailyChallengeCompletedToday, type DailyChallengeTask } from "@/services/dailyChallenge";
 import { useRouter } from "expo-router";
 import { Check, ChevronRight, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
