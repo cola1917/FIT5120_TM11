@@ -48,7 +48,6 @@ const GOALS: Goal[] = [
     tilt: 'left',
     bgIcon: 'height',
     description: 'Eat these magical foods to grow tall and mighty like a superhero giraffe! 🦒✨',
-    mascotTip: 'Milk and yogurt have Calcium for super strong bones!',
     superFoods: [
       { name: 'Milk', description: 'Full of calcium power!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAAN8pyCJaVEN3Z9OM2cCtC0v9rv0SRiwOBuedIG-CeNACdVUSdZLATA9ey-GITNpkCVM3usfXh7z-IPU9LiwseDOpn9ndOR1GXyEF8yK8KVVCXOGDgE97tot7_uyoX1UQwerS2bodrZdCBz_0YnqetE-XAtjg2-qRUi6Afnh3H2Tnf09CjKaL8cGx7JhBrul4-v1hXv9fSHaMbs2QPH2tKa0jvYbX_h18BqkzuZ6kPluI5HnhSclsHcaz6OEtUXUV9Kwwx7KIx0g6' },
       { name: 'Yogurt', description: 'Good Choice', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA59RTQO9WCupNWaxpUgsW0iy6EzGSIyvIUJT3UUt-YI_C-fiPl2p9uHk6pKwoCGWI22bH7RoW9hJYp8D-pwMo9vlXKzkDGa0mOXgnHxH9WXmB4URuu5fgQTiUoFq_sNKQvHTxM0D6zsiPWhYDXtzB5OXC3_tvga9dbQBHRzKb9iHsudXqaLfHxLPKxuZuRluaTYkE5w64g3p4Ti2-z8aAve8RkTZVQkrWkgLb1Mm0990ia2hPpTRAuX-bQ5wCFFelvXQO_T6mVFVeL' },
@@ -73,7 +72,6 @@ const GOALS: Goal[] = [
     tilt: 'right',
     bgIcon: 'visibility',
     description: 'Fuel your eyes with these magical foods for amazing super-vision! 👀✨',
-    mascotTip: 'Carrots have Vitamin A to help you see in the dark! 🥕✨',
     superFoods: [
       { name: 'Carrots', description: 'Mega dose of Beta-Carotene for night vision!', image: 'https://tse3.mm.bing.net/th/id/OIP.6AM2gH5CTSKuvKjK2qy4ZwHaFD?rs=1&pid=ImgDetMain&o=7&rm=3', rating: 2 },
       { name: 'Blueberries', description: 'Protect your retina with powerful antioxidants.', image: 'https://pic.nximg.cn/file/20230811/33760392_173922575125_2.jpg', rating: 2 },
@@ -98,7 +96,6 @@ const GOALS: Goal[] = [
     tilt: 'right',
     bgIcon: 'bolt',
     description: 'Power up your brilliant brain with these super-smart snacks! 🧠💡',
-    mascotTip: 'Healthy fats in nuts and fish help your brain think super fast!',
     superFoods: [
       { name: 'Walnuts', description: 'Brain-shaped power nuts!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFHG-LX8gcRuY6NcsLl30vobCgQNPOWA_tJMlRrXss85MsSgb91D9gS9VdWUPCv88IOCHo-WikCyhD5U2LCnJ2MNsX7LI7YJJeb2puaBPA7vSj97iGKVufNkAuVQWVmmeqOTth0Ii9Gm6gNZFRz5cZUnAJGpHxpzm590smBFfI7FKCKVru46vdWWLTMeEHpFYoVUD4n9aVyz3IX4Aad3t7f7bB-dzMMbLb0faWANBGsfxAKpcJ8tVdU4Zk7T4YyuKGpOGBKRsSNJFE', rating: 2 },
       { name: 'Fish', description: 'Freshly grilled salmon power!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuArer2tViX3FsVLtHxPiziLwqgUL8g9-hbzILfllY8BN5H3wz7xx5paKLzV3hXrU3GcvzrJM6-vMPbugFX0Csgw02RJxIePzhJ5r0h-2kJTCzjMH7pGBAvSQjh7N_h3bfrU2OQnjpYS5NcZAjfYNmsQWDA39P-5I4zS8cV6Ho3bxfI3BVvTTiRAc4bW0NO2NNRSCBtBjQKibnieNw4xLhZeDTphIwZSyorJGDizhJ8MvO0PjBMP0crWh0Sp1VFVKpyricSBc9xfG-vm', rating: 2 },
@@ -123,7 +120,6 @@ const GOALS: Goal[] = [
     tilt: 'left',
     bgIcon: 'shield',
     description: 'Build your ultimate hero shield to zap away those sneaky germs! 🛡️⚡',
-    mascotTip: 'Vitamin C helps your body\'s army fight off bad germs!',
     superFoods: [
       { name: 'Oranges', description: 'Fresh juicy orange slices!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWL3m7aSDhAM7TeweNVJzXstmgJDQE5rv18jxz33migH-XdcMo-HB_693WAu2LX97cNZ26n-xHcEpV99oQ8qFtf5-Zsv33OezvcpLwDChemhrcW27BDqeF2yxY8Cwwl6Kqur9qTdpUVt_9kxx9J81E3DS55qj8EMWnxd6T_OTfMBSEJXZzoRax1MwE4hh9OAublBK3LvpzNJ18YtdYM0deS8BEkg_kw5eMZQx8_ehJd334ERZBwMgFnOGBUGYH9EZTM3La8XkF92es', rating: 3 },
       { name: 'Kiwi', description: 'Bright green Vitamin C power!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDC7h02EIWkYFj8N-Z7EOIqn5h2VNS3jDY7j26oUQKncHr-UOpXcedRcduJ1MyT9AesYDehd8jKPUg0wGod7M3_9OkCqXUF7d5ndERDWzbrhzckXElFGcKLDSachkPcAc2N_5EGPqccD-v_YTcHHNpDTDeK2mnuLmc9QtHYxDXzt9-PXzxO4dBY_srjnshUjL9OBKEx7b6_oYqYpnB6Nedk5LrXKegAruv5AMkV3mFuBZ-pxvJLeUk9KChpiGQS5fk75CtntBGfFTxT', rating: 2 },
@@ -148,7 +144,6 @@ const GOALS: Goal[] = [
     tilt: 'left',
     bgIcon: 'sentiment_very_satisfied',
     description: 'Munch on these happy foods for a joyful heart and mega smiles! 😊🌟',
-    mascotTip: 'Whole grains and fruit give you steady energy for a great mood!',
     superFoods: [
       { name: 'Banana', description: 'Instant smile!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrJkclsYpDmz3-b1gZiSIRbPkPZi79PP7NVytOwnp1wHtYjmCFItK2e5L9iR9mxJUvz-RSjCSakhTCatma28wponDmu_Sa61ayYfB8-IGoDACdg09LHTl-pGd0A92kcuEe7v3SFB2GMd2GJmfBVDxIX-vf_lB8dl26itO2m5KxVyurFeccF-LyEAjdJhd5_gOhU--0D5TOnvm6RQNX0wNEmwvwt4anT9EJReP8u-pfaHiZx3osEOy6aSxXab_h7Fu2w0IhcENhIEqC' },
       { name: 'Yogurt', description: 'Happy tummy!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBCPNSdS-WJ8Ix7CwX_1LwtJamOSa1fVzbdfk8KPp4llNl6lZDlTPiFV0XcTS03vGPhacmMdlQUXdz6OzRypAIxX4t0TuxBwMUyYcTWqNO1-j-R13OC127j1wi81Xxb22UXReHmlmGgQ1-84cmYcFbYo6QRKZZiT8HOUMwyZ5h0C0sHGlZySQjI91Hk-YKLBRw5EVhyfYkpNOKv2DIBuZH0nZ2qaA9obP67iEYrhm3phN48slnoCogUFTRBXtLf-kJ_WgtMoxqIf0pK' },
@@ -173,7 +168,6 @@ const GOALS: Goal[] = [
     tilt: 'right',
     bgIcon: 'fitness_center',
     description: 'Charge up your muscles with these mighty power snacks! 💪🦸',
-    mascotTip: 'Protein power for your growing muscles!',
     superFoods: [
       { name: 'Eggs', description: 'Protein power!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAZGcFl9Ii8gVLiu7SNhOUrn0VVRO9yQBsMLySaxxi7BkiueRjuhqoS0rg4swPkHzFrEijQnkxCnt_3d5pMxWd8Ky7vyYNXpshJ3hpQ_lhWXu5GMyLb-_4LxyH-D7DX6ywAeVAdyFGu0SXjLMDkknw83sgUQe9DorWv0IwlmKecaWIqPGClmsNGQl9IlYayHVoNBSRS81spV75_AE765QCHE12qJjs_3QdO7P6CgqgB2ACKI27vnHW4fabgoasD3TifKO_5BjYF' },
       { name: 'Milk', description: 'Muscle fuel!', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuByMR_KXYExPqayGjFnbQs9l7_kcEqWPikTaAZdb3GaMuzIWAPXB0n9Gm76rbuYQrbCQpbz2H1TGD8mwsMqGRGuPdA9xwLbsOjmE_tLqnn50aeV_mKnHoueIkrQBjupfHR8diOZ-fwMVuCekv3wkR0MCJZ2s_ykXshKExncGd44jkbx8jJwwWf_MgbXAtlfymresZ7O0hxHP8qFDAJlhCkiFZTzQLxlNH1o8_m11NymQFQ2FxqWe86K-q8AqMuDrAzNlW44mi16' },
