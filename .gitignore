@@ -2,6 +2,26 @@
 # Dependencies
 node_modules/
 
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
 # Python
 __pycache__/
 *.pyc
@@ -11,24 +31,21 @@ __pycache__/
 env/
 venv/
 .venv/
-.ENV
-.ENV.local
-.python-version
+pip-log.txt
+pip-selfcheck.json
+*.so
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.db
+*.sqlite
+*.sqlite3
 .pytest_cache/
 .mypy_cache/
-.coverage
-coverage/
-htmlcov/
-
-# Build outputs
-dist/
-build/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Logs
-*.log
+.hypothesis/
 
 # OS generated files
 .DS_Store
@@ -38,17 +55,12 @@ build/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Icon?
+```
 
-# Environment variables
-.env
-.env.local
-.env.*
-!.env.example
+Wait, I need to reconsider. The only modified file is `app/(tabs)/goal.tsx` which is a TypeScript React component file. This appears to be source code, not a build artifact or dependency. Looking at the change list again, there are no compiled files, dependency directories, or other artifacts that would warrant adding to .gitignore.
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+Since the changes are only to source code files (`.tsx`), no additional ignore rules are needed.
+
+```
 ```
