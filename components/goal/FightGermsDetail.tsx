@@ -66,13 +66,10 @@ export default function FightGermsDetail({ goal, onBack, recommendations, recLoa
             {displaySuperFoods.map((food) => (
               <View key={food.name} style={styles.foodCard}>
                 <View style={styles.foodInfo}>
-                  <View style={styles.starRow}>
-                    {[...Array(food.rating || 2)].map((_, starIdx) => (
-                      <Text key={starIdx} style={styles.star}>★</Text>
-                    ))}
-                  </View>
                   <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.goodChoiceText}>Good Choice</Text>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>GOOD CHOICE</Text>
+                  </View>
                 </View>
                 <View style={styles.foodImageContainer}>
                   <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
@@ -282,25 +279,25 @@ const styles = StyleSheet.create({
   foodInfo: {
     flex: 1,
   },
-  starRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
+  badge: {
+    backgroundColor: '#FCE4EC',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
-  star: {
+  badgeText: {
     color: '#E91E63',
-    fontSize: 18,
-    marginRight: 2,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   foodName: {
     fontSize: 24,
     fontWeight: '900',
     color: '#36392c',
     marginBottom: 2,
-  },
-  goodChoiceText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#E91E63',
   },
   foodImageContainer: {
     width: 100,

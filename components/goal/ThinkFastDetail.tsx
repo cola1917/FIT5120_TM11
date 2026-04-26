@@ -64,10 +64,7 @@ export default function ThinkFastDetail({ goal, onBack, recommendations, recLoad
                   <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
                 </View>
                 <View style={styles.foodInfo}>
-                  <View style={styles.foodTitleRow}>
-                    <Text style={styles.foodName}>{food.name}</Text>
-                    <Text style={styles.star}>★</Text>
-                  </View>
+                  <Text style={styles.foodName}>{food.name}</Text>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>GOOD CHOICE</Text>
                   </View>
@@ -295,20 +292,11 @@ const styles = StyleSheet.create({
   foodInfo: {
     flex: 1,
   },
-  foodTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
   foodName: {
     fontSize: 20,
     fontWeight: '900',
     color: '#36392c',
-  },
-  star: {
-    color: '#3b82f6',
-    fontSize: 18,
+    marginBottom: 4,
   },
   badge: {
     backgroundColor: '#E3F2FD',

@@ -47,7 +47,6 @@ export default function GrowUpDetail({ goal, onBack, recommendations, recLoading
             style={styles.heroImage} 
             resizeMode="contain"
           />
-          <Text style={styles.heroStar}>★</Text>
         </View>
         <View style={styles.heroTextContainer}>
           <Text style={styles.heroTitle}>Foods for 🌱 {goal.title}</Text>
@@ -76,10 +75,7 @@ export default function GrowUpDetail({ goal, onBack, recommendations, recLoading
                   <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
                 </View>
                 <View style={styles.foodInfo}>
-                  <View style={styles.foodTitleRow}>
-                    <Text style={styles.foodName}>{food.name}</Text>
-                    <Text style={styles.star}>★★</Text>
-                  </View>
+                  <Text style={styles.foodName}>{food.name}</Text>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>GOOD CHOICE</Text>
                   </View>
@@ -216,13 +212,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  heroStar: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    fontSize: 40,
-    color: '#4CAF50',
-  },
   heroTextContainer: {
     alignItems: 'center',
     marginBottom: 24,
@@ -332,20 +321,11 @@ const styles = StyleSheet.create({
   foodInfo: {
     flex: 1,
   },
-  foodTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
   foodName: {
     fontSize: 20,
     fontWeight: '900',
     color: '#36392c',
-  },
-  star: {
-    color: '#4CAF50',
-    fontSize: 14,
+    marginBottom: 4,
   },
   badge: {
     backgroundColor: '#E8F5E9',

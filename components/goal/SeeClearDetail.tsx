@@ -48,7 +48,6 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
             style={styles.heroImage}
             resizeMode="contain"
           />
-          <Text style={styles.heroStar}>★</Text>
         </View>
         <View style={styles.heroTextContainer}>
           <Text style={styles.heroTitle}>Foods for 👓 {goal.title}</Text>
@@ -74,13 +73,10 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
             {displaySuperFoods.map((food) => (
               <View key={food.name} style={styles.foodCard}>
                 <View style={styles.foodInfo}>
-                  <View style={styles.starRow}>
-                    {[...Array(food.rating || 2)].map((_, starIdx) => (
-                      <Text key={starIdx} style={styles.star}>★</Text>
-                    ))}
-                  </View>
                   <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.goodChoiceText}>Good Choice</Text>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>GOOD CHOICE</Text>
+                  </View>
                 </View>
                 <View style={styles.foodIconContainer}>
                   <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
@@ -214,13 +210,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  heroStar: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    fontSize: 40,
-    color: '#3b82f6',
-  },
   heroTextContainer: {
     alignItems: 'center',
     marginBottom: 24,
@@ -335,25 +324,25 @@ const styles = StyleSheet.create({
   foodInfo: {
     flex: 1,
   },
-  starRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
+  badge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
-  star: {
+  badgeText: {
     color: '#2196F3',
-    fontSize: 18,
-    marginRight: 2,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   foodName: {
     fontSize: 24,
     fontWeight: '900',
     color: '#36392c',
     marginBottom: 2,
-  },
-  goodChoiceText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#2196F3',
   },
   tryLessCard: {
     backgroundColor: '#fff',
