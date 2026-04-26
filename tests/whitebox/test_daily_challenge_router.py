@@ -6,8 +6,6 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.models.user_daily_challenge import UserDailyChallengeCompletion
-
 
 @pytest.fixture()
 def daily_challenge_module(monkeypatch):
@@ -19,6 +17,9 @@ def daily_challenge_module(monkeypatch):
 
 @pytest.fixture()
 def sqlite_session(daily_challenge_module):
+    # Import after daily_challenge_module sets DATABASE_URL (import chain touches app.database).
+    from app.models.user_daily_challenge import UserDailyChallengeCompletion
+
     engine = create_engine("sqlite:///:memory:")
     daily_challenge_module.DailyHealthyChallenge.__table__.create(bind=engine)
     UserDailyChallengeCompletion.__table__.create(bind=engine)
@@ -55,6 +56,8 @@ def sqlite_session(daily_challenge_module):
 
 @pytest.fixture()
 def single_row_session(daily_challenge_module):
+    from app.models.user_daily_challenge import UserDailyChallengeCompletion
+
     engine = create_engine("sqlite:///:memory:")
     daily_challenge_module.DailyHealthyChallenge.__table__.create(bind=engine)
     UserDailyChallengeCompletion.__table__.create(bind=engine)
