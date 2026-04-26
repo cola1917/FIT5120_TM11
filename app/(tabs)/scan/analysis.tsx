@@ -176,10 +176,20 @@ export default function AnalysisScreen() {
 
       setAnalysisResult(result);
     } catch (error) {
-      console.error('Error scanning food:', error);
-      
-      if (error instanceof ApiError) {
-        if (error.statusCode === 408) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error || '');
+      const isNoFoodDetected = errorMessage.toLowerCase().includes('no food detected');
+
+      if (isNoFoodDetected) {
+        setCannotRecognise(true);
+      } else if (error instanceof ApiError) {
+        const isNoFoodDetected =
+          error.statusCode === 400 &&
+          error.message.toLowerCase().includes('no food detected');
+
+        if (isNoFoodDetected) {
+          setCannotRecognise(true);
+        } else if (error.statusCode === 408) {
           setApiError('Request timed out. Please try again!');
         } else if (error.statusCode === 0) {
           setApiError('Network error. Please check your connection!');
@@ -189,6 +199,7 @@ export default function AnalysisScreen() {
           setApiError(error.message || 'Failed to analyze image. Please try again.');
         }
       } else {
+        console.log('Unexpected scan error:', error);
         setApiError('An unexpected error occurred. Please try again.');
       }
     } finally {
@@ -221,9 +232,9 @@ export default function AnalysisScreen() {
   if (cannotRecognise) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.feedbackTitle}>Unable to recognise this food</Text>
+        <Text style={styles.feedbackTitle}>Oops! I can’t see your food clearly</Text>
         <Text style={styles.feedbackText}>
-          Please try scanning again with the food clearly inside the frame.
+          Can you try again?
         </Text>
 
         <TouchableOpacity
@@ -243,13 +254,12 @@ export default function AnalysisScreen() {
     );
   }
 
-  if (noResult || !analysisResult) {
+  // Show API error if present
+  if (apiError) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.feedbackTitle}>Unable to retrieve result at the moment</Text>
-        <Text style={styles.feedbackText}>
-          Please try again. We do not want to show incomplete or confusing information.
-        </Text>
+        <Text style={styles.feedbackTitle}>Error</Text>
+        <Text style={styles.feedbackText}>{apiError}</Text>
 
         <TouchableOpacity style={styles.primaryAction} onPress={loadAnalysis}>
           <Text style={styles.primaryActionText}>Retry</Text>
@@ -265,12 +275,13 @@ export default function AnalysisScreen() {
     );
   }
 
-  // Show API error if present
-  if (apiError) {
+  if (noResult || !analysisResult) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.feedbackTitle}>Error</Text>
-        <Text style={styles.feedbackText}>{apiError}</Text>
+        <Text style={styles.feedbackTitle}>Unable to retrieve result at the moment</Text>
+        <Text style={styles.feedbackText}>
+          Please try again. We do not want to show incomplete or confusing information.
+        </Text>
 
         <TouchableOpacity style={styles.primaryAction} onPress={loadAnalysis}>
           <Text style={styles.primaryActionText}>Retry</Text>
