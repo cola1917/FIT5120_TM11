@@ -45,10 +45,6 @@ export default function FightGermsDetail({ goal, onBack, recommendations, recLoa
         <View style={styles.heroCard}>
           <Text style={styles.heroTitle}>Foods for 🛡️ {goal.title}</Text>
           <Text style={styles.heroSubtitle}>{goal.description}</Text>
-          <View style={styles.tipRow}>
-            <ShieldCheck color="#E91E63" size={24} />
-            <Text style={styles.tipText}>{goal.mascotTip}</Text>
-          </View>
         </View>
       </View>
 

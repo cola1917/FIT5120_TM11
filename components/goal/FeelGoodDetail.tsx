@@ -47,11 +47,6 @@ export default function FeelGoodDetail({ goal, onBack, recommendations, recLoadi
         </View>
       </View>
 
-      {/* Mascot Tip */}
-      <View style={styles.tipSection}>
-        <Text style={styles.tipText}>"{goal.mascotTip}"</Text>
-      </View>
-
       {/* Super Power Foods */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -183,20 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FBC02D',
-  },
-  mascotTipContainer: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-  },
-  mascotTip: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#92400E',
-    fontWeight: '600',
   },
   heroSection: {
     marginBottom: 32,

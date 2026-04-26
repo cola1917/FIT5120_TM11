@@ -31,7 +31,6 @@ export interface Goal {
   tilt: 'left' | 'right';
   bgIcon: string;
   description: string;
-  mascotTip: string;
   superFoods: Food[];
   tryLess: TryLess;
 }

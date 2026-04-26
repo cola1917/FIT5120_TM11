@@ -52,10 +52,6 @@ export default function GrowUpDetail({ goal, onBack, recommendations, recLoading
           <Text style={styles.heroTitle}>Foods for 🌱 {goal.title}</Text>
           <Text style={styles.heroSubtitle}>{goal.description}</Text>
         </View>
-        <View style={styles.tipCard}>
-          <Text style={styles.tipText}>{goal.mascotTip}</Text>
-          <View style={styles.tipTriangle} />
-        </View>
       </View>
 
       {/* Super Power Foods */}
@@ -228,39 +224,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 8,
     textAlign: 'center',
-  },
-  tipCard: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.05)',
-    maxWidth: 320,
-  },
-  tipText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#36392c',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  tipTriangle: {
-    position: 'absolute',
-    top: -12,
-    left: '50%',
-    marginLeft: -12,
-    width: 24,
-    height: 24,
-    backgroundColor: '#fff',
-    transform: [{ rotate: '45deg' }],
-    borderLeftWidth: 2,
-    borderTopWidth: 2,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   section: {
     marginBottom: 40,
