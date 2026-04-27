@@ -5,7 +5,7 @@ export default function StoriesLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="[storyId]" />
+      <Stack.Screen name="[storyId]" options={{headerShown: true}}/>
       <Stack.Screen name="food-fact" />
     </Stack>
   );

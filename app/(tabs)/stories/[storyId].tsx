@@ -45,6 +45,7 @@ export default function StoryReaderScreen() {
   const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
   const [audioState, setAudioState] = useState<'playing' | 'loading' | 'idle' | 'error'>('idle');
 
+  const scrollViewRef = useRef<ScrollView | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
 
   const loadStory = async () => {
@@ -190,19 +191,19 @@ export default function StoryReaderScreen() {
       // isAutoScrolling.current = true;
       
       // Auto-scroll to next page
-      // scrollViewRef.current?.scrollTo({
-      //   y: (nextPage - 1) * PAGE_HEIGHT,
-      //   animated: true,
-      // });
+      scrollViewRef.current?.scrollTo({
+        // y: (nextPage - 1) * PAGE_HEIGHT,
+        animated: true,
+      });
       
       // Update current page
-      // setCurrentPage(nextPage);
+      setCurrentPage(nextPage);
       
       // Wait for scroll animation to complete, then play next page
-      // setTimeout(() => {
-      //   isAutoScrolling.current = false;
-      //   playAudioForPage(nextPage);
-      // }, 600);
+      setTimeout(() => {
+        // isAutoScrolling.current = false;
+        playAudioForPage(nextPage);
+      }, 600);
     }
     // If last page, just stay idle
   };
@@ -214,20 +215,6 @@ export default function StoryReaderScreen() {
       pathname: '/stories/story-outcome',
       params: { storyId: story.id },
     });
-  };
-
-  const handleNextPage = () => {
-    if (!storyTextData) return;
-    if (currentPage < storyTextData.pages.length - 1) {
-      setCurrentPage(currentPage + 1);
-      cleanupAudio();
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
   };
 
   const handleBackPress = async () => {
@@ -260,7 +247,7 @@ export default function StoryReaderScreen() {
       <View style={styles.centered}>
         <Text style={styles.feedbackTitle}>Unable to load story</Text>
         <Text style={styles.feedbackText}>
-          We could not open this story right now.
+          Unable to open this story right now.
         </Text>
 
         <TouchableOpacity style={styles.primaryAction} onPress={loadStory}>
@@ -274,9 +261,6 @@ export default function StoryReaderScreen() {
     );
   }
 
-  const currentPageData = storyTextData.pages[currentPage];
-  const imageUrl = getStoryPageImageUrl(storyId, currentPage + 1);
-
   return (
     <ScrollView
       style={styles.container}
@@ -287,9 +271,6 @@ export default function StoryReaderScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => handleBackPress()}>
           <ArrowLeft size={20} color="#2D241F" />
         </TouchableOpacity>
-
-        {/* Spacer */}
-        {/* <View style={{flex: 1}}></View> */}
 
         <TouchableOpacity
           style={[styles.listenButton, { backgroundColor: '#E77A1F' }]}
@@ -304,40 +285,16 @@ export default function StoryReaderScreen() {
       </View>
 
       <View style={styles.pagesContainer}>
-        <View style={styles.pageCard}>
-          <Text style={styles.pageNumber}>
-            Page {currentPage + 1}/{story.pageCount}
-          </Text>
-
-          <Text style={styles.pageText}>{currentPageData.storyText}</Text>
-          
-          <Image
-            source={{ uri: imageUrl, headers: authHeaders || undefined }}
-            style={styles.pageImage}
-            resizeMode="cover"
-          />
-        </View>
-
-        <View style={styles.navigationRow}>
-          <TouchableOpacity
-            style={[styles.navButton, currentPage === 0 && styles.navButtonDisabled]}
-            onPress={handlePrevPage}
-            disabled={currentPage === 0}
-          >
-            <Text style={[styles.navButtonText, currentPage === 0 && styles.navButtonTextDisabled]}>
-              Previous
-            </Text>
-          </TouchableOpacity>
-
-          {currentPage < story.pageCount - 1 ? (
-            <TouchableOpacity
-              style={styles.navButton}
-              onPress={handleNextPage}
-            >
-              <Text style={styles.navButtonText}>Next</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        {storyTextData.pages.map((p, i) => (
+          <View key={i}>
+            <Text style={styles.pageText}>{p.storyText}</Text>
+            <Image
+              source={{ uri: getStoryPageImageUrl(storyId, i + 1), headers: authHeaders || undefined }}
+              style={styles.pageImage}
+              resizeMode="cover"
+            />
+          </View>
+        ))}
 
         {currentPage === story.pageCount - 1 && (
           <View style={styles.factPromptCard}>
@@ -366,7 +323,7 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   heroCard: {
-    margin: 16,
+    marginHorizontal: 16,
     marginTop: 34,
     borderRadius: 28,
     overflow: 'hidden',
@@ -408,35 +365,19 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   pagesContainer: {
-    paddingHorizontal: 16,
-  },
-  pageCard: {
-    backgroundColor: Colors.surface_bright,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#F1E3C8',
-    marginBottom: 16,
-  },
-  pageNumber: {
-    paddingLeft: Spacing.spacing_4,
-    paddingTop: Spacing.spacing_4,
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#8B6F47',
+
   },
   pageText: {
     fontSize: 22,
     lineHeight: 34,
     color: '#2D241F',
     fontWeight: '500',
-    marginBottom: 16,
-    padding: Spacing.spacing_4
+    paddingVertical: Spacing.spacing_4,
+    paddingHorizontal: Spacing.spacing_6
   },
   pageImage: {
     width: '100%',
     aspectRatio: 1,
-    borderBottomLeftRadius: Radius.card,
-    borderBottomRightRadius: Radius.card,
     backgroundColor: '#EAEAEA',
   },
   factPromptCard: {

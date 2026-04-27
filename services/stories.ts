@@ -7,8 +7,8 @@
 
 import { getToken, clearToken } from './auth';
 
-const BACKEND_URL = 'https://fit5120-tm11.onrender.com'
-//const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://10.192.56.70:8000';
+// const BACKEND_URL = 'https://fit5120-tm11.onrender.com'
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://fit5120-tm11.onrender.com';
 //const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://192.168.100.238:8000';
 
 const API_TIMEOUT = 30000; // 30 seconds
@@ -210,6 +210,10 @@ export function getStoryPageImageUrl(storyId: string, pageNumber: number): strin
  */
 export function getStoryPageAudioUrl(storyId: string, pageNumber: number): string {
   return `${BACKEND_URL}/stories/${storyId}/pages/${pageNumber}/audio`;
+}
+
+export function getStoryOutcomeAudioUrl(storyId: string): string {
+  return `${BACKEND_URL}/stories/${storyId}/outcome/audio`;
 }
 
 /**
