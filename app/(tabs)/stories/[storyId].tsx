@@ -1,5 +1,5 @@
 import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl, getAuthHeaders, getStories } from '@/services/stories';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation, Stack } from 'expo-router';
 import { ArrowLeft, Loader, Pause, Play, TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { AutoSizeText, ResizeTextMode } from 'react-native-auto-size-text';
@@ -11,6 +11,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Audio } from 'expo-av';
@@ -47,6 +49,8 @@ export default function StoryReaderScreen() {
 
   const scrollViewRef = useRef<ScrollView | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const pageHeightsRef = useRef<number[]>([]);
+  const isAutoScrollingRef = useRef(false);
 
   const loadStory = async () => {
     setLoading(true);
@@ -174,7 +178,8 @@ export default function StoryReaderScreen() {
 
   const handleListenPress = async () => {
     if (audioState === 'idle' || audioState === 'error') {
-      await playAudioForPage(currentPage + 1);
+      // Play audio for the current page being displayed (currentPage is 0-indexed, pages are 1-indexed)
+      await playAudioForPage(currentPage);
     } else if (audioState === 'playing') {
       await cleanupAudio();
     }
@@ -184,25 +189,28 @@ export default function StoryReaderScreen() {
     setAudioState('idle');
     
     // Auto-advance to next page if available
-    if (story && pageNumber < story.pageCount) {
-      const nextPage = pageNumber + 1;
+    if (story && pageNumber < story.pageCount - 1) {
+      const nextPageIndex = pageNumber + 1;
       
       // Set flag to prevent scroll handler from interfering
-      // isAutoScrolling.current = true;
+      isAutoScrollingRef.current = true;
+      
+      // Calculate scroll position for next page
+      const scrollY = pageHeightsRef.current.slice(0, nextPageIndex).reduce((sum, height) => sum + height, 0);
       
       // Auto-scroll to next page
       scrollViewRef.current?.scrollTo({
-        // y: (nextPage - 1) * PAGE_HEIGHT,
+        y: scrollY,
         animated: true,
       });
       
       // Update current page
-      setCurrentPage(nextPage);
+      setCurrentPage(nextPageIndex);
       
       // Wait for scroll animation to complete, then play next page
       setTimeout(() => {
-        // isAutoScrolling.current = false;
-        playAudioForPage(nextPage);
+        isAutoScrollingRef.current = false;
+        playAudioForPage(nextPageIndex);
       }, 600);
     }
     // If last page, just stay idle
@@ -228,6 +236,27 @@ export default function StoryReaderScreen() {
     if (audioState === 'loading') return (<Loader size={18} color={'#FFFFFF'} />);
     if (audioState === 'error') return (<TriangleAlert size={18} color={'#FFFFFF'} />);
   }
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isAutoScrollingRef.current) return;
+
+    const scrollY = event.nativeEvent.contentOffset.y;
+    let accumulatedHeight = 0;
+    let newPageIndex = 0;
+
+    for (let i = 0; i < pageHeightsRef.current.length; i++) {
+      if (scrollY < accumulatedHeight + pageHeightsRef.current[i] / 2) {
+        newPageIndex = i;
+        break;
+      }
+      accumulatedHeight += pageHeightsRef.current[i];
+      newPageIndex = i + 1;
+    }
+
+    if (newPageIndex !== currentPage && newPageIndex < (story?.pageCount || 0)) {
+      setCurrentPage(newPageIndex);
+    }
+  };
 
 
   if (loading) {
@@ -262,41 +291,64 @@ export default function StoryReaderScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.heroCard}>
-        <TouchableOpacity style={styles.backButton} onPress={() => handleBackPress()}>
-          <ArrowLeft size={20} color="#2D241F" />
-        </TouchableOpacity>
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle: story?.title || 'Story',
+          headerLeft: () => (
+            <TouchableOpacity onPress={handleBackPress} style={{ marginLeft: 8 }}>
+              <ArrowLeft size={24} color="#2D241F" />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              style={[styles.headerListenButton, { backgroundColor: '#E77A1F' }]}
+              onPress={handleListenPress}
+              disabled={audioState === 'loading'}
+            >
+              {iconForAudioState()}
+              <Text style={styles.headerListenButtonText}>
+                {audioState === 'playing' ? 'Pause' : 'Listen'}
+              </Text>
+            </TouchableOpacity>
+          ),
+          headerStyle: {
+            backgroundColor: Colors.surface,
+          },
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: '#2D241F',
+          },
+        }}
+      />
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        <View style={styles.pagesContainer}>
+          {storyTextData.pages.map((p, i) => (
+            <View
+              key={i}
+              onLayout={(event) => {
+                const { height } = event.nativeEvent.layout;
+                pageHeightsRef.current[i] = height;
+              }}
+            >
+              <Text style={styles.pageText}>{p.storyText}</Text>
+              <Image
+                source={{ uri: getStoryPageImageUrl(storyId, i + 1), headers: authHeaders || undefined }}
+                style={styles.pageImage}
+                resizeMode="cover"
+              />
+            </View>
+          ))}
 
-        <TouchableOpacity
-          style={[styles.listenButton, { backgroundColor: '#E77A1F' }]}
-          onPress={handleListenPress}
-          disabled={audioState === 'loading'}
-        >
-          {iconForAudioState()}
-          <Text style={styles.listenButtonText}>
-            {audioState === 'playing' ? 'Pause' : 'Listen'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.pagesContainer}>
-        {storyTextData.pages.map((p, i) => (
-          <View key={i}>
-            <Text style={styles.pageText}>{p.storyText}</Text>
-            <Image
-              source={{ uri: getStoryPageImageUrl(storyId, i + 1), headers: authHeaders || undefined }}
-              style={styles.pageImage}
-              resizeMode="cover"
-            />
-          </View>
-        ))}
-
-        {currentPage === story.pageCount - 1 && (
           <View style={styles.factPromptCard}>
             <Text style={styles.factPromptTitle}>Want to know more?</Text>
 
@@ -308,9 +360,9 @@ export default function StoryReaderScreen() {
               <Text style={styles.outcomeButtonText}>View Story Outcome</Text>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </>
   );
 }
 
@@ -322,46 +374,19 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 120,
   },
-  heroCard: {
-    marginHorizontal: 16,
-    marginTop: 34,
-    borderRadius: 28,
-    overflow: 'hidden',
-    backgroundColor: Colors.surface_dim,
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  backButton: {
-    margin: Spacing.sm,
-    width: 44,
-    height: 44,
-    borderRadius: Radius.badge,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999,
-  },
-  heroContent: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingTop: 72,
-  },
-  listenButton: {
-    alignSelf: 'center',
-    margin: Spacing.sm,
-    marginLeft: 'auto',
-    minWidth: 150,
-    paddingVertical: 14,
+  headerListenButton: {
+    marginRight: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: Radius.button_primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
   },
-  listenButtonText: {
+  headerListenButtonText: {
     color: Colors.on_secondary,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
   },
   pagesContainer: {
