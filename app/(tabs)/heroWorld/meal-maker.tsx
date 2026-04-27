@@ -18,7 +18,7 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Audio } from 'expo-av';
-import { BookOpen, Play, Star } from 'lucide-react-native';
+import { BookOpen, LogOut, Play, Star } from 'lucide-react-native';
 
 import { useGameEngine } from '@/hooks/games/useGameEngine';
 import AboutModal from '@/components/games/meal-maker/AboutModal';
@@ -245,8 +245,15 @@ export default function MealMakerScreen() {
                 onPress={() => setShowAbout(true)}
                 activeOpacity={0.8}
               >
-                <BookOpen size={20} color="#4F4A43" />
+                <BookOpen size={20} color={Colors.outline} />
                 <Text style={styles.aboutButtonText}>How to Play</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.aboutButton} onPress={handleBack} activeOpacity={0.85}>
+                <View style={styles.playIconCircle}>
+                  <LogOut size={28} color={Colors.outline} />
+                </View>
+                <Text style={styles.aboutButtonText}>Quit</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -318,7 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing['2xl'],
     gap: Spacing.lg,
-    backgroundColor: '#FFFDF4',
+    backgroundColor: Colors.surface,
   },
   heroImage: {
     height: 160,
@@ -407,15 +414,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
     borderRadius: Radius.full,
-    backgroundColor: '#F0EBE0',
+    borderWidth: Spacing.xs,
+    borderColor: Colors.outline,
+    backgroundColor: Colors.inverse_on_surface,
   },
   aboutButtonText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#4F4A43',
+    color: Colors.outline,
     fontFamily: 'BeVietnamPro-Medium',
   },
-
   // Playing overlays
   scorePopupContainer: {
     position: 'absolute',

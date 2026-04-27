@@ -18,6 +18,9 @@ import { Typography } from '@/constants/fonts';
 import { Spacing } from '@/constants/spacing';
 import { Radius } from '@/constants/radius';
 
+const MEDIUM_SCORE_THRESHOLD = 120;
+const HIGH_SCORE_THRESHOLD = 180;
+
 interface GameOverOverlayProps {
   score: number;
   highScore: number;
@@ -55,7 +58,7 @@ export default function GameOverOverlay({
   return (
     <View style={styles.overlay}>
       <View style={styles.content}>
-        <Text style={styles.title}>Great Job,{`\n`}Hero!</Text>
+        <Text style={styles.title}>Great Job, Hero!</Text>
 
         <Image
           source={require('../../../assets/images/Game_results_screen.png')}
@@ -71,15 +74,23 @@ export default function GameOverOverlay({
               <Text style={styles.newBestText}>NEW BEST!</Text>
             </View>
           )}
-          {!isNewHighScore && (
+          {!!highScore && !isNewHighScore && (
             <Text style={styles.bestText}>Best: {highScore}</Text>
           )}
         </Animated.View>
 
-        <View style={styles.messageCard}>
-          <Text style={styles.messageText}>You made healthy choices!{`\n`}Keep being awesome!</Text>
-          <Heart size={24} color="#79B95B" fill="#79B95B" />
-        </View>
+        {score > HIGH_SCORE_THRESHOLD ?
+          (
+            <View style={styles.messageCard}>
+              <Text style={styles.messageText}>You made healthy choices!</Text>
+              <Text style={styles.messageText}>Keep being awesome!</Text>
+              <Heart size={24} color="#79B95B" fill="#79B95B" />
+            </View>
+          ) :
+          score > MEDIUM_SCORE_THRESHOLD ?
+            (<Text style={styles.messageText}>You made healthy choices!</Text>) :
+            (undefined)
+        }
 
         <View style={styles.buttons}>
           <TouchableOpacity style={styles.primaryButton} onPress={onPlayAgain} activeOpacity={0.85}>
@@ -178,10 +189,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4FAEC',
     paddingVertical: Spacing.base,
     paddingHorizontal: Spacing.lg,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
     marginTop: Spacing.sm,
   },
   messageText: {
