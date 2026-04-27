@@ -15,7 +15,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
@@ -238,6 +238,7 @@ const prefStyles = StyleSheet.create({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -303,17 +304,17 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.container}>
           {/* Back button */}
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -331,14 +332,14 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const mealMakerHighScore = profile.highScores['meal-maker'] ?? 0;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Back button */}
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -410,12 +411,12 @@ export default function ProfileScreen() {
           <Text style={styles.deleteButtonText}>🗑️ Delete Profile</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container_outer: {
     flex: 1,
     backgroundColor: Colors.surface,
   },

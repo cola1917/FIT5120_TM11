@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AutoSizeText, ResizeTextMode } from 'react-native-auto-size-text';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
@@ -37,6 +37,7 @@ interface Story {
 }
 
 export default function StoriesScreen() {
+  const insets = useSafeAreaInsets();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -182,18 +183,18 @@ export default function StoriesScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#E77A1F" />
           <Text style={styles.loadingText}>Loading stories...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.centered}>
           <Text style={styles.errorTitle}>Oops!</Text>
           <Text style={styles.errorText}>{error}</Text>
@@ -201,12 +202,12 @@ export default function StoriesScreen() {
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.container}>
         {/* Shared app header used across main pages */}
         <AppHeader />
@@ -277,7 +278,7 @@ export default function StoriesScreen() {
           </View>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
@@ -113,6 +113,7 @@ const avatarStyles = StyleSheet.create({
 // Main Screen
 
 export default function ProfileCreateScreen() {
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState('');
   const [avatarId, setAvatarId] = useState<AvatarId>('hero');
   const [ageString, setAgeString] = useState('10');
@@ -185,7 +186,7 @@ export default function ProfileCreateScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
@@ -274,12 +275,12 @@ export default function ProfileCreateScreen() {
           <Text style={styles.skipButtonText}>Skip for now</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container_outer: {
     flex: 1,
     backgroundColor: Colors.surface,
   },

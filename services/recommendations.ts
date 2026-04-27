@@ -11,7 +11,7 @@
 import { getToken } from './auth';
 import type { BlacklistItem, FoodPreferenceItem } from './userProfile';
 
-const BACKEND_URL = 'https://fit5120-tm11.onrender.com';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://fit5120-tm11.onrender.com';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ export interface RecommendationResponse {
 
 // ─── Preference normalisation ─────────────────────────────────────────────────
 
-const MEAT_PREFS = new Set<FoodPreferenceItem>(['chicken', 'beef', 'pork']);
+const MEAT_PREFS = new Set<FoodPreferenceItem>(['meat']);
 
 /**
  * Merge chicken / beef / pork into a single "meat" API preference ID.

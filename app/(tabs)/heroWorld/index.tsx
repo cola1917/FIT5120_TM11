@@ -5,7 +5,7 @@ import { Radius } from "@/constants/radius";
 import { Spacing } from "@/constants/spacing";
 import { ChevronRight, Gamepad2 } from "lucide-react-native";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import React from "react";
 import { AutoSizeText, ResizeTextMode } from "react-native-auto-size-text";
@@ -43,6 +43,7 @@ const GAMES: GameTile[] = [
 ];
 
 export default function HeroWorldScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const handleGamePress = (game: GameTile) => {
@@ -79,7 +80,7 @@ export default function HeroWorldScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader/>
 
@@ -133,7 +134,7 @@ export default function HeroWorldScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 };
 

@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /*
   DEBUG FLAGS FOR TESTING
@@ -22,6 +22,7 @@ const DEBUG_FORCE_CAMERA_UNAVAILABLE = false;
 const DEBUG_FORCE_CAPTURE_FAILURE = false;
 
 export default function CameraScreen() {
+  const insets = useSafeAreaInsets();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null);
@@ -83,7 +84,7 @@ export default function CameraScreen() {
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={styles.permissionContainer}>
+      <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Camera access needed</Text>
           <Text style={styles.permissionText}>
@@ -98,13 +99,13 @@ export default function CameraScreen() {
             <Text style={styles.secondaryButtonText}>GO BACK</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (DEBUG_FORCE_CAMERA_UNAVAILABLE || cameraError) {
     return (
-      <SafeAreaView style={styles.permissionContainer}>
+      <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Unable to access camera</Text>
           <Text style={styles.permissionText}>
@@ -119,7 +120,7 @@ export default function CameraScreen() {
             <Text style={styles.secondaryButtonText}>GO BACK</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -134,7 +135,7 @@ export default function CameraScreen() {
         }}
       />
 
-      <SafeAreaView style={styles.overlay}>
+      <View style={[styles.overlay, { paddingTop: insets.top }]}>
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.topButton} onPress={() => router.back()}>
             <Text style={styles.topButtonText}>Back</Text>
@@ -161,7 +162,7 @@ export default function CameraScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }

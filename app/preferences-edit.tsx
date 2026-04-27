@@ -15,7 +15,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
@@ -86,6 +86,7 @@ function buildPreferencesFromMaps(
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function PreferencesEditScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [likeDislikeMap, setLikeDislikeMap] = useState<LikeDislikeMap>(createDefaultLikeDislikeMap);
@@ -145,16 +146,16 @@ export default function PreferencesEditScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Header row */}
         <View style={styles.headerRow}>
@@ -194,12 +195,12 @@ export default function PreferencesEditScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container_outer: {
     flex: 1,
     backgroundColor: Colors.surface,
   },

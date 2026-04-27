@@ -16,7 +16,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
@@ -25,6 +25,7 @@ import { Radius } from '@/constants/radius';
 import { getUserProfile, saveUserProfile } from '@/services/userProfile';
 
 export default function ProfileEditScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -99,16 +100,16 @@ export default function ProfileEditScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Header row */}
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -178,12 +179,12 @@ export default function ProfileEditScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container_outer: {
     flex: 1,
     backgroundColor: Colors.surface,
   },

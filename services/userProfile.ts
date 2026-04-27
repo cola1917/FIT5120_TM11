@@ -17,9 +17,7 @@ export type FoodPreferenceItem =
   | 'rice'
   | 'bread'
   | 'noodles'
-  | 'chicken'
-  | 'beef'
-  | 'pork'
+  | 'meat'
   | 'fish'
   | 'dairy';
 
@@ -27,7 +25,7 @@ export type BlacklistItem =
   | 'egg'
   | 'bread'
   | 'milk'
-  | 'peanut'
+  | 'pork'
   | 'seafood'
   | 'nuts';
 

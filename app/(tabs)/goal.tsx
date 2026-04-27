@@ -21,7 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BeStrongDetail from '../../components/goal/BeStrongDetail';
 import FeelGoodDetail from '../../components/goal/FeelGoodDetail';
 import FightGermsDetail from '../../components/goal/FightGermsDetail';
@@ -186,6 +186,7 @@ const GOALS: Goal[] = [
 ];
 
 export default function GoalScreen() {
+  const insets = useSafeAreaInsets();
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
   const [recLoading, setRecLoading] = useState(false);
@@ -318,7 +319,7 @@ export default function GoalScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container_outer, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Shared app header with menu button */}
         <AppHeader title={selectedGoalId ? selectedGoal?.title : 'NutriHeroes'} />
@@ -328,12 +329,12 @@ export default function GoalScreen() {
 
       </ScrollView>
       
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container_outer: {
     flex: 1,
     backgroundColor: '#F6F8EC',
   },

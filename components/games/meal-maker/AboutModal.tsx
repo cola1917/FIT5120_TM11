@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  SafeAreaView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
@@ -76,6 +76,7 @@ const SCORING_GROUPS = [
 // Component
 
 export default function AboutModal({ visible, onClose }: AboutModalProps) {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -83,7 +84,7 @@ export default function AboutModal({ visible, onClose }: AboutModalProps) {
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>How to Play 🍽️</Text>
@@ -174,7 +175,7 @@ export default function AboutModal({ visible, onClose }: AboutModalProps) {
             <Text style={styles.gotItText}>Got it! Let{"'"}s play 🎉</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
