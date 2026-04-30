@@ -1,9 +1,17 @@
 from types import SimpleNamespace
 
-from app.services import health_scoring
+import pytest
 
 
-def test_build_query_variants_expands_aliases_and_components():
+@pytest.fixture()
+def health_scoring(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@localhost:5432/nutrihealth")
+    from app.services import health_scoring as health_scoring_module
+
+    return health_scoring_module
+
+
+def test_build_query_variants_expands_aliases_and_components(health_scoring):
     variants = health_scoring._build_query_variants("Mango Sticky Rice")
 
     assert "mango sticky rice" in variants
@@ -13,7 +21,7 @@ def test_build_query_variants_expands_aliases_and_components():
     assert "rice" in variants
 
 
-def test_build_query_variants_removes_stopwords():
+def test_build_query_variants_removes_stopwords(health_scoring):
     variants = health_scoring._build_query_variants("Stir Fried Squid With Vegetables")
 
     assert "squid fried" in variants
@@ -21,7 +29,7 @@ def test_build_query_variants_removes_stopwords():
     assert "squid" in variants
 
 
-def test_map_health_grade_to_score_prefers_grade_then_hcl_compliance():
+def test_map_health_grade_to_score_prefers_grade_then_hcl_compliance(health_scoring):
     assert health_scoring._map_health_grade_to_score("A", False) == 3
     assert health_scoring._map_health_grade_to_score("B", False) == 3
     assert health_scoring._map_health_grade_to_score("C", False) == 2
@@ -31,7 +39,7 @@ def test_map_health_grade_to_score_prefers_grade_then_hcl_compliance():
     assert health_scoring._map_health_grade_to_score(None, False) is None
 
 
-def test_score_candidate_rewards_exact_category_match_and_penalizes_brand():
+def test_score_candidate_rewards_exact_category_match_and_penalizes_brand(health_scoring):
     unbranded = SimpleNamespace(
         descriptor="Apple",
         food_category_code=9,
@@ -51,7 +59,7 @@ def test_score_candidate_rewards_exact_category_match_and_penalizes_brand():
     assert unbranded_score > 3
 
 
-def test_select_best_candidate_returns_none_when_score_is_too_low():
+def test_select_best_candidate_returns_none_when_score_is_too_low(health_scoring):
     row = SimpleNamespace(
         descriptor="Chocolate Cookie",
         food_category_code=18,
@@ -67,7 +75,7 @@ def test_select_best_candidate_returns_none_when_score_is_too_low():
     assert result is None
 
 
-def test_build_database_assessment_changes_message_by_score():
+def test_build_database_assessment_changes_message_by_score(health_scoring):
     row = SimpleNamespace(descriptor="Broccoli", cn_code=1)
 
     assert "nourishing choice" in health_scoring._build_database_assessment("Broccoli", 3, row)
