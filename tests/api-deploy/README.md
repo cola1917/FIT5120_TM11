@@ -17,7 +17,8 @@ Integration tests that run against a deployed or locally started NutriHealth API
 | `API_BASE_URL` | `http://127.0.0.1:8000` | Base URL of the NutriHealth API |
 | `API_USERNAME` | — | Username for token auth (optional for smoke, required for regression) |
 | `API_PASSWORD` | — | Password for token auth |
-| `API_TEST_TIMEOUT_SECONDS` | `30` | Per-request timeout in seconds |
+| `API_TEST_TIMEOUT_SECONDS` | `60` | Per-request timeout in seconds |
+| `API_TEST_RETRIES` | `2` | Retry count for transient deploy/network timeouts |
 | `MOCK_AI` | `false` | Set to `true` / `1` to enable deterministic AI mock on the server (no paid API calls) |
 
 ## Running locally

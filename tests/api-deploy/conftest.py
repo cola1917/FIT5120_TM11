@@ -6,7 +6,8 @@ Configuration environment variables
 API_BASE_URL        Base URL of the deployed API (default: http://127.0.0.1:8000)
 API_USERNAME        Username for obtaining a JWT bearer token (optional)
 API_PASSWORD        Password for obtaining a JWT bearer token (optional)
-API_TEST_TIMEOUT_SECONDS  Per-request timeout in seconds (default: 30)
+API_TEST_TIMEOUT_SECONDS  Per-request timeout in seconds (default: 60)
+API_TEST_RETRIES  Retry count for transient network timeouts/errors (default: 2)
 MOCK_AI             Set to "true" or "1" to enable deterministic AI mock on the
                     server side (the server must support this flag).
 """
@@ -37,7 +38,8 @@ from metrics_collector import MetricsCollector  # noqa: E402
 # ---------------------------------------------------------------------------
 
 BASE_URL: str = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
-TIMEOUT: float = float(os.getenv("API_TEST_TIMEOUT_SECONDS", "30"))
+TIMEOUT: float = float(os.getenv("API_TEST_TIMEOUT_SECONDS", "60"))
+RETRIES: int = int(os.getenv("API_TEST_RETRIES", "2"))
 _USERNAME: Optional[str] = os.getenv("API_USERNAME") or os.getenv("DEMO_USERNAME")
 _PASSWORD: Optional[str] = os.getenv("API_PASSWORD") or os.getenv("DEMO_PASSWORD")
 
@@ -74,7 +76,9 @@ def auth_token(client: httpx.Client) -> Optional[str]:
     if not _USERNAME or not _PASSWORD:
         return None
 
-    response = client.post(
+    response = request_with_retries(
+        client,
+        "POST",
         "/token",
         data={"username": _USERNAME, "password": _PASSWORD},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -128,6 +132,33 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 # ---------------------------------------------------------------------------
 
 
+def request_with_retries(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    **kwargs,
+) -> httpx.Response:
+    """
+    Send an HTTP request with small retries for transient deploy/network issues.
+
+    The deployed API can occasionally cold-start or hit a short network stall in
+    CI. Retrying only when no response is received keeps status-code assertions
+    meaningful while reducing flaky failures.
+    """
+    last_error: httpx.HTTPError | None = None
+
+    for attempt in range(RETRIES + 1):
+        try:
+            return client.request(method, url, **kwargs)
+        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+            last_error = exc
+            if attempt >= RETRIES:
+                raise
+            time.sleep(2**attempt)
+
+    raise RuntimeError("Request retry loop exited unexpectedly") from last_error
+
+
 def timed_request(
     client: httpx.Client,
     method: str,
@@ -144,7 +175,7 @@ def timed_request(
     """
     path = metrics_path if metrics_path is not None else url
     start = time.perf_counter()
-    response = client.request(method, url, **kwargs)
+    response = request_with_retries(client, method, url, **kwargs)
     elapsed_ms = (time.perf_counter() - start) * 1000
     collector.record(path, response.status_code, elapsed_ms)
     return response
