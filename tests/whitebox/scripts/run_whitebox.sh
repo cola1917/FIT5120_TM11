@@ -12,6 +12,11 @@ metrics_json="$artifacts_dir/whitebox_metrics.json"
 export PYTHONPATH="$repo_root/nutri-health-api${PYTHONPATH:+:$PYTHONPATH}"
 pytest "$repo_root/tests/whitebox" -q \
 	--cov="$repo_root/nutri-health-api/app" \
+  --cov-omit="$repo_root/nutri-health-api/app/etl/*" \
+  --cov-omit="$repo_root/nutri-health-api/app/config/vision_llm.py" \
+  --cov-omit="$repo_root/nutri-health-api/app/services/gemini.py" \
+  --cov-omit="$repo_root/nutri-health-api/app/services/embedding_provider.py" \
+  --cov-omit="$repo_root/nutri-health-api/app/services/rag_service.py" \
   --cov-report="json:$cov_json" \
   --junitxml="$junit_xml"
 
@@ -39,18 +44,41 @@ passed = max(total - failures - errors - skipped, 0)
 pass_rate = (passed / total * 100) if total else 0.0
 duration = sum(float(s.attrib.get("time", 0.0)) for s in suites)
 
+file_summaries = []
+for path, data in cov.get("files", {}).items():
+	summary = data.get("summary", {})
+	covered = summary.get("covered_lines", 0)
+	num_statements = summary.get("num_statements", 0)
+	percent = summary.get("percent_covered", 0.0)
+	file_summaries.append(
+		{
+			"file": path,
+			"covered_lines": covered,
+			"num_statements": num_statements,
+			"percent_covered": percent,
+		}
+	)
+
+low_coverage_files = [
+	item
+	for item in sorted(file_summaries, key=lambda item: (item["percent_covered"], -item["num_statements"]))
+	if item["num_statements"] >= 20
+][:8]
+
 metrics = {
-	"test_scope": "app package (auth, rules, cache, stories, token router)",
+	"test_scope": "NutriHealth API app package, excluding ETL scripts and external AI/vector provider adapters",
 	"tooling": "Pytest, Pytest-cov",
 	"coverage_percent": cov.get("totals", {}).get("percent_covered", 0.0),
 	"coverage_display": cov.get("totals", {}).get("percent_covered_display", "0"),
+	"coverage_note": "Coverage excludes ETL scripts and external AI/vector provider adapters so the percentage reflects API-owned logic.",
+	"low_coverage_files": low_coverage_files,
 	"tests_total": total,
 	"tests_passed": passed,
 	"tests_failed": failures + errors,
 	"tests_skipped": skipped,
 	"pass_rate_percent": round(pass_rate, 2),
 	"duration_seconds": duration,
-	"edge_case_logic": "Invalid credentials, JWT failures, cache expiry, and story lookup errors",
+	"edge_case_logic": "Invalid credentials, JWT failures, cache expiry, story lookup errors, scan validation, and daily challenge completion state",
 }
 
 with open(metrics_path, "w", encoding="utf-8") as f:
