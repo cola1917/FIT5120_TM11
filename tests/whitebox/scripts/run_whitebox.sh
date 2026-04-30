@@ -8,15 +8,22 @@ mkdir -p "$artifacts_dir"
 cov_json="$artifacts_dir/whitebox_coverage.json"
 junit_xml="$artifacts_dir/whitebox_junit.xml"
 metrics_json="$artifacts_dir/whitebox_metrics.json"
+coverage_rc="$artifacts_dir/whitebox_coveragerc"
+
+cat > "$coverage_rc" <<EOF
+[run]
+omit =
+    $repo_root/nutri-health-api/app/etl/*
+    $repo_root/nutri-health-api/app/config/vision_llm.py
+    $repo_root/nutri-health-api/app/services/gemini.py
+    $repo_root/nutri-health-api/app/services/embedding_provider.py
+    $repo_root/nutri-health-api/app/services/rag_service.py
+EOF
 
 export PYTHONPATH="$repo_root/nutri-health-api${PYTHONPATH:+:$PYTHONPATH}"
 pytest "$repo_root/tests/whitebox" -q \
 	--cov="$repo_root/nutri-health-api/app" \
-  --cov-omit="$repo_root/nutri-health-api/app/etl/*" \
-  --cov-omit="$repo_root/nutri-health-api/app/config/vision_llm.py" \
-  --cov-omit="$repo_root/nutri-health-api/app/services/gemini.py" \
-  --cov-omit="$repo_root/nutri-health-api/app/services/embedding_provider.py" \
-  --cov-omit="$repo_root/nutri-health-api/app/services/rag_service.py" \
+  --cov-config="$coverage_rc" \
   --cov-report="json:$cov_json" \
   --junitxml="$junit_xml"
 
