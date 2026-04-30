@@ -8,7 +8,7 @@ Integration tests that run against a deployed or locally started NutriHealth API
 |---|---|---|
 | `test_smoke.py` | Light checks that keep passing without auth credentials. Mirrors `api_smoke_test.sh`. | No (authenticated checks skipped gracefully) |
 | `test_regression.py` | Heavier checks: full auth flow, protected story routes, scan error paths, recommendations shape. Mirrors `api_regression_test.sh`. | Yes (`API_USERNAME` + `API_PASSWORD`) |
-| `test_daily_challenge_api.py` | Daily healthy challenge endpoint integration tests. | No |
+| `test_daily_challenge_api.py` | Daily healthy challenge endpoint integration tests. | Yes (`API_USERNAME` + `API_PASSWORD`) |
 
 ## Configuration
 
@@ -56,6 +56,6 @@ This file is uploaded as a CI artifact and referenced in the generated markdown 
 
 ## Shell scripts (legacy)
 
-`scripts/api_smoke_test.sh` and `scripts/api_regression_test.sh` are retained
-for reference but are no longer used by CI. The pytest suites above are the
-canonical test runner.
+`scripts/api_regression_test.sh` is retained for reference but is no longer
+used by CI. `scripts/api_smoke_test.sh` has been removed because
+`test_smoke.py` is the canonical smoke test runner.

@@ -52,6 +52,16 @@ def test_next_challenge_returns_task(client: httpx.Client, required_auth_headers
     assert payload["tips"]
 
 
+def test_status_returns_completion_state(client: httpx.Client, required_auth_headers: dict) -> None:
+    response = client.get("/daily-challenge/status", headers=required_auth_headers)
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert isinstance(payload["completed_today"], bool)
+    if payload["completed_today"]:
+        assert payload["message"]
+
+
 def test_try_another_excludes_current_task(
     client: httpx.Client,
     first_task: dict,
