@@ -12,6 +12,7 @@ import asyncio
 import base64
 import json
 import logging
+import os
 from io import BytesIO
 from typing import Any, Dict, List
 
@@ -28,6 +29,40 @@ from app.config.vision_llm import (
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Mock AI responses for integration testing.
+# Set the environment variable MOCK_AI=true (or 1 / yes) to enable mock mode.
+# In mock mode no external API calls are made, and deterministic responses are
+# returned so that /scan integration tests can run without paid API access.
+# This flag is False by default and has no effect on production behaviour.
+# ---------------------------------------------------------------------------
+
+MOCK_AI_ANALYSIS: Dict[str, Any] = {
+    "confidence": 0.92,
+    "is_food": True,
+    "food_name": "Apple",
+    "primary_object": "apple",
+    "reject_reason": "none",
+    "nutritional_info": {
+        "carbohydrates": {"amount": "14g", "description": "Gives you energy to run and play!"},
+        "protein": {"amount": "0.5g", "description": "Helps your muscles grow strong."},
+        "fats": {"amount": "0.2g", "description": "Keeps your brain sharp and focused."},
+    },
+    "assessment_score": 3,
+    "assessment": "Apples are a fantastic choice! 🍎 They are packed with vitamins and fibre to keep you going all day. Great job picking a healthy snack! 🌟",
+    "alternatives": [],
+}
+
+MOCK_AI_ALTERNATIVES: List[Dict[str, Any]] = [
+    {"name": "🍊 Orange Slices", "description": "Bursting with vitamin C to keep you healthy! 🌟"},
+    {"name": "🍇 Grapes", "description": "Sweet little bites full of natural energy and goodness! 🎉"},
+]
+
+
+def _is_mock_ai_enabled() -> bool:
+    """Return True when the MOCK_AI environment variable is set to a truthy value."""
+    return os.getenv("MOCK_AI", "").lower() in ("1", "true", "yes")
 
 FOOD_ANALYSIS_PROMPT = """
 Analyze the image and first decide whether the main subject is clearly an edible food item.
@@ -375,6 +410,10 @@ class GeminiService:
             return self._get_fallback_response()
 
     async def analyze_food_image(self, image_bytes: bytes) -> Dict[str, Any]:
+        if _is_mock_ai_enabled():
+            logger.info("MOCK_AI enabled: returning deterministic mock food analysis (no external calls)")
+            return {**MOCK_AI_ANALYSIS}
+
         if get_openai_client() is not None:
             try:
                 s = get_dashscope_settings()
@@ -456,6 +495,10 @@ class GeminiService:
         """Rewrite only the alternatives list in child-friendly language."""
         if not alternatives:
             return alternatives
+
+        if _is_mock_ai_enabled():
+            logger.info("MOCK_AI enabled: returning deterministic mock alternatives (no external calls)")
+            return alternatives[:2] if alternatives else MOCK_AI_ALTERNATIVES
 
         if get_openai_client() is not None:
             try:

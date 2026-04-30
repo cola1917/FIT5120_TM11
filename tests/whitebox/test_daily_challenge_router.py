@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+from datetime import date
 
 import pytest
 from fastapi import HTTPException
@@ -100,6 +101,40 @@ def test_get_next_challenge_raises_when_no_task_available(daily_challenge_module
     assert exc_info.value.status_code == 404
 
 
+def test_check_challenge_status_returns_false_when_not_completed(daily_challenge_module, sqlite_session):
+    result = asyncio.run(
+        daily_challenge_module.check_challenge_status(
+            current_user={"username": "new-user"},
+            db=sqlite_session,
+        )
+    )
+
+    assert result.completed_today is False
+    assert result.message is None
+
+
+def test_check_challenge_status_returns_true_when_completed_today(daily_challenge_module, sqlite_session):
+    from app.models.user_daily_challenge import UserDailyChallengeCompletion
+
+    sqlite_session.add(
+        UserDailyChallengeCompletion(
+            username="done-user",
+            completion_date=date.today(),
+        )
+    )
+    sqlite_session.commit()
+
+    result = asyncio.run(
+        daily_challenge_module.check_challenge_status(
+            current_user={"username": "done-user"},
+            db=sqlite_session,
+        )
+    )
+
+    assert result.completed_today is True
+    assert result.message == daily_challenge_module.COMPLETED_MESSAGE
+
+
 def test_complete_challenge_returns_feedback(daily_challenge_module, sqlite_session):
     result = asyncio.run(
         daily_challenge_module.complete_challenge(
@@ -112,6 +147,23 @@ def test_complete_challenge_returns_feedback(daily_challenge_module, sqlite_sess
     assert result.id == 2
     assert result.task_name == "Power Up Water"
     assert result.feedback == "Your body is clean and fresh inside!"
+
+
+def test_complete_challenge_records_only_one_completion_per_user_per_day(daily_challenge_module, sqlite_session):
+    from app.models.user_daily_challenge import UserDailyChallengeCompletion
+
+    payload = daily_challenge_module.DailyChallengeCompleteRequest(id=2)
+    current_user = {"username": "repeat-user", "sub": "repeat-user"}
+
+    asyncio.run(daily_challenge_module.complete_challenge(payload=payload, current_user=current_user, db=sqlite_session))
+    asyncio.run(daily_challenge_module.complete_challenge(payload=payload, current_user=current_user, db=sqlite_session))
+
+    completion_count = sqlite_session.query(UserDailyChallengeCompletion).filter(
+        UserDailyChallengeCompletion.username == "repeat-user",
+        UserDailyChallengeCompletion.completion_date == date.today(),
+    ).count()
+
+    assert completion_count == 1
 
 
 def test_complete_challenge_raises_for_missing_id(daily_challenge_module, sqlite_session):

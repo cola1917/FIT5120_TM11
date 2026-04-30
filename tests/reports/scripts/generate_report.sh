@@ -62,9 +62,12 @@ api = load_json(api_metrics_json)
 
 coverage = wb.get("coverage_percent")
 if isinstance(coverage, (int, float)):
-    coverage_text = f"{coverage:.2f}% Line Coverage (app package)."
+    coverage_text = f"{coverage:.2f}% Line Coverage (API-owned app code)."
 else:
     coverage_text = "N/A (run whitebox script first)."
+coverage_note = wb.get("coverage_note", "")
+if coverage_note:
+    coverage_text = f"{coverage_text} {coverage_note}"
 
 wb_pass_rate = wb.get("pass_rate_percent")
 wb_pass_rate_text = (
@@ -100,6 +103,16 @@ api_pass_rate_text = (
     else "N/A"
 )
 
+low_coverage_files = wb.get("low_coverage_files", [])
+if low_coverage_files:
+    low_coverage_text = "<br>".join(
+        f"{item.get('file', 'unknown')}: {float(item.get('percent_covered', 0.0)):.2f}% "
+        f"({item.get('covered_lines', 0)}/{item.get('num_statements', 0)} lines)"
+        for item in low_coverage_files
+    )
+else:
+    low_coverage_text = "N/A"
+
 lines = [
     f"# Test Report - {report_id}",
     "",
@@ -119,6 +132,7 @@ lines = [
     f"| Test Scope | Core modules/functions under test. | {wb.get('test_scope', 'N/A')} |",
     f"| Tooling | Testing framework and tools. | {wb.get('tooling', 'N/A')} |",
     f"| Code Coverage | Line coverage of app package. | {coverage_text} |",
+    f"| Lowest Coverage Files | Main files pulling down total coverage. | {low_coverage_text} |",
     f"| Execution Environment | Runtime environment. | {execution_environment} |",
     f"| Edge Case Logic | Boundary value handling. | {wb.get('edge_case_logic', 'N/A')} |",
     "",
