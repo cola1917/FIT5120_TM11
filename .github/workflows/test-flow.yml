@@ -82,11 +82,21 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install API smoke test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tests/api-deploy/requirements.txt
+
       - name: Run API smoke tests
         env:
           # For push/PR use default endpoint; manual runs can override via input.
           API_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.api_base_url || env.DEFAULT_API_BASE_URL }}
-        run: bash tests/api-deploy/scripts/api_smoke_test.sh
+          API_USERNAME: ${{ secrets.API_USERNAME }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD }}
+        run: |
+          python -m pytest tests/api-deploy/test_smoke.py tests/api-deploy/test_daily_challenge_api.py \
+            -v --tb=short \
+            --junitxml=tests/reports/artifacts/api_smoke_junit.xml
 
       - name: Upload API smoke metrics
         if: always()
@@ -110,13 +120,21 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install API regression test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tests/api-deploy/requirements.txt
+
       - name: Run API regression tests
         env:
           # Regression tests require auth credentials but still avoid OpenAI success-path calls.
           API_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.api_base_url || env.DEFAULT_API_BASE_URL }}
           API_USERNAME: ${{ secrets.API_USERNAME }}
           API_PASSWORD: ${{ secrets.API_PASSWORD }}
-        run: bash tests/api-deploy/scripts/api_regression_test.sh
+        run: |
+          python -m pytest tests/api-deploy/test_regression.py \
+            -v --tb=short \
+            --junitxml=tests/reports/artifacts/api_regression_junit.xml
 
       - name: Upload API regression metrics
         if: always()

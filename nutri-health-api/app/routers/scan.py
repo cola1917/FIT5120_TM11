@@ -54,7 +54,7 @@ def _looks_like_non_food(*labels: str) -> bool:
 
 
 def _reject_reason(result: dict) -> str:
-    return _normalize_label(str(result.get("reject_reason", "")))
+    return (result.get("reject_reason", "") or "").strip().lower()
 
 
 def _is_recognised(result: dict) -> bool:
@@ -217,7 +217,7 @@ async def scan_food(
         result["alternatives"] = normalized_alternatives
 
     # Cache the result
-    if bool(os.getenv("CACHE_AI_RESPONSE", True)):
+    if os.getenv("CACHE_AI_RESPONSE", "true").lower() not in ("false", "0", "no"):
         cache_result(db, image_hash, result, ttl_days=1)
     else:
         logger.info("AI response caching disabled")
