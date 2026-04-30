@@ -124,6 +124,24 @@ export default function BeStrongDetail({ goal, onBack, recommendations, recLoadi
         </View>
       )}
 
+      {/* Super Power Foods Description */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIndicator, { backgroundColor: '#4CAF50' }]} />
+          <Text style={[styles.sectionTitle, { color: '#4CAF50' }]}>Super Power Foods</Text>
+        </View>
+        <Text style={styles.infoDescriptionText}>Foods you love that help you reach your goal!</Text>
+      </View>
+
+      {/* Try Less Description */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIndicator, { backgroundColor: '#FF8A65' }]} />
+          <Text style={[styles.sectionTitle, { color: '#FF8A65' }]}>Try Less</Text>
+        </View>
+        <Text style={styles.infoDescriptionText}>Foods that make it hard to reach your goal.</Text>
+      </View>
+
       {/* Try Less Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -241,6 +259,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
     fontStyle: 'italic',
+  },
+  infoDescriptionText: {
+    fontSize: 14,
+    color: '#36392c',
+    fontWeight: '600',
+    marginBottom: 16,
   },
   grid: {
     gap: 16,
