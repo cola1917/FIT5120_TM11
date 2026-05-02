@@ -50,9 +50,10 @@ export default function FeelGoodDetail({ goal, onBack, recommendations, recLoadi
       {/* Super Power Foods */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionIndicator} />
-          <Text style={styles.sectionTitle}>Super Power Foods</Text>
+          <View style={[styles.sectionIndicator, { backgroundColor: '#4CAF50' }]} />
+          <Text style={[styles.sectionTitle, { color: '#4CAF50' }]}>Super Power Foods</Text>
         </View>
+        <Text style={[styles.descriptionText, { color: '#4CAF50', fontStyle: 'italic' }]}>Foods you love that help you reach your goal!</Text>
 
         {recLoading ? (
           <ActivityIndicator color="#FBC02D" size="large" style={{ marginVertical: 24 }} />
@@ -105,30 +106,13 @@ export default function FeelGoodDetail({ goal, onBack, recommendations, recLoadi
         </View>
       )}
 
-      {/* Super Power Foods Description */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={[styles.sectionIndicator, { backgroundColor: '#4CAF50' }]} />
-          <Text style={[styles.sectionTitle, { color: '#4CAF50' }]}>Super Power Foods</Text>
-        </View>
-        <Text style={styles.descriptionText}>Foods you love that help you reach your goal!</Text>
-      </View>
-
-      {/* Try Less Description */}
+      {/* Try Less Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={[styles.sectionIndicator, { backgroundColor: '#FF8A65' }]} />
           <Text style={[styles.sectionTitle, { color: '#FF8A65' }]}>Try Less</Text>
         </View>
-        <Text style={styles.descriptionText}>Foods that make it hard to reach your goal.</Text>
-      </View>
-
-      {/* Try Less Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={[styles.sectionIndicator, { backgroundColor: '#FFD54F' }]} />
-          <Text style={styles.sectionTitle}>Try Less</Text>
-        </View>
+        <Text style={[styles.descriptionText, { color: '#FF8A65', fontStyle: 'italic' }]}>Foods that make it hard to reach your goal.</Text>
 
         {recLoading ? (
           <ActivityIndicator color="#FFD54F" size="large" style={{ marginVertical: 24 }} />
