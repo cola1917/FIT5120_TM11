@@ -178,8 +178,8 @@ export default function StoryReaderScreen() {
 
   const handleListenPress = async () => {
     if (audioState === 'idle' || audioState === 'error') {
-      // Play audio for the current page being displayed (currentPage is 0-indexed, pages are 1-indexed)
-      await playAudioForPage(currentPage);
+      // Play audio for the current page being displayed (currentPage is 0-indexed, but pages are 1-indexed)
+      await playAudioForPage(currentPage + 1);
     } else if (audioState === 'playing') {
       await cleanupAudio();
     }
@@ -188,9 +188,9 @@ export default function StoryReaderScreen() {
   const handleAudioFinished = async (pageNumber: number) => {
     setAudioState('idle');
     
-    // Auto-advance to next page if available
-    if (story && pageNumber < story.pageCount - 1) {
-      const nextPageIndex = pageNumber + 1;
+    // Auto-advance to next page if available (pageNumber is 1-indexed)
+    if (story && pageNumber < story.pageCount) {
+      const nextPageIndex = pageNumber; // Next page index in 0-indexed array
       
       // Set flag to prevent scroll handler from interfering
       isAutoScrollingRef.current = true;
@@ -204,13 +204,13 @@ export default function StoryReaderScreen() {
         animated: true,
       });
       
-      // Update current page
+      // Update current page (0-indexed)
       setCurrentPage(nextPageIndex);
       
-      // Wait for scroll animation to complete, then play next page
+      // Wait for scroll animation to complete, then play next page (1-indexed)
       setTimeout(() => {
         isAutoScrollingRef.current = false;
-        playAudioForPage(nextPageIndex);
+        playAudioForPage(pageNumber + 1);
       }, 600);
     }
     // If last page, just stay idle
@@ -295,7 +295,16 @@ export default function StoryReaderScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: story?.title || 'Story',
+          headerTitle: () => (
+            <AutoSizeText
+              style={styles.headerTitle}
+              numberOfLines={1}
+              fontSize={18}
+              mode={ResizeTextMode.max_lines}
+            >
+              {story?.title || 'Story'}
+            </AutoSizeText>
+          ),
           headerLeft: () => (
             <TouchableOpacity onPress={handleBackPress} style={{ marginLeft: 8 }}>
               <ArrowLeft size={24} color="#2D241F" />
@@ -315,11 +324,6 @@ export default function StoryReaderScreen() {
           ),
           headerStyle: {
             backgroundColor: Colors.surface,
-          },
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: '700',
-            color: '#2D241F',
           },
         }}
       />
@@ -373,6 +377,12 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 120,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D241F',
+    maxWidth: 200,
   },
   headerListenButton: {
     marginRight: 12,
