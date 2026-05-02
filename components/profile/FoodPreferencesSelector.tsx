@@ -70,6 +70,98 @@ export function createDefaultBlacklistMap(): BlacklistMap {
   return map;
 }
 
+// ─── Shared Tile Styles ───────────────────────────────────────────────────────
+//
+// Both the real interactive tiles and the animated demo tiles share these
+// style definitions so they look identical.
+
+const tileStyles = StyleSheet.create({
+  // Base tile — used by real tiles (width: '30%') and demo tiles (fixed 80×80)
+  tile: {
+    width: '30%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.card,
+    backgroundColor: Colors.surface_container_lowest,
+    borderWidth: 2,
+    borderColor: Colors.outline_variant,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    position: 'relative',
+  },
+  // Demo tile overrides only the size; all other properties come from `tile`
+  tileDemo: {
+    width: 80,
+    height: 80,
+    aspectRatio: undefined,
+  },
+  // State variants
+  tileLike: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary_container,
+  },
+  tileDislike: {
+    borderColor: Colors.secondary,
+    backgroundColor: Colors.secondary_container,
+  },
+  tileBlacklisted: {
+    borderColor: Colors.error,
+    backgroundColor: Colors.error_container,
+  },
+  // Emoji
+  emoji: {
+    fontSize: 32,
+    marginBottom: Spacing.xs,
+  },
+  emojiDemo: {
+    fontSize: 28,
+    marginBottom: 2,
+  },
+  // Label
+  label: {
+    ...Typography.labelSmall,
+    color: Colors.on_surface_variant,
+    textAlign: 'center',
+  },
+  labelDemo: {
+    fontSize: 10,
+  },
+  labelLike: {
+    color: Colors.on_primary_container,
+    fontWeight: '700',
+  },
+  labelDislike: {
+    color: Colors.on_secondary_container,
+    fontWeight: '700',
+  },
+  labelBlacklisted: {
+    color: Colors.on_error_container,
+    fontWeight: '700',
+  },
+  // Badge (top-right corner indicator)
+  indicatorBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  indicatorBadgeDislike: {
+    backgroundColor: Colors.secondary,
+  },
+  indicatorBadgeBlacklist: {
+    backgroundColor: Colors.error,
+  },
+  indicatorText: {
+    fontSize: 10,
+  },
+});
+
 // ─── Animated Like/Dislike Indicator ─────────────────────────────────────────
 
 /**
@@ -77,10 +169,8 @@ export function createDefaultBlacklistMap(): BlacklistMap {
  * (none → like → dislike → none) to show users how the tile interaction works.
  */
 function LikeDislikeIndicator() {
-  // 0 = none, 1 = like, 2 = dislike
   const stepRef = useRef(0);
   const stepAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   const arrowBounce = useRef(new Animated.Value(0)).current;
 
   // Derived animated values for each state's opacity
@@ -100,7 +190,7 @@ function LikeDislikeIndicator() {
     extrapolate: 'clamp',
   });
 
-  // Background color for the demo tile
+  // Animated background / border colours for the demo tile
   const bgColor = stepAnim.interpolate({
     inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
     outputRange: [
@@ -129,8 +219,14 @@ function LikeDislikeIndicator() {
     extrapolate: 'clamp',
   });
 
+  // Badge pop-in scale
+  const badgeScale = stepAnim.interpolate({
+    inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
+    outputRange: [0, 0, 1, 0, 1, 0, 0],
+    extrapolate: 'clamp',
+  });
+
   useEffect(() => {
-    // Arrow bounce animation (continuous)
     Animated.loop(
       Animated.sequence([
         Animated.timing(arrowBounce, {
@@ -148,14 +244,11 @@ function LikeDislikeIndicator() {
       ])
     ).start();
 
-    // Cycle through states: none → like → dislike → none
     const runCycle = () => {
       stepRef.current = 0;
       stepAnim.setValue(0);
-
       Animated.sequence([
         Animated.delay(800),
-        // Transition to "like"
         Animated.timing(stepAnim, {
           toValue: 1,
           duration: 350,
@@ -163,7 +256,6 @@ function LikeDislikeIndicator() {
           useNativeDriver: false,
         }),
         Animated.delay(1200),
-        // Transition to "dislike"
         Animated.timing(stepAnim, {
           toValue: 2,
           duration: 350,
@@ -171,7 +263,6 @@ function LikeDislikeIndicator() {
           useNativeDriver: false,
         }),
         Animated.delay(1200),
-        // Transition back to "none"
         Animated.timing(stepAnim, {
           toValue: 3,
           duration: 350,
@@ -187,46 +278,39 @@ function LikeDislikeIndicator() {
     runCycle();
   }, []);
 
-  // Pulse animation on badge appearance
-  const badgeScale = stepAnim.interpolate({
-    inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
-    outputRange: [0, 0, 1, 0, 1, 0, 0],
-    extrapolate: 'clamp',
-  });
-
   return (
     <View style={indicatorStyles.container}>
-      {/* Demo tile */}
+      {/* Demo tile — shares tileStyles.tile + tileStyles.tileDemo */}
       <View style={indicatorStyles.demoWrapper}>
         <Animated.View
           style={[
-            indicatorStyles.demoTile,
+            tileStyles.tile,
+            tileStyles.tileDemo,
             { backgroundColor: bgColor, borderColor: borderColor },
           ]}
         >
-          <Text style={indicatorStyles.demoEmoji}>🍎</Text>
-          <Text style={indicatorStyles.demoLabel}>Example</Text>
+          <Text style={[tileStyles.emoji, tileStyles.emojiDemo]}>🍎</Text>
+          <Text style={[tileStyles.label, tileStyles.labelDemo]}>Example</Text>
 
           {/* Like badge */}
           <Animated.View
             style={[
-              indicatorStyles.demoBadge,
-              indicatorStyles.demoBadgeLike,
+              tileStyles.indicatorBadge,
               { opacity: likeOpacity, transform: [{ scale: badgeScale }] },
             ]}
           >
-            <Text style={indicatorStyles.demoBadgeText}>👍</Text>
+            <Text style={tileStyles.indicatorText}>👍</Text>
           </Animated.View>
 
           {/* Dislike badge */}
           <Animated.View
             style={[
-              indicatorStyles.demoBadge,
-              indicatorStyles.demoBadgeDislike,
+              tileStyles.indicatorBadge,
+              tileStyles.indicatorBadgeDislike,
               { opacity: dislikeOpacity, transform: [{ scale: badgeScale }] },
             ]}
           >
-            <Text style={indicatorStyles.demoBadgeText}>👎</Text>
+            <Text style={tileStyles.indicatorText}>👎</Text>
           </Animated.View>
         </Animated.View>
       </View>
@@ -270,7 +354,6 @@ function LikeDislikeIndicator() {
  */
 function BlacklistIndicator() {
   const toggleAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   const arrowBounce = useRef(new Animated.Value(0)).current;
 
   const bgColor = toggleAnim.interpolate({
@@ -293,8 +376,17 @@ function BlacklistIndicator() {
     outputRange: [0, 0, 1],
   });
 
+  const offOpacity = toggleAnim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [1, 0, 0],
+  });
+
+  const onOpacity = toggleAnim.interpolate({
+    inputRange: [0, 0.6, 1],
+    outputRange: [0, 0, 1],
+  });
+
   useEffect(() => {
-    // Arrow bounce animation (continuous)
     Animated.loop(
       Animated.sequence([
         Animated.timing(arrowBounce, {
@@ -312,7 +404,6 @@ function BlacklistIndicator() {
       ])
     ).start();
 
-    // Toggle cycle: off → on → off
     const runCycle = () => {
       toggleAnim.setValue(0);
       Animated.sequence([
@@ -339,38 +430,29 @@ function BlacklistIndicator() {
     runCycle();
   }, []);
 
-  const offOpacity = toggleAnim.interpolate({
-    inputRange: [0, 0.4, 1],
-    outputRange: [1, 0, 0],
-  });
-
-  const onOpacity = toggleAnim.interpolate({
-    inputRange: [0, 0.6, 1],
-    outputRange: [0, 0, 1],
-  });
-
   return (
     <View style={indicatorStyles.container}>
-      {/* Demo tile */}
+      {/* Demo tile — shares tileStyles.tile + tileStyles.tileDemo */}
       <View style={indicatorStyles.demoWrapper}>
         <Animated.View
           style={[
-            indicatorStyles.demoTile,
+            tileStyles.tile,
+            tileStyles.tileDemo,
             { backgroundColor: bgColor, borderColor: borderColor },
           ]}
         >
-          <Text style={indicatorStyles.demoEmoji}>🥜</Text>
-          <Text style={indicatorStyles.demoLabel}>Example</Text>
+          <Text style={[tileStyles.emoji, tileStyles.emojiDemo]}>🥜</Text>
+          <Text style={[tileStyles.label, tileStyles.labelDemo]}>Example</Text>
 
           {/* Blacklist badge */}
           <Animated.View
             style={[
-              indicatorStyles.demoBadge,
-              indicatorStyles.demoBadgeBlacklist,
+              tileStyles.indicatorBadge,
+              tileStyles.indicatorBadgeBlacklist,
               { opacity: badgeOpacity, transform: [{ scale: badgeScale }] },
             ]}
           >
-            <Text style={indicatorStyles.demoBadgeText}>🚫</Text>
+            <Text style={tileStyles.indicatorText}>🚫</Text>
           </Animated.View>
         </Animated.View>
       </View>
@@ -397,6 +479,8 @@ function BlacklistIndicator() {
   );
 }
 
+// ─── Indicator-only styles (layout/legend elements not shared with tiles) ─────
+
 const indicatorStyles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surface_container,
@@ -410,49 +494,6 @@ const indicatorStyles = StyleSheet.create({
   },
   demoWrapper: {
     alignItems: 'center',
-  },
-  demoTile: {
-    width: 80,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.card,
-    borderWidth: 2,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    position: 'relative',
-  },
-  demoEmoji: {
-    fontSize: 28,
-    marginBottom: 2,
-  },
-  demoLabel: {
-    ...Typography.labelSmall,
-    color: Colors.on_surface_variant,
-    textAlign: 'center',
-    fontSize: 10,
-  },
-  demoBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    borderRadius: Radius.full,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoBadgeLike: {
-    backgroundColor: Colors.primary,
-  },
-  demoBadgeDislike: {
-    backgroundColor: Colors.secondary,
-  },
-  demoBadgeBlacklist: {
-    backgroundColor: Colors.error,
-  },
-  demoBadgeText: {
-    fontSize: 10,
   },
   legend: {
     flexDirection: 'row',
@@ -511,7 +552,7 @@ const indicatorStyles = StyleSheet.create({
   },
 });
 
-// Like/Dislike Tile
+// ─── Like/Dislike Tile ────────────────────────────────────────────────────────
 
 interface LikeDislikeTileProps {
   emoji: string;
@@ -547,7 +588,12 @@ function LikeDislikeTile({ emoji, label, state, onPress }: LikeDislikeTileProps)
         {label}
       </Text>
       {indicator && (
-        <View style={tileStyles.indicatorBadge}>
+        <View
+          style={[
+            tileStyles.indicatorBadge,
+            isDislike && tileStyles.indicatorBadgeDislike,
+          ]}
+        >
           <Text style={tileStyles.indicatorText}>{indicator}</Text>
         </View>
       )}
@@ -555,7 +601,7 @@ function LikeDislikeTile({ emoji, label, state, onPress }: LikeDislikeTileProps)
   );
 }
 
-// Blacklist Tile
+// ─── Blacklist Tile ───────────────────────────────────────────────────────────
 
 interface BlacklistTileProps {
   emoji: string;
@@ -582,73 +628,7 @@ function BlacklistTile({ emoji, label, selected, onPress }: BlacklistTileProps) 
   );
 }
 
-const tileStyles = StyleSheet.create({
-  tile: {
-    width: '30%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.card,
-    backgroundColor: Colors.surface_container_lowest,
-    borderWidth: 2,
-    borderColor: Colors.outline_variant,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    position: 'relative',
-  },
-  tileLike: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary_container,
-  },
-  tileDislike: {
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.secondary_container,
-  },
-  tileBlacklisted: {
-    borderColor: Colors.error,
-    backgroundColor: Colors.error_container,
-  },
-  emoji: {
-    fontSize: 32,
-    marginBottom: Spacing.xs,
-  },
-  label: {
-    ...Typography.labelSmall,
-    color: Colors.on_surface_variant,
-    textAlign: 'center',
-  },
-  labelLike: {
-    color: Colors.on_primary_container,
-    fontWeight: '700',
-  },
-  labelDislike: {
-    color: Colors.on_secondary_container,
-    fontWeight: '700',
-  },
-  labelBlacklisted: {
-    color: Colors.on_error_container,
-    fontWeight: '700',
-  },
-  indicatorBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.full,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  indicatorBadgeBlacklist: {
-    backgroundColor: Colors.error,
-  },
-  indicatorText: {
-    fontSize: 10,
-  },
-});
-
-// Main Component
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 interface FoodPreferencesSelectorProps {
   likeDislikeMap: LikeDislikeMap;
@@ -682,7 +662,6 @@ export function FoodPreferencesSelector({
           <Text style={styles.sectionTitle}>❤️ Likes & Dislikes</Text>
           <Text style={styles.sectionHint}>Tap to cycle: like → dislike → none</Text>
         </View>
-        {/* Animated indicator showing how the cycling works */}
         <LikeDislikeIndicator />
         <View style={styles.grid}>
           {FOOD_PREFERENCE_ITEMS.map((item) => (
@@ -703,7 +682,6 @@ export function FoodPreferencesSelector({
           <Text style={styles.sectionTitle}>🚫 Food Blacklist</Text>
           <Text style={styles.sectionHint}>Tap to mark foods you cannot eat</Text>
         </View>
-        {/* Animated indicator showing how the toggle works */}
         <BlacklistIndicator />
         <View style={styles.grid}>
           {BLACKLIST_ITEMS.map((item) => (
