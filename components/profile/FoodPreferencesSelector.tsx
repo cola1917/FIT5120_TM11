@@ -4,10 +4,14 @@
  * A two-section UI component for selecting food preferences and blacklist items.
  * - Likes/Dislikes section: tiles cycle through 'like' → 'dislike' → 'no preference'
  * - Blacklist section: tiles toggle between selected and not selected
+ *
+ * Includes animated indicators that demonstrate how each section's selection UI works.
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
+  Animated,
+  Easing,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -65,6 +69,447 @@ export function createDefaultBlacklistMap(): BlacklistMap {
   }
   return map;
 }
+
+// ─── Animated Like/Dislike Indicator ─────────────────────────────────────────
+
+/**
+ * Animated indicator that cycles through the three like/dislike states
+ * (none → like → dislike → none) to show users how the tile interaction works.
+ */
+function LikeDislikeIndicator() {
+  // 0 = none, 1 = like, 2 = dislike
+  const stepRef = useRef(0);
+  const stepAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const arrowBounce = useRef(new Animated.Value(0)).current;
+
+  // Derived animated values for each state's opacity
+  const noneOpacity = stepAnim.interpolate({
+    inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
+    outputRange: [1, 0, 0, 0, 0, 0, 1],
+    extrapolate: 'clamp',
+  });
+  const likeOpacity = stepAnim.interpolate({
+    inputRange: [0, 0.4, 1, 1.4, 2],
+    outputRange: [0, 0, 1, 0, 0],
+    extrapolate: 'clamp',
+  });
+  const dislikeOpacity = stepAnim.interpolate({
+    inputRange: [1, 1.4, 2, 2.4, 3],
+    outputRange: [0, 0, 1, 0, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Background color for the demo tile
+  const bgColor = stepAnim.interpolate({
+    inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
+    outputRange: [
+      Colors.surface_container_lowest,
+      Colors.surface_container_lowest,
+      Colors.primary_container,
+      Colors.primary_container,
+      Colors.secondary_container,
+      Colors.secondary_container,
+      Colors.surface_container_lowest,
+    ],
+    extrapolate: 'clamp',
+  });
+
+  const borderColor = stepAnim.interpolate({
+    inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
+    outputRange: [
+      Colors.outline_variant,
+      Colors.outline_variant,
+      Colors.primary,
+      Colors.primary,
+      Colors.secondary,
+      Colors.secondary,
+      Colors.outline_variant,
+    ],
+    extrapolate: 'clamp',
+  });
+
+  useEffect(() => {
+    // Arrow bounce animation (continuous)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(arrowBounce, {
+          toValue: 4,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(arrowBounce, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Cycle through states: none → like → dislike → none
+    const runCycle = () => {
+      stepRef.current = 0;
+      stepAnim.setValue(0);
+
+      Animated.sequence([
+        Animated.delay(800),
+        // Transition to "like"
+        Animated.timing(stepAnim, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: false,
+        }),
+        Animated.delay(1200),
+        // Transition to "dislike"
+        Animated.timing(stepAnim, {
+          toValue: 2,
+          duration: 350,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: false,
+        }),
+        Animated.delay(1200),
+        // Transition back to "none"
+        Animated.timing(stepAnim, {
+          toValue: 3,
+          duration: 350,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.delay(600),
+      ]).start(({ finished }) => {
+        if (finished) runCycle();
+      });
+    };
+
+    runCycle();
+  }, []);
+
+  // Pulse animation on badge appearance
+  const badgeScale = stepAnim.interpolate({
+    inputRange: [0, 0.4, 1, 1.4, 2, 2.4, 3],
+    outputRange: [0, 0, 1, 0, 1, 0, 0],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <View style={indicatorStyles.container}>
+      {/* Demo tile */}
+      <View style={indicatorStyles.demoWrapper}>
+        <Animated.View
+          style={[
+            indicatorStyles.demoTile,
+            { backgroundColor: bgColor, borderColor: borderColor },
+          ]}
+        >
+          <Text style={indicatorStyles.demoEmoji}>🍎</Text>
+          <Text style={indicatorStyles.demoLabel}>Example</Text>
+
+          {/* Like badge */}
+          <Animated.View
+            style={[
+              indicatorStyles.demoBadge,
+              indicatorStyles.demoBadgeLike,
+              { opacity: likeOpacity, transform: [{ scale: badgeScale }] },
+            ]}
+          >
+            <Text style={indicatorStyles.demoBadgeText}>👍</Text>
+          </Animated.View>
+
+          {/* Dislike badge */}
+          <Animated.View
+            style={[
+              indicatorStyles.demoBadge,
+              indicatorStyles.demoBadgeDislike,
+              { opacity: dislikeOpacity, transform: [{ scale: badgeScale }] },
+            ]}
+          >
+            <Text style={indicatorStyles.demoBadgeText}>👎</Text>
+          </Animated.View>
+        </Animated.View>
+      </View>
+
+      {/* Cycle legend */}
+      <View style={indicatorStyles.legend}>
+        <Animated.View style={[indicatorStyles.legendStep, { opacity: noneOpacity }]}>
+          <View style={[indicatorStyles.legendDot, indicatorStyles.legendDotNone]} />
+          <Text style={indicatorStyles.legendText}>No preference</Text>
+        </Animated.View>
+
+        <Animated.View style={[indicatorStyles.legendArrow, { transform: [{ translateX: arrowBounce }] }]}>
+          <Text style={indicatorStyles.legendArrowText}>→</Text>
+        </Animated.View>
+
+        <Animated.View style={[indicatorStyles.legendStep, { opacity: likeOpacity }]}>
+          <View style={[indicatorStyles.legendDot, indicatorStyles.legendDotLike]} />
+          <Text style={indicatorStyles.legendText}>Like 👍</Text>
+        </Animated.View>
+
+        <Animated.View style={[indicatorStyles.legendArrow, { transform: [{ translateX: arrowBounce }] }]}>
+          <Text style={indicatorStyles.legendArrowText}>→</Text>
+        </Animated.View>
+
+        <Animated.View style={[indicatorStyles.legendStep, { opacity: dislikeOpacity }]}>
+          <View style={[indicatorStyles.legendDot, indicatorStyles.legendDotDislike]} />
+          <Text style={indicatorStyles.legendText}>Dislike 👎</Text>
+        </Animated.View>
+      </View>
+
+      <Text style={indicatorStyles.tapHint}>Tap a tile to cycle through states</Text>
+    </View>
+  );
+}
+
+// ─── Animated Blacklist Indicator ─────────────────────────────────────────────
+
+/**
+ * Animated indicator that toggles between unselected and blacklisted states
+ * to show users how the blacklist tile interaction works.
+ */
+function BlacklistIndicator() {
+  const toggleAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const arrowBounce = useRef(new Animated.Value(0)).current;
+
+  const bgColor = toggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.surface_container_lowest, Colors.error_container],
+  });
+
+  const borderColor = toggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.outline_variant, Colors.error],
+  });
+
+  const badgeOpacity = toggleAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  const badgeScale = toggleAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  useEffect(() => {
+    // Arrow bounce animation (continuous)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(arrowBounce, {
+          toValue: 4,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(arrowBounce, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Toggle cycle: off → on → off
+    const runCycle = () => {
+      toggleAnim.setValue(0);
+      Animated.sequence([
+        Animated.delay(800),
+        Animated.timing(toggleAnim, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: false,
+        }),
+        Animated.delay(1400),
+        Animated.timing(toggleAnim, {
+          toValue: 0,
+          duration: 350,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.delay(600),
+      ]).start(({ finished }) => {
+        if (finished) runCycle();
+      });
+    };
+
+    runCycle();
+  }, []);
+
+  const offOpacity = toggleAnim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [1, 0, 0],
+  });
+
+  const onOpacity = toggleAnim.interpolate({
+    inputRange: [0, 0.6, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  return (
+    <View style={indicatorStyles.container}>
+      {/* Demo tile */}
+      <View style={indicatorStyles.demoWrapper}>
+        <Animated.View
+          style={[
+            indicatorStyles.demoTile,
+            { backgroundColor: bgColor, borderColor: borderColor },
+          ]}
+        >
+          <Text style={indicatorStyles.demoEmoji}>🥜</Text>
+          <Text style={indicatorStyles.demoLabel}>Example</Text>
+
+          {/* Blacklist badge */}
+          <Animated.View
+            style={[
+              indicatorStyles.demoBadge,
+              indicatorStyles.demoBadgeBlacklist,
+              { opacity: badgeOpacity, transform: [{ scale: badgeScale }] },
+            ]}
+          >
+            <Text style={indicatorStyles.demoBadgeText}>🚫</Text>
+          </Animated.View>
+        </Animated.View>
+      </View>
+
+      {/* Toggle legend */}
+      <View style={indicatorStyles.legend}>
+        <Animated.View style={[indicatorStyles.legendStep, { opacity: offOpacity }]}>
+          <View style={[indicatorStyles.legendDot, indicatorStyles.legendDotNone]} />
+          <Text style={indicatorStyles.legendText}>Can eat</Text>
+        </Animated.View>
+
+        <Animated.View style={[indicatorStyles.legendArrow, { transform: [{ translateX: arrowBounce }] }]}>
+          <Text style={indicatorStyles.legendArrowText}>→</Text>
+        </Animated.View>
+
+        <Animated.View style={[indicatorStyles.legendStep, { opacity: onOpacity }]}>
+          <View style={[indicatorStyles.legendDot, indicatorStyles.legendDotBlacklist]} />
+          <Text style={indicatorStyles.legendText}>Cannot eat 🚫</Text>
+        </Animated.View>
+      </View>
+
+      <Text style={indicatorStyles.tapHint}>Tap a tile to mark foods you cannot eat</Text>
+    </View>
+  );
+}
+
+const indicatorStyles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.surface_container,
+    borderRadius: Radius.card,
+    padding: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: Colors.outline_variant,
+    borderStyle: 'dashed',
+  },
+  demoWrapper: {
+    alignItems: 'center',
+  },
+  demoTile: {
+    width: 80,
+    height: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.card,
+    borderWidth: 2,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    position: 'relative',
+  },
+  demoEmoji: {
+    fontSize: 28,
+    marginBottom: 2,
+  },
+  demoLabel: {
+    ...Typography.labelSmall,
+    color: Colors.on_surface_variant,
+    textAlign: 'center',
+    fontSize: 10,
+  },
+  demoBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    borderRadius: Radius.full,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  demoBadgeLike: {
+    backgroundColor: Colors.primary,
+  },
+  demoBadgeDislike: {
+    backgroundColor: Colors.secondary,
+  },
+  demoBadgeBlacklist: {
+    backgroundColor: Colors.error,
+  },
+  demoBadgeText: {
+    fontSize: 10,
+  },
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  legendStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: Colors.outline_variant,
+  },
+  legendDotNone: {
+    backgroundColor: Colors.surface_container_lowest,
+    borderColor: Colors.outline_variant,
+  },
+  legendDotLike: {
+    backgroundColor: Colors.primary_container,
+    borderColor: Colors.primary,
+  },
+  legendDotDislike: {
+    backgroundColor: Colors.secondary_container,
+    borderColor: Colors.secondary,
+  },
+  legendDotBlacklist: {
+    backgroundColor: Colors.error_container,
+    borderColor: Colors.error,
+  },
+  legendText: {
+    ...Typography.labelSmall,
+    color: Colors.on_surface_variant,
+    fontSize: 11,
+  },
+  legendArrow: {
+    paddingHorizontal: 2,
+  },
+  legendArrowText: {
+    ...Typography.labelSmall,
+    color: Colors.on_surface_variant,
+    fontSize: 12,
+  },
+  tapHint: {
+    ...Typography.labelSmall,
+    color: Colors.on_surface_variant,
+    fontSize: 11,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+});
 
 // Like/Dislike Tile
 
@@ -237,6 +682,8 @@ export function FoodPreferencesSelector({
           <Text style={styles.sectionTitle}>❤️ Likes & Dislikes</Text>
           <Text style={styles.sectionHint}>Tap to cycle: like → dislike → none</Text>
         </View>
+        {/* Animated indicator showing how the cycling works */}
+        <LikeDislikeIndicator />
         <View style={styles.grid}>
           {FOOD_PREFERENCE_ITEMS.map((item) => (
             <LikeDislikeTile
@@ -256,6 +703,8 @@ export function FoodPreferencesSelector({
           <Text style={styles.sectionTitle}>🚫 Food Blacklist</Text>
           <Text style={styles.sectionHint}>Tap to mark foods you cannot eat</Text>
         </View>
+        {/* Animated indicator showing how the toggle works */}
+        <BlacklistIndicator />
         <View style={styles.grid}>
           {BLACKLIST_ITEMS.map((item) => (
             <BlacklistTile
