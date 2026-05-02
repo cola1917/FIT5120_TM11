@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   Image,
   Animated,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -208,7 +209,11 @@ export default function MealMakerScreen() {
 
           {/* Idle / start screen */}
           {gamePhase === 'idle' && (
-            <View style={styles.idleContainer}>
+            <ScrollView
+              style={styles.idleScrollView}
+              contentContainerStyle={styles.idleContainer}
+              showsVerticalScrollIndicator={false}
+            >
               <Image
                 source={require('../../../assets/images/nutriheroes_logo.png')}
                 style={styles.heroImage}
@@ -239,23 +244,23 @@ export default function MealMakerScreen() {
                 </TouchableOpacity>
               </Animated.View>
 
-              {/* How to Play button */}
-              <TouchableOpacity
-                style={styles.aboutButton}
-                onPress={() => setShowAbout(true)}
-                activeOpacity={0.8}
-              >
-                <BookOpen size={20} color={Colors.outline} />
-                <Text style={styles.aboutButtonText}>How to Play</Text>
-              </TouchableOpacity>
+              {/* How to Play and Quit buttons side by side */}
+              <View style={styles.bottomButtonsRow}>
+                <TouchableOpacity
+                  style={styles.aboutButton}
+                  onPress={() => setShowAbout(true)}
+                  activeOpacity={0.8}
+                >
+                  <BookOpen size={20} color={Colors.outline} />
+                  <Text style={styles.aboutButtonText}>How to Play</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity style={styles.aboutButton} onPress={handleBack} activeOpacity={0.85}>
-                <View style={styles.playIconCircle}>
-                  <LogOut size={28} color={Colors.outline} />
-                </View>
-                <Text style={styles.aboutButtonText}>Quit</Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity style={styles.aboutButton} onPress={handleBack} activeOpacity={0.85}>
+                  <LogOut size={20} color={Colors.outline} />
+                  <Text style={styles.aboutButtonText}>Quit</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           )}
         </View>
 
@@ -319,13 +324,22 @@ const styles = StyleSheet.create({
   },
 
   // Idle screen
-  idleContainer: {
+  idleScrollView: {
     flex: 1,
+    backgroundColor: Colors.surface,
+  },
+  idleContainer: {
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing['2xl'],
+    paddingBottom: Spacing['2xl'],
     gap: Spacing.lg,
-    backgroundColor: Colors.surface,
+  },
+  bottomButtonsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    justifyContent: 'center',
+    flexWrap: 'wrap',
   },
   heroImage: {
     height: 160,
