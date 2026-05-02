@@ -416,6 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EAEAEA',
   },
   factPromptCard: {
+    margin: Spacing.lg,
     backgroundColor: '#FFF8E8',
     borderRadius: 24,
     padding: 18,

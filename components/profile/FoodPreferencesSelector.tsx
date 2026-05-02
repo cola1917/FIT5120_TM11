@@ -49,7 +49,8 @@ export const BLACKLIST_ITEMS: { id: BlacklistItem; emoji: string; label: string 
   { id: 'milk', emoji: '🥛', label: 'Milk' },
   { id: 'pork', emoji: '🥓', label: 'Pork' },
   { id: 'seafood', emoji: '🦐', label: 'Seafood' },
-  { id: 'nuts', emoji: '🌰', label: 'Nuts' },
+  { id: 'meat', emoji: '🍗', label: 'Meat' },
+  { id: 'nuts', emoji: '🥜', label: 'Nuts' },
 ];
 
 // Default State Factories
@@ -102,8 +103,8 @@ const tileStyles = StyleSheet.create({
     backgroundColor: Colors.primary_container,
   },
   tileDislike: {
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.secondary_container,
+    borderColor: Colors.tertiary,
+    backgroundColor: Colors.tertiary_container,
   },
   tileBlacklisted: {
     borderColor: Colors.error,
@@ -152,7 +153,7 @@ const tileStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   indicatorBadgeDislike: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.tertiary,
   },
   indicatorBadgeBlacklist: {
     backgroundColor: Colors.error,
@@ -198,8 +199,8 @@ function LikeDislikeIndicator() {
       Colors.surface_container_lowest,
       Colors.primary_container,
       Colors.primary_container,
-      Colors.secondary_container,
-      Colors.secondary_container,
+      Colors.tertiary_container,
+      Colors.tertiary_container,
       Colors.surface_container_lowest,
     ],
     extrapolate: 'clamp',
@@ -212,8 +213,8 @@ function LikeDislikeIndicator() {
       Colors.outline_variant,
       Colors.primary,
       Colors.primary,
-      Colors.secondary,
-      Colors.secondary,
+      Colors.tertiary,
+      Colors.tertiary,
       Colors.outline_variant,
     ],
     extrapolate: 'clamp',
@@ -341,7 +342,7 @@ function LikeDislikeIndicator() {
         </Animated.View>
       </View>
 
-      <Text style={indicatorStyles.tapHint}>Tap a tile to cycle through states</Text>
+      <Text style={indicatorStyles.tapHint}>Tap a tile to cycle through states </Text>
     </View>
   );
 }
@@ -474,7 +475,7 @@ function BlacklistIndicator() {
         </Animated.View>
       </View>
 
-      <Text style={indicatorStyles.tapHint}>Tap a tile to mark foods you cannot eat</Text>
+      <Text style={indicatorStyles.tapHint}>Tap a tile to mark foods you cannot eat </Text>
     </View>
   );
 }
@@ -523,8 +524,8 @@ const indicatorStyles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   legendDotDislike: {
-    backgroundColor: Colors.secondary_container,
-    borderColor: Colors.secondary,
+    backgroundColor: Colors.tertiary_container,
+    borderColor: Colors.tertiary,
   },
   legendDotBlacklist: {
     backgroundColor: Colors.error_container,
@@ -660,7 +661,6 @@ export function FoodPreferencesSelector({
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>❤️ Likes & Dislikes</Text>
-          <Text style={styles.sectionHint}>Tap to cycle: like → dislike → none</Text>
         </View>
         <LikeDislikeIndicator />
         <View style={styles.grid}>
@@ -680,7 +680,6 @@ export function FoodPreferencesSelector({
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>🚫 Food Blacklist</Text>
-          <Text style={styles.sectionHint}>Tap to mark foods you cannot eat</Text>
         </View>
         <BlacklistIndicator />
         <View style={styles.grid}>
