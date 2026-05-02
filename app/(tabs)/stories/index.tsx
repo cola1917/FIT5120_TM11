@@ -119,17 +119,6 @@ export default function StoriesScreen() {
                   {item.title}
               </AutoSizeText>
             </View>
-
-            <View style={styles.bottomPanel}>
-              <TouchableOpacity
-                style={[styles.readButton, { backgroundColor: '#E77A1F' }]}
-                onPress={() => handleOpenStory(item.id)}
-              >
-                <Text style={styles.readButtonText}>Read Now</Text>
-                <NotebookText color={styles.pageCountText.color} size={16}></NotebookText>
-                <Text style={styles.pageCountText}>{item.pageCount}</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </TouchableOpacity>
       </View>
@@ -347,11 +336,11 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     padding: 18,
   },
   titleBubble: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     backgroundColor: 'rgba(255,255,255,0.95)',
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -363,11 +352,6 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontWeight: '900',
     color: '#2A1E18',
-  },
-  bottomPanel: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 22,
-    padding: 16,
   },
   cardDescription: {
     fontSize: 15,

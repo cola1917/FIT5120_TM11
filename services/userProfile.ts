@@ -27,6 +27,7 @@ export type BlacklistItem =
   | 'milk'
   | 'pork'
   | 'seafood'
+  | 'meat'
   | 'nuts';
 
 export interface FoodPreferences {
