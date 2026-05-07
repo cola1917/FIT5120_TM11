@@ -22,6 +22,7 @@ import { Colors } from '@/constants/colors';
 
 interface StoryPage {
   storyText: string;
+  displayText: string;
 }
 
 interface StoryTextData {
@@ -325,7 +326,7 @@ export default function StoryReaderScreen() {
             >
               {iconForAudioState()}
               <Text style={styles.headerListenButtonText}>
-                {audioState === 'playing' ? 'Pause' : 'Listen'}
+                {audioState === 'playing' ? `Pause · ${currentPage + 1}` : `Listen · ${currentPage + 1}`}
               </Text>
             </TouchableOpacity>
           ),
@@ -351,7 +352,7 @@ export default function StoryReaderScreen() {
                 pageHeightsRef.current[i] = height;
               }}
             >
-              <Text style={styles.pageText}>{p.storyText}</Text>
+              <Text style={styles.pageText}>{p.displayText}</Text>
               <Image
                 source={{ uri: getStoryPageImageUrl(storyId, i + 1), headers: authHeaders || undefined }}
                 style={styles.pageImage}
