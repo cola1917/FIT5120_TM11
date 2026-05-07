@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { getAuthHeaders, getStoryOutcomeAudioUrl, getStoryText } from '@/services/stories';
-import { claimStoryPoints, hasClaimedStoryPoints } from '@/services/userProfile';
+import { claimStoryPoints, hasClaimedStoryPoints, hasUserProfile } from '@/services/userProfile';
 import { Audio } from 'expo-av';
 
 const STORY_POINTS = 10;
@@ -24,6 +24,7 @@ export default function StoryOutcomeScreen() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
   const [audioState, setAudioState] = useState<'playing'| 'idle' | 'error'>('idle');
+  const [profileExists, setProfileExists] = useState(false);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
@@ -111,12 +112,14 @@ export default function StoryOutcomeScreen() {
       setLoadFailed(false);
 
       try {
-        const [storyTextData, claimed] = await Promise.all([
+        const [storyTextData, claimed, profileFound] = await Promise.all([
           getStoryText(storyId),
           hasClaimedStoryPoints(storyId),
+          hasUserProfile(),
         ]);
         setOutcome(storyTextData.outcome);
         setAlreadyClaimed(claimed);
+        setProfileExists(profileFound);
       } catch (error) {
         console.error('Failed to load story outcome:', error);
         setLoadFailed(true);
@@ -277,47 +280,49 @@ export default function StoryOutcomeScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Claim points section */}
-          <View style={styles.claimContainer}>
-            {alreadyClaimed ? (
-              <View style={styles.claimedBadge}>
-                <CheckCircle size={18} color="#2F9E44" />
-                <Text style={styles.claimedText}>Points Already Claimed!</Text>
-              </View>
-            ) : (
-              <View style={styles.claimWrapper}>
-                {/* Floating "+10 ⭐" animation label */}
-                <Animated.View
-                  style={[
-                    styles.floatingPoints,
-                    {
-                      transform: [{ translateY: floatAnim }],
-                      opacity: floatOpacity,
-                    },
-                  ]}
-                  pointerEvents="none"
-                >
-                  <Text style={styles.floatingPointsText}>+{STORY_POINTS} ⭐</Text>
-                </Animated.View>
-
-                <Animated.View style={{ transform: [{ scale: buttonScale }], alignSelf: 'stretch' }}>
-                  <TouchableOpacity
-                    style={[styles.claimButton, claiming && styles.claimButtonDisabled]}
-                    onPress={handleClaimPoints}
-                    disabled={claiming}
-                    activeOpacity={0.85}
+          {/* Claim points section — only shown when a user profile exists */}
+          {profileExists && (
+            <View style={styles.claimContainer}>
+              {alreadyClaimed ? (
+                <View style={styles.claimedBadge}>
+                  <CheckCircle size={18} color="#2F9E44" />
+                  <Text style={styles.claimedText}>Points Already Claimed!</Text>
+                </View>
+              ) : (
+                <View style={styles.claimWrapper}>
+                  {/* Floating "+10 ⭐" animation label */}
+                  <Animated.View
+                    style={[
+                      styles.floatingPoints,
+                      {
+                        transform: [{ translateY: floatAnim }],
+                        opacity: floatOpacity,
+                      },
+                    ]}
+                    pointerEvents="none"
                   >
-                    <View style={styles.buttonContent}>
-                      <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text style={styles.claimButtonText}>
-                        {claiming ? 'Claiming...' : `Claim ${STORY_POINTS} Points`}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-            )}
-          </View>
+                    <Text style={styles.floatingPointsText}>+{STORY_POINTS} ⭐</Text>
+                  </Animated.View>
+
+                  <Animated.View style={{ transform: [{ scale: buttonScale }], alignSelf: 'stretch' }}>
+                    <TouchableOpacity
+                      style={[styles.claimButton, claiming && styles.claimButtonDisabled]}
+                      onPress={handleClaimPoints}
+                      disabled={claiming}
+                      activeOpacity={0.85}
+                    >
+                      <View style={styles.buttonContent}>
+                        <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
+                        <Text style={styles.claimButtonText}>
+                          {claiming ? 'Claiming...' : `Claim ${STORY_POINTS} Points`}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </View>
+              )}
+            </View>
+          )}
 
           <TouchableOpacity style={styles.secondaryButton} onPress={handleGoHome}>
             <Text style={styles.secondaryButtonText}>Go Home</Text>
