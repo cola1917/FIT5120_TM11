@@ -352,12 +352,12 @@ export default function StoryReaderScreen() {
                 pageHeightsRef.current[i] = height;
               }}
             >
-              <Text style={styles.pageText}>{p.displayText}</Text>
               <Image
                 source={{ uri: getStoryPageImageUrl(storyId, i + 1), headers: authHeaders || undefined }}
                 style={styles.pageImage}
                 resizeMode="cover"
               />
+              <Text style={styles.pageText}>{p.displayText}</Text>
             </View>
           ))}
 
