@@ -252,7 +252,7 @@ export default function StoryOutcomeScreen() {
   return (
     <View style={styles.screen}>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft size={20} color="#B45309" />
+        <ArrowLeft size={24} color="#2D241F" />
       </TouchableOpacity>
 
       <View style={styles.card}>
@@ -344,18 +344,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 58,
     left: 18,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
     zIndex: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    marginLeft: 8,
   },
   card: {
     backgroundColor: '#FFF8E8',
