@@ -122,9 +122,16 @@ export default function StoryReaderScreen() {
     loadAuthHeaders();
     setupAudio();
 
-    return () => {
+    // Stop audio whenever the screen loses focus (e.g. navigating away via
+    // swipe-back, tab switch, or any other navigation gesture).
+    const unsubscribeBlur = navigation.addListener('blur', () => {
       cleanupAudio();
-    }
+    });
+
+    return () => {
+      unsubscribeBlur();
+      cleanupAudio();
+    };
   }, [storyId]);
 
   useEffect(() => {
