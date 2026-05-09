@@ -2,8 +2,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
-  FlatList,
   Image,
   ScrollView,
   StyleSheet,
@@ -46,9 +44,6 @@ const DEBUG_FORCE_NO_ALTERNATIVES_RESULT = false;
 
 // Mock data is no longer needed as we fetch from the backend
 // Kept for reference during development if needed
-
-const { width } = Dimensions.get('window');
-const ALTERNATIVE_CARD_WIDTH = width - 80;
 
 export default function AnalysisScreen() {
   const { photoUri } = useLocalSearchParams<{ photoUri?: string }>();
@@ -160,7 +155,7 @@ export default function AnalysisScreen() {
       const result: AnalysisResult = {
         rating,
         label: labelMap[rating],
-        mascotMessage: mascotMessages[rating],
+        mascotMessage: scanResponse.assessment || mascotMessages[rating],
         recommendedFoods: displayRecommendedFoods
       };
 
@@ -299,6 +294,11 @@ export default function AnalysisScreen() {
 
   const isUnhealthy = analysisResult.rating === 'UNHEALTHY';
   const ratingColor = isUnhealthy ? '#E8814A' : '#4CAF50';
+  const labelEmojiMap: Record<AnalysisResult['rating'], string> = {
+    HEALTHY: '😊',
+    MODERATE: '🙂',
+    UNHEALTHY: '😟',
+  };
 
   return (
     <ScrollView
@@ -327,11 +327,13 @@ export default function AnalysisScreen() {
         </View>
 
         <View style={styles.mascotRow}>
-          <Image
-            source={require('../../../assets/images/nutriheroes_icon.png')}
-            style={styles.mascotImage}
-            resizeMode="contain"
-          />
+          <View style={styles.mascotAvatar}>
+            <Image
+              source={require('../../../assets/images/Logo Feedback.png')}
+              style={styles.mascotImage}
+              resizeMode="contain"
+            />
+          </View>
           <View style={styles.speechBubble}>
             <Text style={styles.speechText}>
               {analysisResult.mascotMessage}
@@ -352,7 +354,7 @@ export default function AnalysisScreen() {
             numberOfLines={1}
             fontSize={13}
             >
-            😦 {analysisResult.label}
+            {labelEmojiMap[analysisResult.rating]} {analysisResult.label}
           </AutoSizeText>
         </View>
       </View>
@@ -376,16 +378,10 @@ export default function AnalysisScreen() {
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={analysisResult.recommendedFoods}
-            keyExtractor={(item) => item.id}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            contentContainerStyle={styles.alternativesListContent}
-            renderItem={({ item }) => (
+          <View style={styles.alternativesColumn}>
+            {analysisResult.recommendedFoods.map((item) => (
               <TouchableOpacity
+                key={item.id}
                 activeOpacity={0.92}
                 style={styles.alternativeCard}
                 onPress={() => handleSwap(item)}
@@ -408,8 +404,8 @@ export default function AnalysisScreen() {
                   <Text style={styles.alternativeDesc}>{item.description}</Text>
                 </View>
               </TouchableOpacity>
-            )}
-          />
+            ))}
+          </View>
         )}
       </View>
     </ScrollView>
@@ -480,17 +476,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    paddingHorizontal: 8,
+    paddingHorizontal: 2,
+  },
+  mascotAvatar: {
+    width: 76,
+    height: 76,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 6,
   },
   mascotImage: {
-    width: 48,
-    height: 48,
-    marginRight: 8,
+    width: 74,
+    height: 74,
   },
   speechBubble: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 10,
+    borderRadius: 18,
+    padding: 12,
     flex: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -542,12 +544,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 8,
   },
-  alternativesListContent: {
-    paddingHorizontal: 4,
+  alternativesColumn: {
+    gap: 12,
   },
   alternativeCard: {
-    width: ALTERNATIVE_CARD_WIDTH,
-    marginRight: 14,
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     overflow: 'hidden',
