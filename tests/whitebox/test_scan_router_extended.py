@@ -9,7 +9,7 @@ Covers the branches that were not exercised in test_scan_router.py:
   - vision LLM returns reject_reason=analysis_failed → 500 ANALYSIS_FAILED
   - not-food result → 400 NOT_FOOD
   - healthy food (assessment_score >= 3) → alternatives forced to []
-  - unhealthy food (assessment_score < 3) → RAG + rewrite + image_url injected
+  - unhealthy food (assessment_score < 3) → fine-tuned model alternatives + image_url injected
   - CACHE_AI_RESPONSE=false → cache_result is NOT called
 """
 
@@ -257,16 +257,16 @@ def test_scan_food_unhealthy_food_builds_alternatives(monkeypatch, scan_module, 
 
     gemini_mock = MagicMock()
     gemini_mock.analyze_food_image = AsyncMock(return_value=ai_result)
-    gemini_mock.rewrite_alternatives = AsyncMock(return_value=[
-        {"name": "🍎 Apple Slices", "description": "Crunchy and full of vitamins!"},
-    ])
     monkeypatch.setattr(scan_module, "gemini_service", gemini_mock)
 
-    rag_mock = MagicMock()
-    rag_mock.get_alternatives = MagicMock(return_value=[
-        {"name": "Apple Slices", "description": "Healthy snack"},
-    ])
-    monkeypatch.setattr(scan_module, "rag_service", rag_mock)
+    # Mock the fine-tuned model alternative service (replaced rag_service + gemini rewrite)
+    monkeypatch.setattr(
+        scan_module,
+        "get_scan_alternatives",
+        lambda food_name, assessment_score: [
+            {"name": "Apple Slices", "description": "Crunchy and full of vitamins!"},
+        ],
+    )
 
     monkeypatch.setattr(
         scan_module,

@@ -3,6 +3,7 @@ Scan Router
 Handles the /scan endpoint for food image analysis
 """
 
+import asyncio
 import logging
 import os
 from urllib.parse import quote
@@ -18,7 +19,7 @@ from app.services.alternative_rules import (
 )
 from app.services.cache import hash_image, get_cached_result, cache_result
 from app.services.health_scoring import apply_database_first_score
-from app.services.rag_service import rag_service
+from app.services.scan_alternative_service import get_scan_alternatives
 from app.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -197,18 +198,11 @@ async def scan_food(
     if int(result.get("assessment_score", 3) or 3) >= 3:
         result["alternatives"] = []
 
-    # For moderate/unhealthy recognised foods, build healthier swaps from rules/RAG and then rewrite.
+    # For moderate/unhealthy recognised foods, generate alternatives via fine-tuned model.
     else:
         food_name = result.get("food_name", "")
-        candidate_alternatives = rag_service.get_alternatives(
-            food_name,
-            k=6,
-            target_count=TARGET_ALTERNATIVE_COUNT,
-        )
-        rewritten_alternatives = await gemini_service.rewrite_alternatives(
-            food_name,
-            source_category,
-            candidate_alternatives,
+        rewritten_alternatives = await asyncio.to_thread(
+            get_scan_alternatives, food_name, result["assessment_score"]
         )
         normalized_alternatives = []
         for alt in rewritten_alternatives[:TARGET_ALTERNATIVE_COUNT]:
