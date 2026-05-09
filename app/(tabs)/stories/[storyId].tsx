@@ -343,7 +343,7 @@ export default function StoryReaderScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        <View style={styles.pagesContainer}>
+        <View>
           {storyTextData.pages.map((p, i) => (
             <View
               key={i}
@@ -407,16 +407,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
   },
-  pagesContainer: {
-
-  },
   pageText: {
     fontSize: 22,
     lineHeight: 34,
     color: '#2D241F',
     fontWeight: '500',
     paddingVertical: Spacing.spacing_4,
-    paddingHorizontal: Spacing.spacing_6
+    paddingHorizontal: Spacing.spacing_6,
   },
   pageImage: {
     width: '100%',
