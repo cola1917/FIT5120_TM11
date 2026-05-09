@@ -81,17 +81,23 @@ export default function MealMakerScreen() {
   const roundSoundRef = useRef<Audio.Sound | null>(null);
   const isRoundPlayingRef = useRef(false);
 
+  // Keep a ref to the current volume so audio callbacks never capture a stale value.
+  // This avoids recreating playMenuMusic / playRoundMusic on every volume change,
+  // which would cause useFocusEffect to re-run and spawn duplicate sound instances.
+  const volumeRef = useRef(settings.volume);
+  volumeRef.current = settings.volume;
+
   const playMenuMusic = useCallback(async () => {
     if (menuSoundRef.current) return;
     try {
       const { sound } = await Audio.Sound.createAsync(
         require('../../../assets/audio/menu-audio.mp3'),
-        { isLooping: true, shouldPlay: true, volume: settings.volume }
+        { isLooping: true, shouldPlay: true, volume: volumeRef.current }
       );
       menuSoundRef.current = sound;
       isMenuPlayingRef.current = true;
     } catch (_) {}
-  }, [settings.volume]);
+  }, []); // stable — reads volume from ref at call time
 
   const stopMenuMusic = useCallback(async () => {
     const sound = menuSoundRef.current;
@@ -112,7 +118,7 @@ export default function MealMakerScreen() {
       }
       const { sound } = await Audio.Sound.createAsync(
         require('../../../assets/audio/round-audio.mp3'),
-        { isLooping: false, shouldPlay: true, volume: settings.volume }
+        { isLooping: false, shouldPlay: true, volume: volumeRef.current }
       );
       roundSoundRef.current = sound;
       isRoundPlayingRef.current = true;
@@ -124,7 +130,7 @@ export default function MealMakerScreen() {
         }
       });
     } catch (_) {}
-  }, [stopMenuMusic, settings.volume]);
+  }, [stopMenuMusic]); // stable — reads volume from ref at call time
 
   const stopRoundMusic = useCallback(async () => {
     const sound = roundSoundRef.current;
@@ -135,7 +141,9 @@ export default function MealMakerScreen() {
     isRoundPlayingRef.current = false;
   }, []);
 
-  // Update menu music volume when settings change while it's playing
+  // Live-update volume on already-playing sounds when the setting changes.
+  // This is the only place that reacts to volume changes — playMenuMusic and
+  // playRoundMusic are stable and do NOT re-run when volume changes.
   useEffect(() => {
     if (menuSoundRef.current) {
       menuSoundRef.current.setVolumeAsync(settings.volume).catch(() => {});
@@ -154,6 +162,8 @@ export default function MealMakerScreen() {
         resetGame();
       };
     }, [playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
+    // playMenuMusic / stopMenuMusic / stopRoundMusic are all stable (no volume dep),
+    // so this effect only re-runs when resetGame changes — i.e. effectively once.
   );
 
   useEffect(() => {
