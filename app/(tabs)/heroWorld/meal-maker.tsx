@@ -180,12 +180,14 @@ export default function MealMakerScreen() {
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
         if (gamePhase === 'playing') {
           resetGame();
+          stopRoundMusic();
+          playMenuMusic();
           return true; // consume the event
         }
         return false; // let default navigation handle it
       });
       return () => subscription.remove();
-    }, [gamePhase, resetGame])
+    }, [gamePhase, resetGame, stopRoundMusic, playMenuMusic])
   );
 
   // ─── Plate layout ─────────────────────────────────────────────────────────

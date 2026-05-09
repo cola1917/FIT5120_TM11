@@ -15,7 +15,7 @@ import Reanimated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { CheckCircle, Heart, Home, RotateCcw } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, Heart, RotateCcw } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
 import { Spacing } from '@/constants/spacing';
@@ -194,8 +194,8 @@ export default function GameOverOverlay({
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.secondaryButton} onPress={onBack} activeOpacity={0.85}>
-            <Home size={22} color="#B64220" fill="#B64220" />
-            <Text style={styles.secondaryButtonText}>BACK TO HERO WORLD</Text>
+            <ArrowLeft size={22} color="#B64220" />
+            <Text style={styles.secondaryButtonText}>BACK TO MENU</Text>
           </TouchableOpacity>
         </View>
       </View>
