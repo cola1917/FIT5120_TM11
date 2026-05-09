@@ -43,6 +43,7 @@ export interface UserProfile {
   highScores: Record<string, number>;
   totalPoints: number;
   foodPreferences?: FoodPreferences;
+  completedStories: string[];
 }
 
 // ─── Storage Keys ────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ export async function createUserProfile(
     highScores: {},
     totalPoints: 0,
     foodPreferences,
+    completedStories: [],
   };
   await saveUserProfile(profile);
   return profile;
@@ -157,4 +159,35 @@ export async function addTotalPoints(points: number): Promise<void> {
   if (!profile) return;
   profile.totalPoints = Math.max(0, profile.totalPoints + points);
   await saveUserProfile(profile);
+}
+
+// ─── Story Completion ─────────────────────────────────────────────────────────
+
+/**
+ * Check whether the user has already claimed points for a given story.
+ * Returns false if no profile exists or the story has not been completed.
+ */
+export async function hasClaimedStoryPoints(storyId: string): Promise<boolean> {
+  const profile = await getUserProfile();
+  if (!profile) return false;
+  const completed = profile.completedStories ?? [];
+  return completed.includes(storyId);
+}
+
+/**
+ * Claim points for completing a story.
+ * Adds the storyId to completedStories and increments totalPoints.
+ * Returns true if points were awarded, false if already claimed or no profile.
+ */
+export async function claimStoryPoints(storyId: string, points: number): Promise<boolean> {
+  const profile = await getUserProfile();
+  if (!profile) return false;
+
+  const completed = profile.completedStories ?? [];
+  if (completed.includes(storyId)) return false;
+
+  profile.completedStories = [...completed, storyId];
+  profile.totalPoints = Math.max(0, profile.totalPoints + points);
+  await saveUserProfile(profile);
+  return true;
 }

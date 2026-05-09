@@ -2,35 +2,43 @@
   "pages": [
     {
       "storyText": "In the Heart of Sunny Meadow lived Leo the Rabbit and Pip the Squirrel. Leo loved crunchy kale and bright orange carrots, but Pip only wanted to eat 'Neon-Nuggets' - brightly colored, sugary snacks he found in crinkly bags dropped by hikers.",
-      "imagePrompt": "A vibrant meadow with a brown rabbit named Leo eating a fresh, bright orange carrot and a gray squirrel named Pip holding a crinkly bag of brightly colored snacks. The sun is shining, and there are colorful wildflowers everywhere. Classic children's storybook illustration style, charming watercolor and ink, soft and whimsical."
+      "imagePrompt": "A vibrant meadow with a brown rabbit named Leo eating a fresh, bright orange carrot and a gray squirrel named Pip holding a crinkly bag of brightly colored snacks. The sun is shining, and there are colorful wildflowers everywhere. Classic children's storybook illustration style, charming watercolor and ink, soft and whimsical.",
+      "displayText": "Leo loves healthy carrots, but Pip only wants to eat sugary snacks!"
     },
     {
       "storyText": "One afternoon, Pip found a sparkly golden ticket. 'Look, Leo! It's a map to the Secret Mountain of Marshmallows!' Pip squealed with excitement. Leo frowned. 'That sounds too good to be true, Pip. My carrots give me the power to run, but those snacks just make you sleepy.'",
-      "imagePrompt": "Pip the squirrel holding a sparkly golden map with a drawing of a mountain made of white marshmallows. Leo the rabbit looks skeptical with his paws on his hips. Detailed forest background with tall oak trees and dappled sunlight. Beautiful hand-drawn storybook illustration style, rich organic colors, soft pencil and watercolor."
+      "imagePrompt": "Pip the squirrel holding a sparkly golden map with a drawing of a mountain made of white marshmallows. Leo the rabbit looks skeptical with his paws on his hips. Detailed forest background with tall oak trees and dappled sunlight. Beautiful hand-drawn storybook illustration style, rich organic colors, soft pencil and watercolor.",
+      "displayText": "\"Look, Leo! A map to a mountain made of marshmallows!\""
     },
     {
       "storyText": "They began their climb up the rocky trail. Halfway up, Pip started to huff and puff. His legs felt like jelly, and his tummy hurt from all the sugar. Leo, fueled by his healthy greens, hopped effortlessly over logs and stones. 'Wait for me!' Pip gasped, feeling very slow.",
-      "imagePrompt": "A steep rocky path leading up a mountain. Leo the rabbit is playfully jumping over a large mossy log with ease. Pip the squirrel is sitting on a rock, looking tired, holding his stomach next to an empty, crumpled snack bag. Classic printed storybook illustration, expressive characters, warm earthy tones, vintage storybook aesthetic."
+      "imagePrompt": "A steep rocky path leading up a mountain. Leo the rabbit is playfully jumping over a large mossy log with ease. Pip the squirrel is sitting on a rock, looking tired, holding his stomach next to an empty, crumpled snack bag. Classic printed storybook illustration, expressive characters, warm earthy tones, vintage storybook aesthetic.",
+      "displayText": "Pip felt slow and tired, but Leo hopped over the rocks with ease."
     },
     {
       "storyText": "Finally, they reached the 'Chocolate Fountain' at the top. It looked delicious! But as Pip reached out for a taste, the ground began to shake. The 'chocolate' wasn't chocolate at all - it was a giant, sticky mud trap covered by a magical illusion projector!",
-      "imagePrompt": "A mysterious cave entrance with a shimmering, brown liquid fountain. A hidden magical contraption behind a rock is casting a faint, whimsical glow of candy shapes. The 'chocolate' is visibly turning into thick, dark brown mud. Pip the squirrel is leaning forward, looking surprised. Whimsical children's book illustration, atmospheric watercolor washes, classic storybook style."
+      "imagePrompt": "A mysterious cave entrance with a shimmering, brown liquid fountain. A hidden magical contraption behind a rock is casting a faint, whimsical glow of candy shapes. The 'chocolate' is visibly turning into thick, dark brown mud. Pip the squirrel is leaning forward, looking surprised. Whimsical children's book illustration, atmospheric watercolor washes, classic storybook style.",
+      "displayText": "Oh no! The chocolate fountain was actually a sticky mud trap!"
     },
     {
       "storyText": "Pip slipped and fell into the sticky mud. 'I'm stuck!' he cried. He tried to pull himself out, but his muscles felt weak because he hadn't eaten anything healthy all day. Behind the rocks, a sneaky Fox appeared, grinning. He had set the trap to catch slow, sluggish animals who only ate junk food.",
-      "imagePrompt": "Pip the squirrel trapped waist-deep in thick, gooey mud. In the shadowy background of the cave, a sneaky orange fox with a mischievous grin peeks out from behind a stalagmite. Leo the rabbit stands on solid ground, looking worried and alert. Traditional storybook art, expressive pen and ink with soft watercolor, engaging children's literature style."
+      "imagePrompt": "Pip the squirrel trapped waist-deep in thick, gooey mud. In the shadowy background of the cave, a sneaky orange fox with a mischievous grin peeks out from behind a stalagmite. Leo the rabbit stands on solid ground, looking worried and alert. Traditional storybook art, expressive pen and ink with soft watercolor, engaging children's literature style.",
+      "displayText": "Pip was stuck in the mud, and a sneaky fox was watching him!"
     },
     {
       "storyText": "Leo didn't panic. He reached into his backpack and pulled out a long, sturdy stalk of celery he had saved. 'Grab onto this, Pip!' Leo braced his strong legs against a rock and pulled with all his might. Thanks to his healthy diet, his muscles were strong enough to save his friend.",
-      "imagePrompt": "Leo the rabbit digging his feet into a rock, pulling hard on a long, bright green celery stalk. Pip the squirrel is grabbing the other end of the celery, being lifted out of the mud. The fox in the background looks frustrated. Hand-painted storybook illustration, dynamic and heartwarming, classic children's book style with beautiful soft shading."
+      "imagePrompt": "Leo the rabbit digging his feet into a rock, pulling hard on a long, bright green celery stalk. Pip the squirrel is grabbing the other end of the celery, being lifted out of the mud. The fox in the background looks frustrated. Hand-painted storybook illustration, dynamic and heartwarming, classic children's book style with beautiful soft shading.",
+      "displayText": "\"Grab the celery!\" Leo used his strength to pull Pip to safety."
     },
     {
       "storyText": "They dashed away from the cave just as the Fox lunged! Leo ran like the wind, and Pip used every bit of energy he had left. They didn't stop until they reached the safety of the vegetable patch. 'The Fox almost got us because I was too slow and weak,' Pip realized sadly.",
-      "imagePrompt": "Leo and Pip running fast through a dense forest, escaping. The orange fox is far behind, tripping over a tree root. Dramatic lighting with long shadows and magical rays of sunlight filtering through the trees. Beautiful vintage storybook illustration, rich watercolor textures, lively and expressive."
+      "imagePrompt": "Leo and Pip running fast through a dense forest, escaping. The orange fox is far behind, tripping over a tree root. Dramatic lighting with long shadows and magical rays of sunlight filtering through the trees. Beautiful vintage storybook illustration, rich watercolor textures, lively and expressive.",
+      "displayText": "They ran as fast as the wind to escape the hungry fox!"
     },
     {
       "storyText": "From that day on, Pip traded his 'Neon-Nuggets' for walnuts, berries, and crisp apples. He felt faster, stronger, and more awake than ever before. 'You were right, Leo,' Pip said, munching on a delicious red apple. 'Real food is the real magic!'",
-      "imagePrompt": "Leo and Pip sitting together on a soft patch of grass near a cozy garden. Leo has a pile of fresh carrots, and Pip is happily eating a bright red apple with some walnuts. They both look healthy and happy. The sun is setting in a beautiful orange and purple sky. Charming storybook ending illustration, warm and comforting watercolor style, perfect for a printed children's book."
+      "imagePrompt": "Leo and Pip sitting together on a soft patch of grass near a cozy garden. Leo has a pile of fresh carrots, and Pip is happily eating a bright red apple with some walnuts. They both look healthy and happy. The sun is setting in a beautiful orange and purple sky. Charming storybook ending illustration, warm and comforting watercolor style, perfect for a printed children's book.",
+      "displayText": "Pip learned his lesson: healthy food gives you the best magic of all!"
     }
   ],
   "outcome": "Junk food might look like a treat, but it can leave you feeling sluggish and weak when you need your strength the most. Healthy snacks are your \"real magic\" and secret weapon, giving you the energy and speed to stay safe, solve problems, and be a hero for your friends!"
