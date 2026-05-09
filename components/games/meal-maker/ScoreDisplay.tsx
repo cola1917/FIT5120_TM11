@@ -7,8 +7,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/fonts';
 import { Spacing } from '@/constants/spacing';
@@ -34,6 +35,11 @@ function ScoreDisplayInner({ score, timeRemaining, onBack }: ScoreDisplayProps) 
     <View style={[styles.container, { paddingTop: insets.top + Spacing.sm }]}>
       <View style={styles.inner}>
 
+        {/* Back button — top left */}
+        <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
+          <ArrowLeft size={24} color={Colors.on_surface} />
+        </TouchableOpacity>
+
         <View style={styles.hudItems}>
           <View style={styles.item}>
             <Text style={styles.label}>⏱</Text>
@@ -47,6 +53,9 @@ function ScoreDisplayInner({ score, timeRemaining, onBack }: ScoreDisplayProps) 
             <Text style={styles.value}>{score}</Text>
           </View>
         </View>
+
+        {/* Spacer to balance the back button and keep HUD centred */}
+        <View style={styles.backButtonSpacer} />
       </View>
     </View>
   );
@@ -95,5 +104,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.outline_variant,
     opacity: 0.4,
     marginHorizontal: Spacing.sm,
+  },
+  backButton: {
+    padding: Spacing.xs,
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonSpacer: {
+    width: 40,
   },
 });
