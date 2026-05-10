@@ -207,10 +207,18 @@ export default function MealMakerScreen() {
     setTimeout(() => startGame(), 100);
   }, [resetGame, startGame]);
 
+  // Always navigates to Hero World regardless of where the user came from
   const handleBack = useCallback(() => {
     resetGame();
-    router.back();
+    router.replace('/(tabs)/heroWorld');
   }, [resetGame, router]);
+
+  // Returns to the idle/menu phase without leaving the game screen
+  const handleBackToMenu = useCallback(() => {
+    resetGame();
+    stopRoundMusic();
+    playMenuMusic();
+  }, [resetGame, stopRoundMusic, playMenuMusic]);
 
   // When in playing phase, back goes to idle (start screen), not out of the game
   const handleBackFromRound = useCallback(() => {
@@ -367,7 +375,7 @@ export default function MealMakerScreen() {
             isNewHighScore={isNewHighScore}
             dailyReward={dailyReward}
             onPlayAgain={handlePlayAgain}
-            onBack={handleBack}
+            onBack={handleBackToMenu}
           />
         )}
       </View>
