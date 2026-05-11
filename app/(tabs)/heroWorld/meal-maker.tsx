@@ -48,7 +48,7 @@ export default function MealMakerScreen() {
   const router = useRouter();
 
   // ─── Settings ────────────────────────────────────────────────────────────────
-  const { settings, setVolume, setDifficulty } = useGameSettings();
+  const { settings, loading: settingsLoading, setVolume, setDifficulty } = useGameSettings();
 
   // ─── Game Engine ─────────────────────────────────────────────────────────────
   const {
@@ -153,18 +153,35 @@ export default function MealMakerScreen() {
     }
   }, [settings.volume]);
 
+  // Track whether the screen is currently focused so we know whether to start
+  // music once settings finish loading.
+  const isFocusedRef = useRef(false);
+
   useFocusEffect(
     useCallback(() => {
-      playMenuMusic();
+      isFocusedRef.current = true;
+      // Only start music if settings have already loaded (volume is known).
+      // If settings are still loading, the effect below will start music once ready.
+      if (!settingsLoading) {
+        playMenuMusic();
+      }
       return () => {
+        isFocusedRef.current = false;
         stopMenuMusic();
         stopRoundMusic();
         resetGame();
       };
-    }, [playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
-    // playMenuMusic / stopMenuMusic / stopRoundMusic are all stable (no volume dep),
-    // so this effect only re-runs when resetGame changes — i.e. effectively once.
+    }, [settingsLoading, playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
   );
+
+  // Start menu music once settings finish loading, but only if the screen is
+  // focused and no music is already playing. This fixes the race condition where
+  // useFocusEffect fires before AsyncStorage returns the saved volume.
+  useEffect(() => {
+    if (!settingsLoading && isFocusedRef.current && !menuSoundRef.current) {
+      playMenuMusic();
+    }
+  }, [settingsLoading, playMenuMusic]);
 
   useEffect(() => {
     if (gamePhase === 'playing') {
