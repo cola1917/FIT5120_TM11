@@ -41,21 +41,18 @@ const EARN_EXP_ITEMS = [
     id: 'read-story',
     image: require('../assets/images/Read_Story_EXP.png'),
     title: 'Read Story',
-    exp: 20,
     href: '/stories',
   },
   {
     id: 'meal-maker',
     image: require('../assets/images/Meal_Maker_EXP.png'),
     title: 'Meal Maker',
-    exp: 10,
     href: '/heroWorld/meal-maker',
   },
   {
     id: 'daily-challenge',
     image: require('../assets/images/Daily_Challenge_EXP.png'),
     title: 'Daily Challenge',
-    exp: 50,
     href: '/heroWorld/daily-challenge',
   },
 ] as const;
@@ -442,7 +439,6 @@ export default function ProfileScreen() {
               >
                 <Image source={item.image} style={styles.earnImage} contentFit="contain" />
                 <Text style={styles.earnTitle}>{item.title}</Text>
-                <Text style={styles.earnExp}>+{item.exp} EXP</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -456,7 +452,7 @@ export default function ProfileScreen() {
             <View style={styles.statCard}>
               <Text style={styles.statEmoji}>⭐</Text>
               <Text style={styles.statValue}>{profile.totalPoints}</Text>
-              <Text style={styles.statLabel}>Total Points</Text>
+              <Text style={styles.statLabel}>Total EXP</Text>
             </View>
 
             <View style={styles.statCard}>
