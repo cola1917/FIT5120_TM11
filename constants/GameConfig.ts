@@ -5,6 +5,25 @@
  * All game balance parameters are configurable here.
  */
 
+import type { GameDifficulty } from '../services/gameSettings';
+
+// ─── Difficulty Configuration ────────────────────────────────────────────────
+
+export interface DifficultyConfig {
+  /** Multiplier applied to spawn interval (>1 = slower spawning = easier) */
+  spawnMultiplier: number;
+  /** Multiplier applied to fall duration (>1 = slower falling = easier) */
+  fallMultiplier: number;
+  /** Multiplier applied to points earned per meal */
+  pointsMultiplier: number;
+}
+
+export const DIFFICULTY_CONFIG: Record<GameDifficulty, DifficultyConfig> = {
+  easy:   { spawnMultiplier: 1.4, fallMultiplier: 1.4, pointsMultiplier: 0.8 },
+  medium: { spawnMultiplier: 1.0, fallMultiplier: 1.0, pointsMultiplier: 1.0 },
+  hard:   { spawnMultiplier: 0.7, fallMultiplier: 0.7, pointsMultiplier: 1.25 },
+};
+
 // ─── Timing & Layout ────────────────────────────────────────────────────────
 
 export const ROUND_DURATION_SECONDS = 60;

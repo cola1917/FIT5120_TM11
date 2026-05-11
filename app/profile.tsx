@@ -41,21 +41,18 @@ const EARN_EXP_ITEMS = [
     id: 'read-story',
     image: require('../assets/images/Read_Story_EXP.png'),
     title: 'Read Story',
-    exp: 20,
     href: '/stories',
   },
   {
     id: 'meal-maker',
     image: require('../assets/images/Meal_Maker_EXP.png'),
     title: 'Meal Maker',
-    exp: 10,
     href: '/heroWorld/meal-maker',
   },
   {
     id: 'daily-challenge',
     image: require('../assets/images/Daily_Challenge_EXP.png'),
     title: 'Daily Challenge',
-    exp: 50,
     href: '/heroWorld/daily-challenge',
   },
 ] as const;
@@ -340,14 +337,14 @@ export default function ProfileScreen() {
   const getAvatarImage = () => {
     switch (profile?.avatarId) {
       case 'hero':
-        if (profile.totalPoints > 300) return (<Image source={require('../assets/images/avatar/hero-4.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 200) return (<Image source={require('../assets/images/avatar/hero-3.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 100) return (<Image source={require('../assets/images/avatar/hero-2.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[3].exp) return (<Image source={require('../assets/images/avatar/hero-4.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[2].exp) return (<Image source={require('../assets/images/avatar/hero-3.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[1].exp) return (<Image source={require('../assets/images/avatar/hero-2.png')} style={styles.avatarImage}/>);
         return (<Image source={require('../assets/images/avatar/hero-1.png')} style={styles.avatarImage}/>);
       case 'princess':
-        if (profile.totalPoints > 300) return (<Image source={require('../assets/images/avatar/princess-4.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 200) return (<Image source={require('../assets/images/avatar/princess-3.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 100) return (<Image source={require('../assets/images/avatar/princess-2.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[3].exp) return (<Image source={require('../assets/images/avatar/princess-4.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[2].exp) return (<Image source={require('../assets/images/avatar/princess-3.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[1].exp) return (<Image source={require('../assets/images/avatar/princess-2.png')} style={styles.avatarImage}/>);
         return (<Image source={require('../assets/images/avatar/princess-1.png')} style={styles.avatarImage}/>);
       default:
         break;
@@ -442,7 +439,6 @@ export default function ProfileScreen() {
               >
                 <Image source={item.image} style={styles.earnImage} contentFit="contain" />
                 <Text style={styles.earnTitle}>{item.title}</Text>
-                <Text style={styles.earnExp}>+{item.exp} EXP</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -456,7 +452,7 @@ export default function ProfileScreen() {
             <View style={styles.statCard}>
               <Text style={styles.statEmoji}>⭐</Text>
               <Text style={styles.statValue}>{profile.totalPoints}</Text>
-              <Text style={styles.statLabel}>Total Points</Text>
+              <Text style={styles.statLabel}>Total EXP</Text>
             </View>
 
             <View style={styles.statCard}>
