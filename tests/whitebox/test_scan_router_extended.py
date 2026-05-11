@@ -263,7 +263,7 @@ def test_scan_food_unhealthy_food_builds_alternatives(monkeypatch, scan_module, 
     monkeypatch.setattr(
         scan_module,
         "get_scan_alternatives",
-        lambda food_name, assessment_score: [
+        lambda food_name, assessment_score, blacklist=None, likes=None, dislikes=None: [
             {"name": "Apple Slices", "description": "Crunchy and full of vitamins!"},
         ],
     )

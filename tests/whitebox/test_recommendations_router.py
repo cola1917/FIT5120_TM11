@@ -60,6 +60,8 @@ def _patch_successful_pipeline(monkeypatch, rec_module, parsed=None):
     monkeypatch.setattr(rec_module, "parse_model_output", lambda raw: parsed_payload)
     monkeypatch.setattr(rec_module, "filter_output", lambda parsed, blacklist, allergies, forbidden_cats=None, forbidden_kws=None: parsed)
     monkeypatch.setattr(rec_module, "filter_tiny_hero_by_likes", lambda filtered, likes: filtered)
+    monkeypatch.setattr(rec_module, "rewrite_try_less_by_likes", lambda filtered, likes: filtered)
+    monkeypatch.setattr(rec_module, "topup_sections", lambda filtered, **kwargs: filtered)
     monkeypatch.setattr(rec_module, "should_queue_generation", lambda food_name: False)
 
     def _enrich(items):
@@ -161,6 +163,8 @@ def test_recommend_passes_payload_to_model_and_filters(monkeypatch, rec_module):
     monkeypatch.setattr(rec_module, "parse_model_output", lambda raw: parsed_payload)
     monkeypatch.setattr(rec_module, "filter_output", _capture_filter)
     monkeypatch.setattr(rec_module, "filter_tiny_hero_by_likes", _capture_tiny_hero_filter)
+    monkeypatch.setattr(rec_module, "rewrite_try_less_by_likes", lambda filtered, likes: filtered)
+    monkeypatch.setattr(rec_module, "topup_sections", lambda filtered, **kwargs: filtered)
     monkeypatch.setattr(rec_module, "should_queue_generation", lambda food_name: False)
     monkeypatch.setattr(
         rec_module,
