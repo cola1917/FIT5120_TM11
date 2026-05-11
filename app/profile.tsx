@@ -340,14 +340,14 @@ export default function ProfileScreen() {
   const getAvatarImage = () => {
     switch (profile?.avatarId) {
       case 'hero':
-        if (profile.totalPoints > 300) return (<Image source={require('../assets/images/avatar/hero-4.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 200) return (<Image source={require('../assets/images/avatar/hero-3.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 100) return (<Image source={require('../assets/images/avatar/hero-2.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[3].exp) return (<Image source={require('../assets/images/avatar/hero-4.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[2].exp) return (<Image source={require('../assets/images/avatar/hero-3.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[1].exp) return (<Image source={require('../assets/images/avatar/hero-2.png')} style={styles.avatarImage}/>);
         return (<Image source={require('../assets/images/avatar/hero-1.png')} style={styles.avatarImage}/>);
       case 'princess':
-        if (profile.totalPoints > 300) return (<Image source={require('../assets/images/avatar/princess-4.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 200) return (<Image source={require('../assets/images/avatar/princess-3.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 100) return (<Image source={require('../assets/images/avatar/princess-2.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[3].exp) return (<Image source={require('../assets/images/avatar/princess-4.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[2].exp) return (<Image source={require('../assets/images/avatar/princess-3.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[1].exp) return (<Image source={require('../assets/images/avatar/princess-2.png')} style={styles.avatarImage}/>);
         return (<Image source={require('../assets/images/avatar/princess-1.png')} style={styles.avatarImage}/>);
       default:
         break;
