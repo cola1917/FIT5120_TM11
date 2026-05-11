@@ -88,7 +88,7 @@ def test_scan_food_rejects_oversized_file(monkeypatch, scan_module, fake_db, fak
     monkeypatch.setattr(scan_module, "get_cached_result", lambda db, h: None)
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert exc.value.status_code == 400
     assert "too large" in exc.value.detail.lower()
@@ -103,7 +103,7 @@ def test_scan_food_rejects_read_error(monkeypatch, scan_module, fake_db, fake_us
     upload.read = bad_read  # type: ignore[method-assign]
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert exc.value.status_code == 400
     assert exc.value.headers.get("X-Error-Code") == "INVALID_FILE"
@@ -123,7 +123,7 @@ def test_scan_food_returns_cached_result(monkeypatch, scan_module, fake_db, fake
     monkeypatch.setattr(scan_module, "gemini_service", gemini_mock)
 
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
-    result = asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+    result = asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert result.food_name == "Apple"
     assert result.recognised is True
@@ -143,7 +143,7 @@ def test_scan_food_returns_500_when_vision_raises(monkeypatch, scan_module, fake
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert exc.value.status_code == 500
     assert exc.value.headers.get("X-Error-Code") == "ANALYSIS_FAILED"
@@ -173,7 +173,7 @@ def test_scan_food_returns_500_when_vision_returns_analysis_failed(monkeypatch, 
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert exc.value.status_code == 500
     assert exc.value.headers.get("X-Error-Code") == "ANALYSIS_FAILED"
@@ -207,7 +207,7 @@ def test_scan_food_returns_400_for_non_food(monkeypatch, scan_module, fake_db, f
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert exc.value.status_code == 400
     assert exc.value.headers.get("X-Error-Code") == "NOT_FOOD"
@@ -239,7 +239,7 @@ def test_scan_food_healthy_food_returns_empty_alternatives(monkeypatch, scan_mod
     monkeypatch.setenv("CACHE_AI_RESPONSE", "true")
 
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
-    result = asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+    result = asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert result.alternatives == []
     assert result.assessment_score == 3
@@ -280,7 +280,7 @@ def test_scan_food_unhealthy_food_builds_alternatives(monkeypatch, scan_module, 
     monkeypatch.setenv("CACHE_AI_RESPONSE", "true")
 
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
-    result = asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+    result = asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     assert len(result.alternatives) >= 1
     # image_url must be injected
@@ -314,6 +314,6 @@ def test_scan_food_does_not_cache_when_disabled(monkeypatch, scan_module, fake_d
     monkeypatch.setattr(scan_module, "cache_result", cache_result_mock)
 
     upload = _make_upload(b"\xff\xd8\xff" + b"x" * 100, content_type="image/jpeg")
-    asyncio.run(scan_module.scan_food(file=upload, db=fake_db, current_user=fake_user))
+    asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=fake_db, current_user=fake_user))
 
     cache_result_mock.assert_not_called()

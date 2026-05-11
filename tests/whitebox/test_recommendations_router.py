@@ -58,7 +58,7 @@ def _patch_successful_pipeline(monkeypatch, rec_module, parsed=None):
 
     monkeypatch.setattr(rec_module, "call_model", lambda **kwargs: '{"ok": true}')
     monkeypatch.setattr(rec_module, "parse_model_output", lambda raw: parsed_payload)
-    monkeypatch.setattr(rec_module, "filter_output", lambda parsed, blacklist, allergies: parsed)
+    monkeypatch.setattr(rec_module, "filter_output", lambda parsed, blacklist, allergies, forbidden_cats=None, forbidden_kws=None: parsed)
     monkeypatch.setattr(rec_module, "filter_tiny_hero_by_likes", lambda filtered, likes: filtered)
     monkeypatch.setattr(rec_module, "should_queue_generation", lambda food_name: False)
 
@@ -148,7 +148,7 @@ def test_recommend_passes_payload_to_model_and_filters(monkeypatch, rec_module):
         received["model_kwargs"] = kwargs
         return '{"ok": true}'
 
-    def _capture_filter(parsed, blacklist, allergies):
+    def _capture_filter(parsed, blacklist, allergies, forbidden_cats=None, forbidden_kws=None):
         received["filter_blacklist"] = blacklist
         received["filter_allergies"] = allergies
         return parsed
