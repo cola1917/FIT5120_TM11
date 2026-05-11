@@ -141,8 +141,50 @@ export default function MealMakerScreen() {
     isRoundPlayingRef.current = false;
   }, []);
 
-  // Live-update volume on already-playing sounds when the setting changes.
-  // Skip the update while settings are still loading to avoid acting on the
+  // Track whether the screen is currently focused so we know whether to start
+  // music once settings finish loading.
+  const isFocusedRef = useRef(false);
+
+  // Whether we have already started the menu music for this focus session.
+  // Used to prevent the deferred-start effect from spawning a second instance
+  // after the useFocusEffect has already started one.
+  const menuMusicStartedRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      menuMusicStartedRef.current = false;
+
+      // Only start music if settings have already loaded (volume is known).
+      // If settings are still loading, the effect below will start music once ready.
+      if (!settingsLoading) {
+        menuMusicStartedRef.current = true;
+        playMenuMusic();
+      }
+      return () => {
+        isFocusedRef.current = false;
+        menuMusicStartedRef.current = false;
+        stopMenuMusic();
+        stopRoundMusic();
+        resetGame();
+      };
+    }, [settingsLoading, playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
+  );
+
+  // Start menu music once settings finish loading, but only if the screen is
+  // focused and music has not already been started by useFocusEffect.
+  // This fixes the race condition where useFocusEffect fires before AsyncStorage
+  // returns the saved volume.
+  useEffect(() => {
+    if (!settingsLoading && isFocusedRef.current && !menuMusicStartedRef.current) {
+      menuMusicStartedRef.current = true;
+      playMenuMusic();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsLoading]);
+
+  // Live-update volume on already-playing sounds when the user changes the setting.
+  // Skip during the initial load phase (settingsLoading) to avoid acting on the
   // default value before the real saved value has been read from AsyncStorage.
   useEffect(() => {
     if (settingsLoading) return;
@@ -153,41 +195,6 @@ export default function MealMakerScreen() {
       roundSoundRef.current.setVolumeAsync(settings.volume).catch(() => {});
     }
   }, [settings.volume, settingsLoading]);
-
-  // Track whether the screen is currently focused so we know whether to start
-  // music once settings finish loading.
-  const isFocusedRef = useRef(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      isFocusedRef.current = true;
-      // Only start music if settings have already loaded (volume is known).
-      // If settings are still loading, the effect below will start music once ready.
-      if (!settingsLoading) {
-        playMenuMusic();
-      }
-      return () => {
-        isFocusedRef.current = false;
-        stopMenuMusic();
-        stopRoundMusic();
-        resetGame();
-      };
-    }, [settingsLoading, playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
-  );
-
-  // Start menu music once settings finish loading, but only if the screen is
-  // focused and no music is already playing. This fixes the race condition where
-  // useFocusEffect fires before AsyncStorage returns the saved volume.
-  // NOTE: settingsLoading is intentionally the only dependency that triggers this.
-  // settings.volume must NOT be in the dependency array — adding it would cause
-  // this effect to re-run on every volume change and spawn a second sound instance
-  // (the guard `!menuSoundRef.current` is async-unsafe during the createAsync call).
-  useEffect(() => {
-    if (!settingsLoading && isFocusedRef.current && !menuSoundRef.current) {
-      playMenuMusic();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsLoading]);
 
   useEffect(() => {
     if (gamePhase === 'playing') {
