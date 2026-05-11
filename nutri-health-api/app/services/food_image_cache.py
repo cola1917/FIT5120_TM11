@@ -51,8 +51,8 @@ _lock = threading.Lock()
 
 _RETRY_AFTER_HOURS = 24
 _DOWNLOAD_TIMEOUT  = 15   # seconds
-_IMAGE_WIDTH       = 400
-_IMAGE_HEIGHT      = 400
+_IMAGE_WIDTH       = 512
+_IMAGE_HEIGHT      = 512
 
 VALID_STATUSES = {"ready", "pending", "failed", "fallback", "missing"}
 

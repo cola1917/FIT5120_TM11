@@ -20,6 +20,7 @@ from app.services.food_image_cache import (
     get_cached_image,
     get_category_fallback_image,
 )
+from app.services.food_metadata import find_existing_image as _find_metadata_image
 
 # ─── Category keyword map ─────────────────────────────────────────────────────
 # Order matters: more specific terms should appear in earlier entries.
@@ -103,13 +104,21 @@ def enrich_recommendation_items(items: list[dict]) -> list[EnrichedFoodItem]:
         if not food_name:
             continue
         category = infer_category(food_name)
-        cached   = get_cached_image(food_name)
-        if cached:
-            image_url    = cached["image_url"]
+        metadata_url = _find_metadata_image(food_name)
+        if metadata_url:
+            # Priority 1: pre-existing photo from clean_food_metadata.json
+            image_url    = metadata_url
             image_status = "ready"
         else:
-            image_url    = get_category_fallback_image(category)
-            image_status = "fallback"
+            cached = get_cached_image(food_name)
+            if cached:
+                # Priority 2: previously AI-generated image (on-disk cache)
+                image_url    = cached["image_url"]
+                image_status = "ready"
+            else:
+                # Priority 3: category-level static fallback
+                image_url    = get_category_fallback_image(category)
+                image_status = "fallback"
         enriched.append(
             EnrichedFoodItem(
                 food_id      = slugify(food_name),

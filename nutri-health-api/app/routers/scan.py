@@ -7,7 +7,8 @@ import asyncio
 import logging
 import os
 from urllib.parse import quote
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
+import json
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.scan import ScanResponse, ErrorResponse
@@ -107,9 +108,22 @@ def get_food_image_url(food_name: str) -> str:
 )
 async def scan_food(
     file: UploadFile = File(..., description="Image file (JPEG or PNG, max 5MB)"),
+    blacklist: str = Form(default="[]", description="JSON array of blacklisted terms e.g. '[\"nuts\",\"egg\"]'"),
+    likes: str = Form(default="[]", description="JSON array of liked categories e.g. '[\"fruits\",\"dairy\"]'"),
+    dislikes: str = Form(default="[]", description="JSON array of disliked categories e.g. '[\"fish\",\"meat\"]'"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    def _parse_str_list(raw: str) -> list[str]:
+        try:
+            parsed = json.loads(raw) if raw else []
+            return parsed if isinstance(parsed, list) else []
+        except (json.JSONDecodeError, ValueError):
+            return []
+
+    blacklist_terms = _parse_str_list(blacklist)
+    likes_terms     = _parse_str_list(likes)
+    dislikes_terms  = _parse_str_list(dislikes)
     # Validate file type
     if file.content_type not in ALLOWED_TYPES:
         logger.warning(f"Invalid file type: {file.content_type}")
@@ -147,13 +161,15 @@ async def scan_food(
             headers={"X-Error-Code": "INVALID_FILE"},
         )
 
-    # Check cache
+    # Check cache — skip when user has a blacklist (results are personalised)
+    has_prefs = bool(blacklist_terms or likes_terms or dislikes_terms)
     image_hash = hash_image(file_content + SCAN_CACHE_VERSION.encode("utf-8"))
     logger.info(f"Processing image with hash: {image_hash[:16]}...")
-    cached_result = get_cached_result(db, image_hash)
-    if cached_result:
-        logger.info("Returning cached result")
-        return ScanResponse(**cached_result)
+    if not has_prefs:
+        cached_result = get_cached_result(db, image_hash)
+        if cached_result:
+            logger.info("Returning cached result")
+            return ScanResponse(**cached_result)
 
     # Analyse image
     try:
@@ -202,7 +218,12 @@ async def scan_food(
     else:
         food_name = result.get("food_name", "")
         rewritten_alternatives = await asyncio.to_thread(
-            get_scan_alternatives, food_name, result["assessment_score"]
+            get_scan_alternatives,
+            food_name,
+            result["assessment_score"],
+            blacklist_terms,
+            likes_terms,
+            dislikes_terms,
         )
         normalized_alternatives = []
         for alt in rewritten_alternatives[:TARGET_ALTERNATIVE_COUNT]:
@@ -210,9 +231,11 @@ async def scan_food(
             normalized_alternatives.append(alt)
         result["alternatives"] = normalized_alternatives
 
-    # Cache the result
-    if os.getenv("CACHE_AI_RESPONSE", "true").lower() not in ("false", "0", "no"):
+    # Cache the result — skip when user has a blacklist (personalised results must not be shared)
+    if not has_prefs and os.getenv("CACHE_AI_RESPONSE", "true").lower() not in ("false", "0", "no"):
         cache_result(db, image_hash, result, ttl_days=1)
+    elif has_prefs:
+        logger.info("Skipping cache write: personalised result (blacklist present)")
     else:
         logger.info("AI response caching disabled")
 

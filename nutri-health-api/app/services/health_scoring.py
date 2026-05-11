@@ -324,18 +324,15 @@ def _build_database_assessment(food_name: str, score: int, row: CnFdes) -> str:
     display_name = (row.descriptor or food_name or "This food").strip()
     if score >= 3:
         return (
-            f"{display_name} looks like a nourishing choice with a strong nutrition profile. "
-            "It can fit well into everyday meals and snacks when enjoyed as part of a balanced plate. "
-            "Keep exploring foods that help your body feel strong and ready for action! 🌟"
+            f"{display_name} is a nourishing choice with a strong nutrition profile. "
+            "It's great for everyday eating and helps your body feel strong and energised! 🌟"
         )
     if score == 2:
         return (
-            f"{display_name} has some good nutrients, but it is better as an occasional choice than an everyday one. "
-            "Try pairing it with fruit, vegetables, or another less processed food to build a stronger meal. "
-            "Small balanced choices can make a big difference! 😊"
+            f"{display_name} has some good nutrients but is higher in fat, sugar, or salt. "
+            "It's best enjoyed occasionally rather than every day. 😊"
         )
     return (
-        f"{display_name} can be a fun once-in-a-while treat, but it is not the strongest everyday option. "
-        "A simpler food with less sugar, salt, or saturated fat would give your body steadier fuel. "
-        "You can always make a super swap next time! 💪"
+        f"{display_name} is high in sugar, salt, or unhealthy fats with limited nutritional value. "
+        "It's best saved as a once-in-a-while treat. 💪"
     )

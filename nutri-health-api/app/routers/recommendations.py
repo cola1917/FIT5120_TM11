@@ -14,13 +14,14 @@ from app.schemas.recommendation import (
     RecommendationResponse,
 )
 from app.services.enrichment import enrich_recommendation_items
-from app.services.filter import filter_output, filter_tiny_hero_by_likes
+from app.services.filter import filter_output, filter_tiny_hero_by_likes, resolve_forbidden
 from app.services.food_image_cache import (
     generate_and_cache_food_image,
     mark_pending,
     should_queue_generation,
 )
-from app.services.recommendation import call_model, parse_model_output
+from app.services.food_metadata import find_existing_image as _find_metadata_image
+from app.services.recommendation import call_model, parse_model_output, topup_sections, rewrite_try_less_by_likes
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +70,30 @@ async def recommend(
             detail="Model returned invalid output. Please try again.",
         )
 
-    filtered = filter_output(parsed, payload.blacklist, payload.allergies)
+    # Resolve forbidden sets once per request — reused by filter_output and topup_sections.
+    forbidden_cats, forbidden_kws = resolve_forbidden(payload.blacklist + payload.allergies)
+
+    filtered = filter_output(
+        parsed, payload.blacklist, payload.allergies,
+        forbidden_cats=forbidden_cats, forbidden_kws=forbidden_kws,
+    )
     filtered = filter_tiny_hero_by_likes(filtered, payload.likes)
     if filtered is None:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Filtering failed. Please try again.",
         )
+
+    filtered = rewrite_try_less_by_likes(filtered, payload.likes)
+    filtered = topup_sections(
+        filtered,
+        goal=payload.goal_id,
+        blacklist=payload.blacklist,
+        allergies=payload.allergies,
+        likes=payload.likes,
+        forbidden_cats=forbidden_cats,
+        forbidden_kws=forbidden_kws,
+    )
 
     logger.info(
         "Recommendation response: super=%d tiny=%d try_less=%d",
@@ -104,6 +122,9 @@ async def recommend(
         + response.try_less_foods
     )
     for item in all_items:
+        # Skip AI generation when a pre-existing metadata image already covers this food.
+        if _find_metadata_image(item.food_name):
+            continue
         if should_queue_generation(item.food_name):
             mark_pending(item.food_name, item.category)
             background_tasks.add_task(

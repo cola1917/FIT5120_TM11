@@ -5,15 +5,14 @@ Replaces the RAG + Gemini rewrite pipeline for generating healthier food alterna
 in the /scan endpoint.
 
 Flow:
-  get_scan_alternatives(food_name, assessment_score)
+  get_scan_alternatives(food_name, assessment_score, blacklist, likes, dislikes)
     → score < 3: call fine-tuned model (Task: alternative_generation)
     → parse alternatives list
     → filter global banned terms
-    → fallback to rule-based candidates if model fails
+    → filter user blacklist (hard)
+    → filter user dislikes (hard)
+    → fill from fallback map if < 2 remain (likes-aware ordering)
     → return [{"name": "...", "description": "..."}]
-
-Does NOT accept user blacklist/allergies — scan requests do not carry
-per-user preferences. Only global child-safety banned terms are applied.
 """
 
 from __future__ import annotations
@@ -32,7 +31,7 @@ logger = logging.getLogger(__name__)
 # ─── Model config ─────────────────────────────────────────────────────────────
 
 _MODEL       = os.getenv("OPENAI_FOOD_MODEL", "ft:gpt-4o-mini-2024-07-18:personal::Dcz8w84o")
-_TEMPERATURE = 0.4   # higher than recommendation (0.25) for more variety in alternatives
+_TEMPERATURE = 0.3   # lowered from 0.4 for more consistent output; still above recommendation (0.25) for variety
 _TOP_P       = 0.9
 
 # ─── Score → health_level mapping ────────────────────────────────────────────
@@ -58,6 +57,7 @@ _SCAN_BANNED_TERMS: list[str] = [
 _QUALITY_BLOCKED_TERMS: list[str] = [
     "candy", "cake", "cookie", "cookies", "muffin", "muffins",
     "ice cream", "soda", "cola", "chips", "fries", "french fries",
+    "donut", "doughnut", "pastry", "brownie", "cupcake", "waffle",
     "syrup", "chocolate", "chocolate bar",
     "sweetened drink", "sweetened drinks", "energy drink",
     "sauce", "dressing", "dip", "gravy", "ketchup",
@@ -67,6 +67,15 @@ _QUALITY_BLOCKED_TERMS: list[str] = [
 _BROAD_CATEGORY_TERMS: frozenset[str] = frozenset({
     "fruit", "fruits", "vegetable", "vegetables", "protein",
     "healthy snack", "drink", "drinks",
+})
+
+# Single raw ingredients that are too vague on their own as alternatives
+_SINGLE_RAW_INGREDIENTS: frozenset[str] = frozenset({
+    "mango", "banana", "apple", "orange", "grapes", "pear", "kiwi",
+    "strawberry", "strawberries", "blueberry", "blueberries", "berries",
+    "yogurt", "yoghurt", "milk", "cheese", "egg", "eggs",
+    "rice", "oats", "bread", "potato", "carrot", "spinach",
+    "chicken", "fish", "tofu", "nuts", "almonds", "water",
 })
 
 # ─── Generic fallback when rules also produce nothing ─────────────────────────
@@ -107,8 +116,8 @@ _FALLBACK_MAP: dict[str, list[dict]] = {
         {"name": "fruit smoothie",          "alternative_reason": "A fruit smoothie is sweet, creamy, and full of vitamins to keep you feeling great! 🍓🥤"},
     ],
     "chips": [
-        {"name": "carrot sticks with hummus", "alternative_reason": "Carrot sticks with hummus are crunchy and satisfying — a great swap for chips! 🥕😊"},
-        {"name": "roasted chickpeas",         "alternative_reason": "Roasted chickpeas are crispy, crunchy, and full of protein for energy! 🌟✨"},
+        {"name": "carrot sticks with hummus", "alternative_reason": "Carrot sticks with hummus give you the same satisfying crunch as chips, with more vitamins and a tasty dip! 🥕😊"},
+        {"name": "low-salt roasted nori",     "alternative_reason": "Low-salt roasted nori is light, crispy, and savoury — just like chips but way better for you! 🌊✨"},
     ],
     "fries": [
         {"name": "sweet potato fries",   "alternative_reason": "Sweet potato fries are crispy and naturally sweet — a tastier, healthier choice! 🍠✨"},
@@ -121,6 +130,8 @@ _FALLBACK_MAP: dict[str, list[dict]] = {
     "burger": [
         {"name": "whole-grain chicken sandwich", "alternative_reason": "A whole-grain chicken sandwich gives you protein and fiber to keep you full and strong! 🐔🌾"},
         {"name": "whole-grain fish sandwich",    "alternative_reason": "A whole-grain fish sandwich is rich in healthy fats and great for your brain! 🐟🌾"},
+        {"name": "rice bowl with vegetables",    "alternative_reason": "A rice bowl with veggies is hearty and satisfying — just like a burger but way more nutritious! 🍚🥦"},
+        {"name": "tofu rice bowl",               "alternative_reason": "A tofu rice bowl is filling and packed with plant-based protein to keep you going! 🍚✨"},
     ],
     "cheeseburger": [
         {"name": "whole-grain chicken sandwich", "alternative_reason": "A whole-grain chicken sandwich gives you protein and fiber to keep you full and strong! 🐔🌾"},
@@ -135,14 +146,81 @@ _FALLBACK_MAP: dict[str, list[dict]] = {
         {"name": "whole-grain noodles with egg",  "alternative_reason": "Whole-grain noodles with egg give you energy and protein to stay active! 🍝🥚"},
     ],
     "fried chicken": [
-        {"name": "grilled chicken wrap",  "alternative_reason": "A grilled chicken wrap has the same great taste with less oil and more veggies! 🌯🥗"},
-        {"name": "chicken rice bowl",     "alternative_reason": "A chicken rice bowl is a balanced meal with protein and carbs to keep you going! 🍚🐔"},
+        {"name": "grilled chicken wrap",       "alternative_reason": "A grilled chicken wrap has the same great taste with less oil and more veggies! 🌯🥗"},
+        {"name": "chicken rice bowl",          "alternative_reason": "A chicken rice bowl is a balanced meal with protein and carbs to keep you going! 🍚🐔"},
+        {"name": "tofu stir-fry with vegetables", "alternative_reason": "Tofu stir-fry gives you that satisfying crispy texture with healthy veggies instead of frying! 🥦✨"},
+        {"name": "vegetable rice bowl",        "alternative_reason": "A veggie rice bowl is filling, colourful, and packed with vitamins to keep you energised! 🍚🥦"},
     ],
     "chocolate cookie": [
         {"name": "banana bread",        "alternative_reason": "Banana bread satisfies your sweet tooth with natural fruit sweetness — no extra sugar needed! 🍌😊"},
         {"name": "yogurt with berries", "alternative_reason": "Yogurt with berries gives you creamy sweetness plus vitamins for a great snack! 🍓✨"},
     ],
+    "cookie": [
+        {"name": "banana oat bites",    "alternative_reason": "Banana oat bites are chewy, naturally sweet, and full of energy to keep you going! 🍌🌾"},
+        {"name": "yogurt with berries", "alternative_reason": "Yogurt with berries gives you creamy sweetness plus vitamins for a great snack! 🍓✨"},
+    ],
+    "donut": [
+        {"name": "banana bread",           "alternative_reason": "Banana bread is soft, naturally sweet, and made with real fruit — a much better treat! 🍌😊"},
+        {"name": "fruit salad with honey", "alternative_reason": "Fruit salad with a drizzle of honey is sweet, fresh, and full of vitamins! 🍓🍯"},
+    ],
+    "doughnut": [
+        {"name": "banana bread",           "alternative_reason": "Banana bread is soft, naturally sweet, and made with real fruit — a much better treat! 🍌😊"},
+        {"name": "fruit salad with honey", "alternative_reason": "Fruit salad with a drizzle of honey is sweet, fresh, and full of vitamins! 🍓🍯"},
+    ],
+    "pastry": [
+        {"name": "whole-grain toast with nut butter", "alternative_reason": "Whole-grain toast with nut butter gives you lasting energy and healthy fats to power your day! 🍞🥜"},
+        {"name": "banana oat bites",                  "alternative_reason": "Banana oat bites are chewy, naturally sweet, and packed with energy! 🍌🌾"},
+    ],
+    "milk tea": [
+        {"name": "plain milk with a dash of honey", "alternative_reason": "Plain milk with a touch of honey is creamy, naturally sweet, and great for strong bones! 🥛🍯"},
+        {"name": "fruit smoothie",                  "alternative_reason": "A fruit smoothie is refreshing, sweet, and packed with vitamins to keep you energized! 🍓🥤"},
+    ],
+    "bubble tea": [
+        {"name": "plain milk with a dash of honey", "alternative_reason": "Plain milk with a touch of honey is creamy, naturally sweet, and great for strong bones! 🥛🍯"},
+        {"name": "fruit smoothie",                  "alternative_reason": "A fruit smoothie is refreshing, sweet, and packed with vitamins to keep you energized! 🍓🥤"},
+    ],
+    "pizza": [
+        {"name": "whole-grain veggie flatbread",    "alternative_reason": "A whole-grain veggie flatbread has the same fun pizza feel with more fibre and vegetables! 🫓🥦"},
+        {"name": "chicken and vegetable rice bowl", "alternative_reason": "A chicken and veggie rice bowl is a filling, balanced meal with protein and plenty of goodness! 🍚🐔"},
+    ],
+    "hot dog": [
+        {"name": "whole-grain chicken sandwich", "alternative_reason": "A whole-grain chicken sandwich gives you protein and fibre to keep you full and strong! 🐔🌾"},
+        {"name": "grilled chicken wrap",         "alternative_reason": "A grilled chicken wrap is a tasty handheld option with lean protein and vegetables! 🌯🥗"},
+    ],
 }
+
+# ─── Frontend category → alternative name keyword mapper ─────────────────────
+# Maps the 8 frontend preference IDs to keywords found in alternative food names.
+# Order within each list matters: earlier keywords are more specific.
+
+_CATEGORY_KEYWORDS: dict[str, list[str]] = {
+    "fish":       ["fish", "salmon", "tuna", "sardine", "mackerel", "seafood", "prawn", "shrimp"],
+    "meat":       ["chicken", "beef", "turkey", "lamb", "duck", "pork", "meat"],
+    "dairy":      ["yogurt", "yoghurt", "milk", "cheese", "kefir"],
+    "fruits":     ["fruit", "apple", "banana", "mango", "berry", "berries", "orange", "grape",
+                   "melon", "peach", "pear", "kiwi", "lychee", "watermelon"],
+    "vegetables": ["vegetable", "veggie", "carrot", "broccoli", "spinach", "cucumber",
+                   "tomato", "lettuce", "celery", "cabbage", "corn", "pea"],
+    "noodles":    ["noodle", "pasta", "spaghetti", "vermicelli", "ramen", "udon"],
+    "rice":       ["rice", "congee", "porridge", "risotto"],
+    "bread":      ["bread", "toast", "wrap", "flatbread", "sandwich", "bun", "roll", "pita"],
+}
+
+
+def infer_alternative_category(name: str) -> str | None:
+    """
+    Map an alternative food name to one of the 8 frontend preference categories.
+    Returns None if no category can be inferred.
+
+    Priority order: fish > meat > dairy > fruits > vegetables > noodles > rice > bread
+    (protein-first, since a 'chicken rice bowl' should map to meat not rice)
+    """
+    lower = name.lower()
+    for category, keywords in _CATEGORY_KEYWORDS.items():
+        if any(kw in lower for kw in keywords):
+            return category
+    return None
+
 
 # ─── Scan-specific system prompt ─────────────────────────────────────────────
 
@@ -156,8 +234,13 @@ Output rules:
 - Each alternative must have "name" (a specific food, NOT a broad category like "fruit", \
 "vegetable", "healthy snack", or "drink") and "alternative_reason" (one sentence explaining \
 why this food is a good swap, child-friendly, with 1-2 emojis).
-- "alternative_reason" must describe why the alternative food is good for the child, \
-NOT about the original food.
+- "name" must be a complete, specific food or dish (e.g. "banana oat bites", \
+"frozen yogurt with berries", "carrot sticks with hummus") — NOT a single raw ingredient \
+like "mango", "banana", "yogurt", "milk", or "apple" alone.
+- "alternative_reason" must explain both why this alternative is healthier AND how it \
+satisfies a similar craving or eating occasion as the original food (e.g. same crunch, \
+same sweetness, same handheld feel, same refreshing quality). Do NOT write a generic \
+nutrition statement — make the connection to the original food's appeal obvious.
 - Choose alternatives in the same eating context: snack stays snack or fruit, \
 drink stays drink or dairy, dessert stays light dessert or fruit, \
 meal stays a balanced meal option.
@@ -165,7 +248,8 @@ meal stays a balanced meal option.
 - Do not use medical jargon.
 - Do not recommend pork, bacon, ham, alcohol, caffeine drinks, supplements, baby formula, \
 medical foods, sauces, or condiments as alternatives.
-- Do not recommend another junk food as an alternative.
+- Do not recommend another junk food, candy, cake, cookie, ice cream, donut, or pastry \
+as an alternative — even if the original food is also a sweet or junk food.
 
 Context-matching rules:
 - Alternatives must be similar in food type, eating occasion, and texture.
@@ -174,14 +258,14 @@ Context-matching rules:
 - Do not replace burgers or sandwiches with plain meat or plain fish only.
 - Prefer complete child-friendly alternatives (a dish or a food combination).
 
-Examples of good context-matched alternatives:
-Food: burger → alternatives: whole-grain chicken sandwich, veggie burger
-Food: instant noodles → alternatives: noodle soup with vegetables, whole-grain noodles with egg
-Food: chips → alternatives: carrot sticks with hummus, roasted chickpeas
-Food: ice cream → alternatives: plain yogurt with fruit, frozen banana
-Food: cake → alternatives: banana bread, yogurt with berries
-Food: fried chicken → alternatives: grilled chicken wrap, chicken rice bowl
-Food: soda → alternatives: fruit-infused water, plain milk
+Examples of good context-matched alternatives (notice how each reason links back to the original food's appeal):
+Food: chips → alternatives: carrot sticks with hummus (reason: "same satisfying crunch as chips, with a tasty dip"), low-salt roasted nori (reason: "light and crispy just like chips but way better for you")
+Food: burger → alternatives: whole-grain chicken sandwich (reason: "same handheld, savoury feel as a burger"), veggie burger (reason: "gives you the burger experience with more fibre")
+Food: instant noodles → alternatives: noodle soup with vegetables (reason: "warm and slurpy just like noodles, with real veggies added"), whole-grain noodles with egg (reason: "same comforting noodle feel with more protein")
+Food: ice cream → alternatives: plain yogurt with fruit (reason: "cold, creamy, and sweet — just like ice cream"), frozen banana (reason: "naturally creamy and sweet when frozen — like ice cream but full of vitamins")
+Food: cake → alternatives: banana bread (reason: "soft and sweet like cake but made with real fruit"), yogurt with berries (reason: "satisfies the same sweet craving with less sugar")
+Food: fried chicken → alternatives: grilled chicken wrap (reason: "same savoury chicken flavour without the heavy frying"), chicken rice bowl (reason: "filling and satisfying like fried chicken, but lighter")
+Food: soda → alternatives: fruit-infused water (reason: "refreshing and fizz-free with real fruit flavour"), plain milk (reason: "cold and satisfying to drink, with calcium instead of sugar")
 
 Output schema:
 {
@@ -233,7 +317,58 @@ def build_alternative_prompt(food_name: str, health_level: str) -> str:
 
 # ─── Model call ───────────────────────────────────────────────────────────────
 
-def call_alternative_model(food_name: str, health_level: str) -> str:
+def _build_system_prompt(
+    blacklist: list[str],
+    likes: list[str],
+    dislikes: list[str],
+) -> str:
+    """Return system prompt with user preference context appended."""
+    extra: list[str] = []
+    if blacklist:
+        extra.append(
+            "User blacklist (never suggest any of these, not even as part of a dish name): "
+            + ", ".join(blacklist)
+        )
+    if likes:
+        extra.append(
+            "User prefers food from these groups: "
+            + ", ".join(likes)
+            + " — when multiple suitable alternatives exist, prefer these categories."
+        )
+    if dislikes:
+        extra.append(
+            "User dislikes food from these groups: "
+            + ", ".join(dislikes)
+            + " — avoid suggesting alternatives from these categories when possible."
+        )
+    if not extra:
+        return _SYSTEM_PROMPT
+    return _SYSTEM_PROMPT + "\n\n" + "\n".join(extra)
+
+
+def _is_blacklisted(name: str, blacklist: list[str]) -> bool:
+    """Return True if the alternative name contains any user blacklist term."""
+    lower = name.lower()
+    for term in blacklist:
+        t = term.lower().strip()
+        if not t:
+            continue
+        if " " in t:
+            if t in lower:
+                return True
+        else:
+            if re.search(r"\b" + re.escape(t), lower):
+                return True
+    return False
+
+
+def call_alternative_model(
+    food_name: str,
+    health_level: str,
+    blacklist: list[str] | None = None,
+    likes: list[str] | None = None,
+    dislikes: list[str] | None = None,
+) -> str:
     """Call the fine-tuned model synchronously. Returns raw response string."""
     api_key = os.getenv("OPENAI_API_KEY")
     client  = openai.OpenAI(api_key=api_key)
@@ -242,7 +377,7 @@ def call_alternative_model(food_name: str, health_level: str) -> str:
         temperature = _TEMPERATURE,
         top_p       = _TOP_P,
         messages    = [
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": _build_system_prompt(blacklist or [], likes or [], dislikes or [])},
             {"role": "user",   "content": build_alternative_prompt(food_name, health_level)},
         ],
     )
@@ -303,10 +438,21 @@ def filter_alternatives(alternatives: list[dict]) -> list[dict]:
     return [a for a in alternatives if not _is_banned(a.get("name", ""))]
 
 
+def _is_single_raw_ingredient(name: str) -> bool:
+    """Return True if the name is a single raw ingredient with no preparation context."""
+    lower = name.lower().strip()
+    # Only flag single-token names (multi-word names like "yogurt with berries" are fine)
+    if " " in lower:
+        return False
+    return lower in _SINGLE_RAW_INGREDIENTS
+
+
 def _is_quality_blocked(name: str) -> bool:
-    """Return True if a name is unhealthy junk food or a broad vague category."""
+    """Return True if a name is unhealthy junk food, a broad vague category, or a single raw ingredient."""
     lower = name.lower().strip()
     if lower in _BROAD_CATEGORY_TERMS:
+        return True
+    if _is_single_raw_ingredient(lower):
         return True
     for term in _QUALITY_BLOCKED_TERMS:
         if " " in term:
@@ -327,10 +473,14 @@ def _fill_from_fallback_map(
     food_name: str,
     existing_alts: list[dict],
     target: int = 2,
+    blacklist: list[str] | None = None,
+    likes: list[str] | None = None,
+    dislikes: list[str] | None = None,
 ) -> list[dict]:
     """
     Fill up to `target` items using _FALLBACK_MAP when quality filter leaves
-    fewer than needed. Fallback candidates are also quality-checked.
+    fewer than needed. Candidates are quality-checked, blacklist-filtered, and
+    sorted so liked categories come first.
     """
     if len(existing_alts) >= target:
         return existing_alts[:target]
@@ -346,19 +496,41 @@ def _fill_from_fallback_map(
                 break
 
     existing_names = {a.get("name", "").lower() for a in existing_alts}
-    result = list(existing_alts)
+    bl = blacklist or []
+    liked = set(likes or [])
+    disliked = set(dislikes or [])
 
+    eligible: list[dict] = []
     for cand in candidates:
-        if len(result) >= target:
-            break
         name = cand.get("name", "")
         if name.lower() in existing_names:
             continue
         if _is_quality_blocked(name):
             continue
-        result.append(cand)
+        if bl and _is_blacklisted(name, bl):
+            continue
+        cat = infer_alternative_category(name)
+        if disliked and cat in disliked:
+            continue
+        eligible.append(cand)
 
+    # Liked categories first, then neutral
+    if liked:
+        eligible.sort(key=lambda c: 0 if infer_alternative_category(c.get("name", "")) in liked else 1)
+
+    result = list(existing_alts) + eligible
     return result[:target]
+
+
+def _filter_dislikes(alts: list[dict], dislikes: list[str]) -> list[dict]:
+    """
+    Hard-filter alternatives whose inferred category is in the dislikes list.
+    If all alternatives are disliked, returns empty list — caller fills from fallback.
+    """
+    if not dislikes:
+        return alts
+    disliked = set(dislikes)
+    return [a for a in alts if infer_alternative_category(a.get("name", "")) not in disliked]
 
 
 # ─── Burger post-parse cleanup ───────────────────────────────────────────────
@@ -447,6 +619,9 @@ def _fallback_alternatives(food_name: str) -> list[dict]:
 def get_scan_alternatives(
     food_name: str,
     assessment_score: int,
+    blacklist: list[str] | None = None,
+    likes: list[str] | None = None,
+    dislikes: list[str] | None = None,
 ) -> list[dict]:
     """
     Return up to 2 healthier alternatives for a scanned food.
@@ -454,6 +629,10 @@ def get_scan_alternatives(
     Returns [] for healthy foods (assessment_score >= 3).
     Returns [{name, description}, ...] for unhealthy / moderate foods.
     Falls back to rule-based candidates if the model fails.
+
+    blacklist: hard filter — allergens/ingredients to never suggest.
+    dislikes:  hard filter — disliked frontend categories are always excluded.
+    likes:     preference hint — liked categories prioritised in fallback ordering.
     """
     if assessment_score >= 3:
         return []
@@ -463,20 +642,32 @@ def get_scan_alternatives(
         logger.warning("Unexpected assessment_score=%s, returning []", assessment_score)
         return []
 
+    bl = [t.strip() for t in (blacklist or []) if t.strip()]
+    lk = [t.strip() for t in (likes or []) if t.strip()]
+    dl = [t.strip() for t in (dislikes or []) if t.strip()]
+
     # ── Model call ──
     try:
-        raw    = call_alternative_model(food_name, health_level)
+        raw    = call_alternative_model(food_name, health_level, blacklist=bl, likes=lk, dislikes=dl)
         parsed = parse_alternative_output(raw)
     except Exception as exc:
         logger.error("Model call failed for scan alternative (%r): %s", food_name, exc)
-        return _fallback_alternatives(food_name)
+        parsed = None
 
     if parsed is None:
-        logger.warning("Model output parse failed for %r, using fallback", food_name)
-        return _fallback_alternatives(food_name)
+        logger.warning("Model output parse/call failed for %r, seeding from fallback map", food_name)
+        # Seed alts from fallback map so blacklist/dislikes filters still apply
+        alts = list(_fallback_alternatives(food_name))
+    else:
+        # ── Filter global banned terms ──
+        alts = filter_alternatives(parsed["alternatives"])
 
-    # ── Filter banned terms ──
-    alts = filter_alternatives(parsed["alternatives"])
+    # ── Filter user blacklist (hard) ──
+    if bl:
+        before = len(alts)
+        alts = [a for a in alts if not _is_blacklisted(a.get("name", ""), bl)]
+        if len(alts) < before:
+            logger.info("Blacklist removed %d alt(s) for %r", before - len(alts), food_name)
 
     # ── Burger-specific cleanup ──
     alts = _cleanup_burger_alternatives(food_name, alts)
@@ -484,23 +675,30 @@ def get_scan_alternatives(
     # ── Quality filter (remove junk food / broad-category alternatives) ──
     alts = filter_quality_alternatives(alts)
 
+    # ── Filter user dislikes (hard) ──
+    if dl:
+        before = len(alts)
+        alts = _filter_dislikes(alts, dl)
+        if len(alts) < before:
+            logger.info("Dislikes filter removed %d alt(s) for %r", before - len(alts), food_name)
+
     # ── Fill from fallback map if fewer than 2 remain ──
     if len(alts) < 2:
         logger.info(
             "Only %d quality alt(s) for %r after filter, filling from fallback map",
             len(alts), food_name,
         )
-        alts = _fill_from_fallback_map(food_name, alts)
+        alts = _fill_from_fallback_map(food_name, alts, blacklist=bl, likes=lk, dislikes=dl)
 
     if not alts:
-        logger.warning("All alternatives filtered for %r, using fallback", food_name)
-        return _fallback_alternatives(food_name)
+        logger.warning("All alternatives filtered for %r — no alternatives to return", food_name)
+        return []
 
     # ── Shape output ──
     return [
         {
             "name":        a["name"],
-            "description": a["alternative_reason"],
+            "description": a.get("alternative_reason") or a.get("description", ""),
         }
         for a in alts[:2]
     ]
