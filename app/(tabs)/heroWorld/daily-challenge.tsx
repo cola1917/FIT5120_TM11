@@ -4,11 +4,13 @@ import { Typography } from "@/constants/fonts";
 import { Radius } from "@/constants/radius";
 import { Spacing } from "@/constants/spacing";
 import { completeDailyChallenge, getNextDailyChallenge, isDailyChallengeCompletedToday, markDailyChallengeCompletedToday, type DailyChallengeTask } from "@/services/dailyChallenge";
+import { addTotalPoints, hasUserProfile } from "@/services/userProfile";
 import { useRouter } from "expo-router";
-import { Check, ChevronRight, X } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import { Check, CheckCircle, ChevronRight, X } from "lucide-react-native";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Image,
   Modal,
   ScrollView,
@@ -40,6 +42,7 @@ const TASK_IMAGES: Record<string, any> = {
 };
 
 const DEFAULT_IMAGE = require("../../../assets/images/nutriheroes_icon.png");
+const DAILY_CHALLENGE_EXP = 50;
 
 export default function DailyChallengeScreen() {
   const router = useRouter();
@@ -49,18 +52,70 @@ export default function DailyChallengeScreen() {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [completedTaskName, setCompletedTaskName] = useState("");
   const [alreadyCompletedToday, setAlreadyCompletedToday] = useState(false);
+  const [profileExists, setProfileExists] = useState(false);
+  const [pointsAwarded, setPointsAwarded] = useState(false);
+
+  // Animation refs — matching story-outcome.tsx style
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const floatOpacity = useRef(new Animated.Value(0)).current;
+  const badgeScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     loadChallenge();
   }, []);
 
+  // Trigger the points animation when the modal opens and points were awarded
+  useEffect(() => {
+    if (!showFeedbackModal || !pointsAwarded) return;
+
+    floatAnim.setValue(0);
+    floatOpacity.setValue(1);
+    badgeScale.setValue(1);
+
+    Animated.parallel([
+      // Float "+50 ⭐" upward and fade out
+      Animated.timing(floatAnim, {
+        toValue: -80,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.delay(400),
+        Animated.timing(floatOpacity, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Pulse the awarded badge
+      Animated.sequence([
+        Animated.spring(badgeScale, {
+          toValue: 1.12,
+          useNativeDriver: true,
+          speed: 30,
+          bounciness: 10,
+        }),
+        Animated.spring(badgeScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 6,
+        }),
+      ]),
+    ]).start();
+  }, [showFeedbackModal, pointsAwarded, floatAnim, floatOpacity, badgeScale]);
+
   const loadChallenge = async () => {
     try {
       setLoading(true);
-      // Check if already completed today
-      const completedToday = await isDailyChallengeCompletedToday();
+      // Check if already completed today and whether a profile exists
+      const [completedToday, profileFound] = await Promise.all([
+        isDailyChallengeCompletedToday(),
+        hasUserProfile(),
+      ]);
       setAlreadyCompletedToday(completedToday);
-      
+      setProfileExists(profileFound);
+
       if (!completedToday) {
         const data = await getNextDailyChallenge();
         setChallenge(data);
@@ -80,9 +135,19 @@ export default function DailyChallengeScreen() {
       const response = await completeDailyChallenge(challenge.id);
       setFeedbackMessage(response.feedback);
       setCompletedTaskName(response.task_name);
-      setShowFeedbackModal(true);
+
+      // Award EXP to the user profile if one exists
+      let awarded = false;
+      if (profileExists) {
+        await addTotalPoints(DAILY_CHALLENGE_EXP);
+        awarded = true;
+      }
+      setPointsAwarded(awarded);
+
       // Mark the challenge as completed for today
       await markDailyChallengeCompletedToday();
+
+      setShowFeedbackModal(true);
     } catch (error: any) {
       console.error("Failed to complete challenge:", error);
       Alert.alert("Error", "Failed to complete challenge. Please try again.");
@@ -140,9 +205,9 @@ export default function DailyChallengeScreen() {
           <View style={styles.completedContainer}>
             <View style={styles.completedCard}>
               <Text style={styles.completedEmoji}>🌟</Text>
-              <Text style={styles.completedTitle}>Wow, you're amazing!</Text>
+              <Text style={styles.completedTitle}>{"Wow, you're amazing!"}</Text>
               <Text style={styles.completedMessage}>
-                You've finished today's challenge!
+                {"You've finished today's challenge!"}
               </Text>
               <Text style={styles.completedSubMessage}>
                 🎉 Come back tomorrow for a brand new adventure!
@@ -242,6 +307,37 @@ export default function DailyChallengeScreen() {
               <View style={styles.feedbackBubble}>
                 <Text style={styles.feedbackText}>{feedbackMessage}</Text>
               </View>
+
+              {/* EXP award section — only shown when a profile exists */}
+              {profileExists && (
+                <View style={styles.expContainer}>
+                  {pointsAwarded ? (
+                    <View style={styles.expWrapper}>
+                      {/* Floating "+50 ⭐" animation label */}
+                      <Animated.View
+                        style={[
+                          styles.floatingPoints,
+                          {
+                            transform: [{ translateY: floatAnim }],
+                            opacity: floatOpacity,
+                          },
+                        ]}
+                        pointerEvents="none"
+                      >
+                        <Text style={styles.floatingPointsText}>+{DAILY_CHALLENGE_EXP} ⭐</Text>
+                      </Animated.View>
+
+                      {/* Awarded badge with spring pulse */}
+                      <Animated.View style={{ transform: [{ scale: badgeScale }], alignSelf: 'stretch' }}>
+                        <View style={styles.awardedBadge}>
+                          <CheckCircle size={18} color="#2F9E44" />
+                          <Text style={styles.awardedText}>+{DAILY_CHALLENGE_EXP} EXP added!</Text>
+                        </View>
+                      </Animated.View>
+                    </View>
+                  ) : null}
+                </View>
+              )}
             </View>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleCloseFeedback}>
@@ -332,7 +428,7 @@ const styles = StyleSheet.create({
   },
   tipsContainer: {
     backgroundColor: Colors.primary_container,
-    borderRadius: Radius.medium,
+    borderRadius: Radius.md,
     padding: Spacing.md,
     alignItems: "center",
   },
@@ -428,17 +524,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.xl,
     width: "100%",
+    gap: Spacing.md,
   },
   modalTaskName: {
     ...Typography.titleLarge,
     color: Colors.on_surface,
     fontWeight: "900",
-    marginBottom: Spacing.md,
     textAlign: "center",
   },
   feedbackBubble: {
     backgroundColor: Colors.primary_container,
-    borderRadius: Radius.large,
+    borderRadius: Radius.md,
     padding: Spacing.md,
     width: "100%",
   },
@@ -448,6 +544,57 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "600",
   },
+
+  // ─── EXP award animation (matching story-outcome.tsx) ────────────────────────
+  expContainer: {
+    alignSelf: 'stretch',
+  },
+  expWrapper: {
+    alignItems: 'center',
+    position: 'relative',
+    gap: Spacing.xs,
+  },
+  floatingPoints: {
+    position: 'absolute',
+    top: 0,
+    zIndex: 10,
+    backgroundColor: '#FFF3CD',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: '#F5C842',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  floatingPointsText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#B45309',
+  },
+  awardedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#EBFBEE',
+    borderRadius: Radius.full,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    borderColor: '#B2F2BB',
+    alignSelf: 'stretch',
+  },
+  awardedText: {
+    color: '#2F9E44',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  // ─── Modal button ─────────────────────────────────────────────────────────────
   modalButton: {
     backgroundColor: Colors.primary,
     flexDirection: "row",
@@ -464,6 +611,8 @@ const styles = StyleSheet.create({
     color: Colors.on_primary,
     fontWeight: "900",
   },
+
+  // ─── Already completed screen ─────────────────────────────────────────────────
   completedContainer: {
     flex: 1,
     justifyContent: "center",

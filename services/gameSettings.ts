@@ -19,7 +19,7 @@ export interface GameSettings {
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
-  volume: 0.7,
+  volume: 0.3,
   difficulty: 'medium',
 };
 
