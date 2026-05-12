@@ -9,9 +9,10 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Map } from 'lucide-react-native';
 import type { Goal } from './types';
 import type { RecommendationResponse } from '../../services/recommendations';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -23,6 +24,16 @@ interface Props {
 }
 
 export default function SeeClearDetail({ goal, onBack, recommendations, recLoading }: Props) {
+  const router = useRouter();
+  
+  const handleFoodQuestPress = (foodName: string) => {
+    // Navigate to food quest map with the food name
+    router.push({
+      pathname: '/food-quest-map' as any,
+      params: { foodName },
+    });
+  };
+
   const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
     name: f.name,
     description: `Grade ${f.grade}`,
@@ -74,6 +85,14 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>GOOD CHOICE</Text>
                   </View>
+                  <TouchableOpacity 
+                    style={styles.questButton}
+                    onPress={() => handleFoodQuestPress(food.name)}
+                    activeOpacity={0.7}
+                  >
+                    <Map color="#2E7D32" size={16} />
+                    <Text style={styles.questButtonText}>Find This Food</Text>
+                  </TouchableOpacity>
                 </View>
                 <View style={styles.foodIconContainer}>
                   <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
@@ -273,6 +292,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
+  },
+  questButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+  },
+  questButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2E7D32',
   },
   foodIconContainer: {
     width: 100,

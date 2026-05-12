@@ -21,6 +21,8 @@ export default function RootLayout() {
         <Stack.Screen name="profile" options={{ headerShown: false }} />
         <Stack.Screen name="preferences-edit" options={{ headerShown: false }} />
         <Stack.Screen name="profile-edit" options={{ headerShown: false }} />
+        <Stack.Screen name="food-quest-map" options={{ headerShown: false }} />
+        <Stack.Screen name="food-quest-map-nearby" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

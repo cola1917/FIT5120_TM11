@@ -43,6 +43,46 @@ function normalizePrefs(items: FoodPreferenceItem[]): string[] {
   return hasMeat ? [...others, 'meat'] : others;
 }
 
+/**
+ * Convert relative image URLs to absolute URLs by prepending the backend URL.
+ * Handles paths like /static/food_photos/*.jpg, /static/generated_foods/*.png,
+ * and /static/category_fallback/*.png
+ */
+function resolveImageUrl(imageUrl: string): string {
+  if (!imageUrl) {
+    return '';
+  }
+  // If already an absolute URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  // If starts with /static/, prepend backend URL
+  if (imageUrl.startsWith('/static/')) {
+    return `${BACKEND_URL}${imageUrl}`;
+  }
+  // Otherwise return as-is (might be a data URI or external URL)
+  return imageUrl;
+}
+
+/**
+ * Normalize a recommendation response by converting all relative image URLs
+ * to absolute URLs that the frontend can load.
+ */
+function normalizeResponse(response: RecommendationResponse): RecommendationResponse {
+  const normalizeItems = (items: FoodItem[]): FoodItem[] => {
+    return items.map(item => ({
+      ...item,
+      image_url: resolveImageUrl(item.image_url),
+    }));
+  };
+
+  return {
+    super_power_foods: normalizeItems(response.super_power_foods),
+    tiny_hero_foods: normalizeItems(response.tiny_hero_foods),
+    try_less_foods: normalizeItems(response.try_less_foods),
+  };
+}
+
 // ─── API call ─────────────────────────────────────────────────────────────────
 
 /**
@@ -85,5 +125,6 @@ export async function getRecommendations(
     throw new Error(errorData.detail || `Recommendations request failed: ${response.status}`);
   }
 
-  return response.json() as Promise<RecommendationResponse>;
+  const data = await response.json() as RecommendationResponse;
+  return normalizeResponse(data);
 }
