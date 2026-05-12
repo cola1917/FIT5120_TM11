@@ -2,9 +2,9 @@
 
 ## What Is Pair Programming?
 
-Pair programming is a collaborative software development practice where two team members work together on the same task. One person acts as the **Driver**, who writes the code, while the other acts as the **Navigator**, who reviews the approach, checks logic, suggests improvements, and thinks ahead about edge cases. The two roles should rotate regularly so both team members contribute to implementation and review.
+Pair programming is a collaborative software development practice where two team members work together on the same task. One person acts as the **Driver**, who writes the code, while the other acts as the **Navigator**, who reviews and guides the work. During a programming session, the roles may be swapped.
 
-For this project, pair programming is used to improve code quality, share technical knowledge across the team, reduce misunderstandings, and make sure important features are reviewed while they are being built.
+For this project, pair programming is used to improve code quality, share technical knowledge across the team, reduce misunderstandings, and make sure important features are reviewed while they are being developed.
 
 ## Project Context
 
@@ -51,7 +51,7 @@ The Navigator is responsible for:
 
 ### Role Rotation
 
-Roles should rotate during longer sessions or across different tasks. A recommended rotation is every 30-45 minutes, or after completing a small feature step such as UI layout, API integration, validation, or testing.
+Roles should rotate during longer sessions or across different tasks. A recommended rotation is every 30-45 minutes, or after completing a small feature step.
 
 ## Pair Programming Workflow
 
@@ -76,23 +76,33 @@ Roles should rotate during longer sessions or across different tasks. A recommen
 
 The following parts of NutriHeroes are especially suitable for pair programming:
 
-- Food scanning flow from camera capture to analysis result.
-- Backend `/scan` endpoint and frontend API integration.
-- User profile creation and food preference storage.
-- Goal-based food recommendation logic.
-- Daily challenge API and mobile screen integration.
-- Meal Maker mini-game scoring and feedback.
-- README, testing reports, and project documentation.
+- Food scanning flow (frontend → backend → result display)
+- Backend `/scan` endpoint and frontend API integration
+- User profile creation and food preference storage
+- Goal-based food recommendation logic
+- Daily challenge API and mobile screen integration
+- Meal Maker mini-game scoring and feedback
+- Avatar EXP and level progression logic
+- Food Quest Map feature integration
+- Final feature testing and validation
+- Onboarding flow optimisation
+- README, testing reports, and project documentation
 
 ## 8.0 Actual Pair Programming Sessions
 
 | Date | Driver | Navigator | Task | Description | Outcome |
 |------|--------|-----------|------|-------------|---------|
-| 16/03/26 | Henry | YiPing | Confirming the presentation style of the story | Once a child has chosen a storybook, how should it be presented by turning the pages or by swiping? | Turning the pages helps prevent the child from seeing too much text at once and losing interest in reading. |
-| 12/04/26 | ZiCheng | Henry | Recover the Outcome page in the story function | When integrating the frontend and backend, I assumed this was part of the story, so I included it in the story's page count. | The final adjustment is that "Outcome" now has its own page. |
+| 16/03/26 | Henry | YiPing | Confirming the presentation style of the story | Once a child has chosen a storybook, how should it be presented—by turning the pages or by swiping? | Turning the pages helps prevent the child from seeing too much text at once and losing interest in reading. |
+| 12/04/26 | ZiCheng | Henry | Recover the Outcome page in the story function | When integrating the front-end and back-end, I assumed this was part of the story, so I included it in the story’s page count. | The final adjustment is that “Outcome” now has its own page. |
 | 21/04/26 | YiPing | Henry | Change the Avatar | Believing that the current Avatar is too ordinary to appeal to children, adjustments were made to the Avatar. | Make the avatar cuter and replace it. |
-| 27/04/26 | Bohan | Henry | Change the food recommendation algorithm of the  goal function | With the introduction of User Profiles, the food recommendation logic previously based on Goals should be revised. Recommendations should no longer be based solely on Goals, but should instead take into account both the child's food preferences and their Goals. | Change the recommendation algorithm to better meet our requirements. |
-| 28/04/26 | Zicheng | Henry | Change to food recommendation presentation styles in the goal function | If we simply recommend foods based solely on a child's preferences, the risk is encouraging them to become fussy eaters. | Add a "Tiny Hero Challenge" to encourage children to try foods they do not usually like. |
+| 27/04/26 | Bohan | Henry | Change the food recommendation algorithm of the goal function | With the introduction of User Profiles, the food recommendation logic previously based on Goals should be revised. Recommendations should no longer be based solely on Goals, but should instead take into account both the child’s food preferences and their Goals. | Change the recommendation algorithm to better meet our requirements. |
+| 28/04/26 | Zicheng | Henry | Change to food recommendation presentation styles in the goal function | If we simply recommend foods based solely on a child’s preferences, the risk is encouraging them to become fussy eaters. | Add a “Tiny Hero Challenge” to encourage children to try foods they don’t usually like. |
+| 02/05/26 | Henry | YiPing | Improve Food Quest Map interaction flow | During testing, the original Food Quest Map flow contained too many steps and unclear instructions for children. The team reviewed how to simplify the interaction and improve readability. | Simplified the Food Quest Map interface and improved child-friendly guidance text. |
+| 05/05/26 | YiPing | Henry | Debug API response handling between frontend and backend | During frontend and backend integration, inconsistent API responses caused some food recommendation pages to fail rendering correctly. | Standardised API response handling and improved error validation logic. |
+| 08/05/26 | Bohan | Henry | Optimise Avatar EXP and level-up logic | The EXP progression and level-up calculations did not properly handle remaining EXP after levelling up. The team reviewed the logic and edge cases for Avatar progression. | Updated the EXP calculation logic and implemented EXP carry-over after level upgrades. |
+| 10/05/26 | ZiCheng | Henry | Improve onboarding and profile setup experience | During user testing, some children experienced difficulty understanding the profile setup process and avatar selection flow. | Simplified onboarding instructions and improved avatar selection visuals. |
+| 11/05/26 | Henry | Jiangtao | Final feature testing and validation | Before final submission, system-wide testing was conducted on story progression, game rewards, Avatar levels, and daily challenge features to identify integration and edge-case issues. | Multiple UI inconsistencies and functional bugs were resolved, improving overall feature stability and user experience. |
+| 12/05/26 | Henry | Bohan | Review child-friendly wording and safety messages | The team reviewed whether system messages, food guidance, and Food Quest Map reminders were understandable and suitable for children aged 7–12. | Updated multiple UI texts and safety reminders using simpler and more child-friendly wording. |
 
 ## Evidence to Attach or Reference
 
@@ -107,6 +117,6 @@ When submitting pair programming evidence, the team can include:
 
 ## Reflection
 
-Pair programming supported this project by helping the team connect implementation decisions with the target users: children aged 7-12. Since NutriHeroes depends on both technical correctness and child-friendly communication, having one person implement while another reviews the flow helped identify issues in wording, navigation, error handling, and feature consistency earlier than working alone.
+Pair programming supported this project by helping the team connect implementation decisions with the target users: children aged 7-12. Since NutriHeroes depends on both technical correctness and child-friendly interaction design, pairing helped catch problems earlier.
 
-The practice is especially useful for features where multiple parts of the system interact, such as scanning food, receiving backend analysis, displaying health feedback, and recommending alternatives. Future sessions should continue to record roles, decisions, and follow-up tasks so the team has clear evidence of collaboration and shared ownership.
+The practice is especially useful for features where multiple parts of the system interact, such as scanning food, receiving backend analysis, displaying health feedback, and recommending alternatives.
