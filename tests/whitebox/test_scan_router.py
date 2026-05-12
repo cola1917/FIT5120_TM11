@@ -36,7 +36,7 @@ def test_scan_food_rejects_invalid_content_type(monkeypatch):
     upload = UploadFile(filename="file.txt", file=io.BytesIO(b"abc"), headers=Headers({"content-type": "text/plain"}))
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=object(), current_user={"username": "demo"}))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=object(), current_user={"username": "demo"}))
 
     assert exc.value.status_code == 400
     assert "Invalid file type" in exc.value.detail
@@ -48,7 +48,7 @@ def test_scan_food_rejects_empty_payload(monkeypatch):
     upload = UploadFile(filename="empty.jpg", file=io.BytesIO(b""), headers=Headers({"content-type": "image/jpeg"}))
 
     with pytest.raises(scan_module.HTTPException) as exc:
-        asyncio.run(scan_module.scan_food(file=upload, db=object(), current_user={"username": "demo"}))
+        asyncio.run(scan_module.scan_food(file=upload, blacklist="[]", likes="[]", dislikes="[]", db=object(), current_user={"username": "demo"}))
 
     assert exc.value.status_code == 400
     assert "Empty file uploaded" in exc.value.detail

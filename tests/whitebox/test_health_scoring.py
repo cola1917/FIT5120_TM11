@@ -79,5 +79,5 @@ def test_build_database_assessment_changes_message_by_score(health_scoring):
     row = SimpleNamespace(descriptor="Broccoli", cn_code=1)
 
     assert "nourishing choice" in health_scoring._build_database_assessment("Broccoli", 3, row)
-    assert "occasional choice" in health_scoring._build_database_assessment("Broccoli", 2, row)
+    assert "enjoyed occasionally" in health_scoring._build_database_assessment("Broccoli", 2, row)
     assert "once-in-a-while treat" in health_scoring._build_database_assessment("Broccoli", 1, row)

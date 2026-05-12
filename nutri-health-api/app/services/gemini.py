@@ -4,8 +4,6 @@ Qwen-VL (DashScope) when the OpenAI quota is exhausted.
 
 Flow:
   1. analyze_food_image()  — vision LLM, outputs child-friendly format directly (~10s)
-  2. RAG search            — fast FAISS lookup using food_name (<1s)
-  3. rewrite_alternatives() — small LLM call, rewrites only the alternatives list (~2-3s)
 """
 
 import asyncio
@@ -54,11 +52,6 @@ MOCK_AI_ANALYSIS: Dict[str, Any] = {
     "alternatives": [],
 }
 
-MOCK_AI_ALTERNATIVES: List[Dict[str, Any]] = [
-    {"name": "🍊 Orange Slices", "description": "Bursting with vitamin C to keep you healthy! 🌟"},
-    {"name": "🍇 Grapes", "description": "Sweet little bites full of natural energy and goodness! 🎉"},
-]
-
 
 def _is_mock_ai_enabled() -> bool:
     """Return True when the MOCK_AI environment variable is set to a truthy value."""
@@ -90,8 +83,9 @@ For assessment_score (CRITICAL - this is a best-effort FALLBACK score only, used
 - Score 3 (HEALTHY): Whole foods rich in nutrients, fiber, vitamins, and minerals. Examples: fruits, vegetables, whole grains, lean proteins, nuts, legumes, dairy. Great for everyday eating.
 
 For assessment (this is a fallback child-friendly assessment that may be replaced by backend rules):
-- Max 3 sentences: praise something good, suggest one pairing, encouraging close
-- At most 4 emojis naturally placed
+- Max 2 sentences: evaluate only the scanned food itself
+- Do NOT mention or suggest any other food
+- At most 2 emojis naturally placed
 
 For alternatives:
 - Exactly 2 options only if the food is unhealthy (score 1) or moderate (score 2), otherwise 0
@@ -169,7 +163,7 @@ ANALYSIS_RESPONSE_SCHEMA = {
         },
         "assessment": {
             "type": "string",
-            "description": "Child-friendly health assessment, max 3 sentences, at most 4 emojis"
+            "description": "Child-friendly health assessment of this food only, max 2 sentences, no other food mentioned, at most 2 emojis"
         },
         "alternatives": {
             "type": "array",
@@ -190,19 +184,6 @@ ANALYSIS_RESPONSE_SCHEMA = {
         "assessment_score", "assessment", "alternatives"
     ],
     "additionalProperties": False
-}
-
-ALTERNATIVES_REWRITE_SCHEMA = {
-    "type": "array",
-    "items": {
-        "type": "object",
-        "properties": {
-            "name": {"type": "string"},
-            "description": {"type": "string"}
-        },
-        "required": ["name", "description"],
-        "additionalProperties": False
-    }
 }
 
 
@@ -255,29 +236,6 @@ def _is_quota_exceeded(error: Exception) -> bool:
     return False
 
 
-def _build_rewrite_prompt(food_name: str, source_category: str, alternatives: list) -> str:
-    return (
-        "You are rewriting preselected healthier food swaps for children aged 7-12.\n"
-        "Important: the food choices are already chosen. Keep the same core foods and do not invent junk-food-style alternatives.\n"
-        f"Original food: {food_name}\n"
-        f"Original food category: {source_category}\n\n"
-        "Rules:\n"
-        "- Output at most 2 items — if given more, keep the best 2\n"
-        "- Keep each alternative in the same rough eating context as the original food\n"
-        "- If the name does not start with a food emoji, add one at the beginning\n"
-        "- You may lightly tidy the wording of the name, but keep the same core food choice\n"
-        "- Rewrite 'description' to sound warm, natural, playful, and child-friendly (1-2 short sentences)\n"
-        "- Make each description explain why this feels like a good swap for the original food\n"
-        "- Mention one or two benefits based on the provided reason_tags or experience_tags\n"
-        "- Add 1-3 cute, relevant emojis in each description to make it feel fun for kids, but keep it easy to read\n"
-        "- The emojis should match the food or feeling, such as freshness, crunch, creaminess, fun, or energy\n"
-        "- Sound like a helpful suggestion from a friendly grown-up, not a rule table or nutrition lecture\n"
-        "- No calorie information\n"
-        "- Output only the JSON array with 'name' and 'description'\n\n"
-        "Input:\n"
-        + json.dumps(alternatives, ensure_ascii=False)
-    )
-
 
 class GeminiService:
     """Food scanner: OpenAI first, automatic fallback to Qwen-VL on quota exhaustion."""
@@ -298,6 +256,7 @@ class GeminiService:
             image = Image.open(BytesIO(image_bytes))
             if image.mode != "RGB":
                 image = image.convert("RGB")
+            image.thumbnail((512, 512), Image.LANCZOS)
             buf = BytesIO()
             image.save(buf, format="JPEG")
             b64 = base64.standard_b64encode(buf.getvalue()).decode("ascii")
@@ -343,6 +302,7 @@ class GeminiService:
             image = Image.open(BytesIO(image_bytes))
             if image.mode != "RGB":
                 image = image.convert("RGB")
+            image.thumbnail((512, 512), Image.LANCZOS)
 
             fmt = (image.format or "JPEG").upper()
             mime = "image/png" if fmt == "PNG" else "image/jpeg"
@@ -441,88 +401,6 @@ class GeminiService:
 
         logger.info("Using Qwen-VL for image analysis")
         return await asyncio.to_thread(self._analyze_food_image_qwen, image_bytes)
-
-    # ------------------------------------------------------------------ #
-    #  Alternatives rewrite (small second LLM call)                       #
-    # ------------------------------------------------------------------ #
-
-    def _rewrite_alternatives_openai(self, food_name: str, source_category: str, alternatives: list) -> list:
-        client = get_openai_client()
-        if not client:
-            return None
-
-        s = get_dashscope_settings()
-        prompt = _build_rewrite_prompt(food_name, source_category, alternatives)
-
-        try:
-            completion = client.chat.completions.create(
-                model=s.openai_text_model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-            )
-            response_text = (completion.choices[0].message.content or "").strip()
-            response_text = _unwrap_json_markdown(response_text)
-            return json.loads(response_text)
-        except Exception as e:
-            if _is_quota_exceeded(e):
-                raise
-            logger.error("OpenAI alternatives rewrite failed: %s", e)
-            return alternatives
-
-    def _rewrite_alternatives_qwen(self, food_name: str, source_category: str, alternatives: list) -> list:
-        client = get_dashscope_openai_client()
-        if not client:
-            return alternatives
-
-        s = get_dashscope_settings()
-        prompt = _build_rewrite_prompt(food_name, source_category, alternatives)
-
-        try:
-            completion = client.chat.completions.create(
-                model=s.qwen_text_model,
-                messages=[{"role": "user", "content": prompt}],
-                stream=False,
-                temperature=0.2,
-            )
-            response_text = (completion.choices[0].message.content or "").strip()
-            response_text = _unwrap_json_markdown(response_text)
-            return json.loads(response_text)
-        except Exception as e:
-            logger.error("Qwen alternatives rewrite failed: %s", e)
-            return alternatives
-
-    async def rewrite_alternatives(self, food_name: str, source_category: str, alternatives: list) -> list:
-        """Rewrite only the alternatives list in child-friendly language."""
-        if not alternatives:
-            return alternatives
-
-        if _is_mock_ai_enabled():
-            logger.info("MOCK_AI enabled: returning deterministic mock alternatives (no external calls)")
-            return alternatives[:2] if alternatives else MOCK_AI_ALTERNATIVES
-
-        if get_openai_client() is not None:
-            try:
-                result = await asyncio.to_thread(
-                    self._rewrite_alternatives_openai,
-                    food_name,
-                    source_category,
-                    alternatives,
-                )
-                if result is not None:
-                    return result
-            except Exception as e:
-                if _is_quota_exceeded(e):
-                    logger.warning("OpenAI quota exhausted, switching to Qwen for alternatives rewrite")
-                else:
-                    logger.error("OpenAI alternatives rewrite error: %s", e)
-
-        logger.info("Using Qwen for alternatives rewrite")
-        return await asyncio.to_thread(
-            self._rewrite_alternatives_qwen,
-            food_name,
-            source_category,
-            alternatives,
-        )
 
     # ------------------------------------------------------------------ #
     #  Fallback response                                                   #

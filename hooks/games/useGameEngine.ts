@@ -19,6 +19,7 @@ import {
   MAX_ACTIVE_INGREDIENTS,
   PLATE_CAPACITY,
   LANE_BLOCK_COUNT,
+  DIFFICULTY_CONFIG,
   IngredientDefinition,
   getRandomIngredient,
   calculateMealScore,
@@ -26,6 +27,8 @@ import {
   getCurrentSpawnInterval,
 } from '../../constants/GameConfig';
 import { saveGameScore, getHighScore } from '../../services/gameStorage';
+import { claimGamePoints, DailyRewardResult } from '../../services/gameDailyRewards';
+import type { GameDifficulty } from '../../services/gameSettings';
 
 export const GAME_ID = 'meal-maker';
 
@@ -45,7 +48,12 @@ export interface GameActions {
   despawnIngredient: (id: string) => void;
 }
 
-export function useGameEngine() {
+export interface GameEngineOptions {
+  volume: number;
+  difficulty: GameDifficulty;
+}
+
+export function useGameEngine({ volume, difficulty }: GameEngineOptions) {
   // ─── Split state for performance ─────────────────────────────────────────────
   // Timer state is separate so ticking doesn't re-render ingredient list
   const [gamePhase, setGamePhase] = useState<GamePhase>('idle');
@@ -58,6 +66,9 @@ export function useGameEngine() {
   const [highScore, setHighScore] = useState(0);
   const [isNewHighScore, setIsNewHighScore] = useState(false);
 
+  // Daily reward state
+  const [dailyReward, setDailyReward] = useState<DailyRewardResult | null>(null);
+
   // Refs for intervals (avoid stale closures)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const spawnerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,6 +78,12 @@ export function useGameEngine() {
   const plateIngredientsRef = useRef<IngredientDefinition[]>([]);
   const isMealCompletingRef = useRef(false);
   const gamePhaseRef = useRef<GamePhase>('idle');
+
+  // Keep volume and difficulty accessible in callbacks without stale closures
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+  const difficultyRef = useRef(difficulty);
+  difficultyRef.current = difficulty;
 
   // Lane occupancy: laneIndex → count of ingredients currently in that lane
   const laneCountsRef = useRef<number[]>(new Array(NUM_LANES).fill(0));
@@ -101,8 +118,11 @@ export function useGameEngine() {
     clearAllIntervals();
     gamePhaseRef.current = 'game_over';
     const finalScore = totalScoreRef.current;
-    const isNew = await saveGameScore(GAME_ID, finalScore);
-    const hs = await getHighScore(GAME_ID);
+    const [isNew, hs, reward] = await Promise.all([
+      saveGameScore(GAME_ID, finalScore),
+      getHighScore(GAME_ID),
+      claimGamePoints(GAME_ID, finalScore),
+    ]);
 
     activeIngredientsRef.current = [];
     plateIngredientsRef.current = [];
@@ -117,6 +137,7 @@ export function useGameEngine() {
     setShowMealScore(false);
     setHighScore(hs);
     setIsNewHighScore(isNew);
+    setDailyReward(reward);
   }, [clearAllIntervals]);
 
   // Keep endGame ref current for timer closure
@@ -127,7 +148,9 @@ export function useGameEngine() {
 
   const scheduleNextSpawn = useCallback(() => {
     const elapsed = elapsedSecondsRef.current;
-    const interval = getCurrentSpawnInterval(elapsed);
+    const diffConfig = DIFFICULTY_CONFIG[difficultyRef.current];
+    const baseInterval = getCurrentSpawnInterval(elapsed);
+    const interval = Math.round(baseInterval * diffConfig.spawnMultiplier);
 
     spawnerRef.current = setTimeout(() => {
       // Bail if game is no longer playing
@@ -168,9 +191,10 @@ export function useGameEngine() {
       // Pick a random ingredient
       const ingredient = getRandomIngredient();
 
-      // Calculate fall duration based on elapsed time
+      // Calculate fall duration based on elapsed time and difficulty
       const { min, max } = getCurrentFallDuration(elapsed);
-      const fallDuration = min + Math.random() * (max - min);
+      const baseFall = min + Math.random() * (max - min);
+      const fallDuration = Math.round(baseFall * diffConfig.fallMultiplier);
 
       const newIngredient: ActiveIngredient = {
         id: `${ingredient.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -210,6 +234,7 @@ export function useGameEngine() {
     setLastMealScore(null);
     setShowMealScore(false);
     setIsNewHighScore(false);
+    setDailyReward(null);
 
     // Start countdown timer — only updates timeRemaining, not ingredients
     timerRef.current = setInterval(() => {
@@ -251,6 +276,7 @@ export function useGameEngine() {
       setShowMealScore(false);
       setHighScore(hs);
       setIsNewHighScore(false);
+      setDailyReward(null);
     });
   }, [clearAllIntervals]);
 
@@ -259,7 +285,7 @@ export function useGameEngine() {
   const playCatchIngredientSound = useCallback(async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/audio/pop.mp3'), { shouldPlay: true }
+        require('../../assets/audio/pop.mp3'), { shouldPlay: true, volume: volumeRef.current }
       );
   
       sound.setOnPlaybackStatusUpdate((status) => {
@@ -304,7 +330,7 @@ export function useGameEngine() {
   const playMealCompleteSound = useCallback(async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/audio/meal-complete.mp3'), { shouldPlay: true }
+        require('../../assets/audio/meal-complete.mp3'), { shouldPlay: true, volume: volumeRef.current }
       );
 
       sound.setOnPlaybackStatusUpdate((status) => {
@@ -320,7 +346,9 @@ export function useGameEngine() {
     playMealCompleteSound();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const categories = plate.map((i) => i.category);
-    const mealScore = calculateMealScore(categories);
+    const baseMealScore = calculateMealScore(categories);
+    const diffConfig = DIFFICULTY_CONFIG[difficultyRef.current];
+    const mealScore = Math.round(baseMealScore * diffConfig.pointsMultiplier);
 
     totalScoreRef.current += mealScore;
     if (totalScoreRef.current < 0) totalScoreRef.current = 0;
@@ -368,6 +396,7 @@ export function useGameEngine() {
     showMealScore,
     highScore,
     isNewHighScore,
+    dailyReward,
     startGame,
     resetGame,
     catchIngredient,

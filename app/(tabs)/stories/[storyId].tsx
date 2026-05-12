@@ -22,6 +22,7 @@ import { Colors } from '@/constants/colors';
 
 interface StoryPage {
   storyText: string;
+  displayText: string;
 }
 
 interface StoryTextData {
@@ -122,9 +123,16 @@ export default function StoryReaderScreen() {
     loadAuthHeaders();
     setupAudio();
 
-    return () => {
+    // Stop audio whenever the screen loses focus (e.g. navigating away via
+    // swipe-back, tab switch, or any other navigation gesture).
+    const unsubscribeBlur = navigation.addListener('blur', () => {
       cleanupAudio();
-    }
+    });
+
+    return () => {
+      unsubscribeBlur();
+      cleanupAudio();
+    };
   }, [storyId]);
 
   useEffect(() => {
@@ -318,7 +326,7 @@ export default function StoryReaderScreen() {
             >
               {iconForAudioState()}
               <Text style={styles.headerListenButtonText}>
-                {audioState === 'playing' ? 'Pause' : 'Listen'}
+                {audioState === 'playing' ? `Pause · ${currentPage + 1}` : `Listen · ${currentPage + 1}`}
               </Text>
             </TouchableOpacity>
           ),
@@ -335,7 +343,7 @@ export default function StoryReaderScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        <View style={styles.pagesContainer}>
+        <View>
           {storyTextData.pages.map((p, i) => (
             <View
               key={i}
@@ -344,12 +352,12 @@ export default function StoryReaderScreen() {
                 pageHeightsRef.current[i] = height;
               }}
             >
-              <Text style={styles.pageText}>{p.storyText}</Text>
               <Image
                 source={{ uri: getStoryPageImageUrl(storyId, i + 1), headers: authHeaders || undefined }}
                 style={styles.pageImage}
                 resizeMode="cover"
               />
+              <Text style={styles.pageText}>{p.displayText}</Text>
             </View>
           ))}
 
@@ -399,16 +407,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
   },
-  pagesContainer: {
-
-  },
   pageText: {
     fontSize: 22,
     lineHeight: 34,
     color: '#2D241F',
     fontWeight: '500',
     paddingVertical: Spacing.spacing_4,
-    paddingHorizontal: Spacing.spacing_6
+    paddingHorizontal: Spacing.spacing_6,
   },
   pageImage: {
     width: '100%',

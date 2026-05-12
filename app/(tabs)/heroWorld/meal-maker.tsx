@@ -15,14 +15,17 @@ import {
   Image,
   Animated,
   ScrollView,
+  BackHandler,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Audio } from 'expo-av';
-import { BookOpen, LogOut, Play, Star } from 'lucide-react-native';
+import { BookOpen, LogOut, Play, Settings, Star } from 'lucide-react-native';
 
 import { useGameEngine } from '@/hooks/games/useGameEngine';
+import { useGameSettings } from '@/hooks/games/useGameSettings';
 import AboutModal from '@/components/games/meal-maker/AboutModal';
+import OptionsModal from '@/components/games/meal-maker/OptionsModal';
 import ScoreDisplay from '@/components/games/meal-maker/ScoreDisplay';
 import FallingIngredient from '@/components/games/meal-maker/FallingIngredient';
 import Plate from '@/components/games/meal-maker/Plate';
@@ -44,6 +47,10 @@ interface PlateZone {
 export default function MealMakerScreen() {
   const router = useRouter();
 
+  // ─── Settings ────────────────────────────────────────────────────────────────
+  const { settings, loading: settingsLoading, setVolume, setDifficulty } = useGameSettings();
+
+  // ─── Game Engine ─────────────────────────────────────────────────────────────
   const {
     gamePhase,
     timeRemaining,
@@ -54,17 +61,19 @@ export default function MealMakerScreen() {
     showMealScore,
     highScore,
     isNewHighScore,
+    dailyReward,
     startGame,
     resetGame,
     catchIngredient,
     despawnIngredient,
-  } = useGameEngine();
+  } = useGameEngine({ volume: settings.volume, difficulty: settings.difficulty });
 
   const [plateZone, setPlateZone] = useState<PlateZone | null>(null);
   const [showAbout, setShowAbout] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const plateWrapperRef = useRef<View>(null);
 
-  // Audio
+  // ─── Audio ───────────────────────────────────────────────────────────────────
 
   const menuSoundRef = useRef<Audio.Sound | null>(null);
   const isMenuPlayingRef = useRef(false);
@@ -72,17 +81,23 @@ export default function MealMakerScreen() {
   const roundSoundRef = useRef<Audio.Sound | null>(null);
   const isRoundPlayingRef = useRef(false);
 
+  // Keep a ref to the current volume so audio callbacks never capture a stale value.
+  // This avoids recreating playMenuMusic / playRoundMusic on every volume change,
+  // which would cause useFocusEffect to re-run and spawn duplicate sound instances.
+  const volumeRef = useRef(settings.volume);
+  volumeRef.current = settings.volume;
+
   const playMenuMusic = useCallback(async () => {
     if (menuSoundRef.current) return;
     try {
       const { sound } = await Audio.Sound.createAsync(
         require('../../../assets/audio/menu-audio.mp3'),
-        { isLooping: true, shouldPlay: true, volume: 0.7 }
+        { isLooping: true, shouldPlay: true, volume: volumeRef.current }
       );
       menuSoundRef.current = sound;
       isMenuPlayingRef.current = true;
     } catch (_) {}
-  }, []);
+  }, []); // stable — reads volume from ref at call time
 
   const stopMenuMusic = useCallback(async () => {
     const sound = menuSoundRef.current;
@@ -103,7 +118,7 @@ export default function MealMakerScreen() {
       }
       const { sound } = await Audio.Sound.createAsync(
         require('../../../assets/audio/round-audio.mp3'),
-        { isLooping: false, shouldPlay: true, volume: 0.5 }
+        { isLooping: false, shouldPlay: true, volume: volumeRef.current }
       );
       roundSoundRef.current = sound;
       isRoundPlayingRef.current = true;
@@ -115,7 +130,7 @@ export default function MealMakerScreen() {
         }
       });
     } catch (_) {}
-  }, [stopMenuMusic]);
+  }, [stopMenuMusic]); // stable — reads volume from ref at call time
 
   const stopRoundMusic = useCallback(async () => {
     const sound = roundSoundRef.current;
@@ -126,16 +141,60 @@ export default function MealMakerScreen() {
     isRoundPlayingRef.current = false;
   }, []);
 
+  // Track whether the screen is currently focused so we know whether to start
+  // music once settings finish loading.
+  const isFocusedRef = useRef(false);
+
+  // Whether we have already started the menu music for this focus session.
+  // Used to prevent the deferred-start effect from spawning a second instance
+  // after the useFocusEffect has already started one.
+  const menuMusicStartedRef = useRef(false);
+
   useFocusEffect(
     useCallback(() => {
-      playMenuMusic();
+      isFocusedRef.current = true;
+      menuMusicStartedRef.current = false;
+
+      // Only start music if settings have already loaded (volume is known).
+      // If settings are still loading, the effect below will start music once ready.
+      if (!settingsLoading) {
+        menuMusicStartedRef.current = true;
+        playMenuMusic();
+      }
       return () => {
+        isFocusedRef.current = false;
+        menuMusicStartedRef.current = false;
         stopMenuMusic();
         stopRoundMusic();
         resetGame();
       };
-    }, [playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
+    }, [settingsLoading, playMenuMusic, stopMenuMusic, stopRoundMusic, resetGame])
   );
+
+  // Start menu music once settings finish loading, but only if the screen is
+  // focused and music has not already been started by useFocusEffect.
+  // This fixes the race condition where useFocusEffect fires before AsyncStorage
+  // returns the saved volume.
+  useEffect(() => {
+    if (!settingsLoading && isFocusedRef.current && !menuMusicStartedRef.current) {
+      menuMusicStartedRef.current = true;
+      playMenuMusic();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsLoading]);
+
+  // Live-update volume on already-playing sounds when the user changes the setting.
+  // Skip during the initial load phase (settingsLoading) to avoid acting on the
+  // default value before the real saved value has been read from AsyncStorage.
+  useEffect(() => {
+    if (settingsLoading) return;
+    if (menuSoundRef.current) {
+      menuSoundRef.current.setVolumeAsync(settings.volume).catch(() => {});
+    }
+    if (roundSoundRef.current) {
+      roundSoundRef.current.setVolumeAsync(settings.volume).catch(() => {});
+    }
+  }, [settings.volume, settingsLoading]);
 
   useEffect(() => {
     if (gamePhase === 'playing') {
@@ -143,7 +202,25 @@ export default function MealMakerScreen() {
     }
   }, [gamePhase, playRoundMusic]);
 
-  // Plate layout
+  // ─── OS Back Button / Gesture ─────────────────────────────────────────────
+  // When a round is active, the hardware back button returns to the start screen
+  // instead of navigating away from the game entirely.
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (gamePhase === 'playing') {
+          resetGame();
+          stopRoundMusic();
+          playMenuMusic();
+          return true; // consume the event
+        }
+        return false; // let default navigation handle it
+      });
+      return () => subscription.remove();
+    }, [gamePhase, resetGame, stopRoundMusic, playMenuMusic])
+  );
+
+  // ─── Plate layout ─────────────────────────────────────────────────────────
 
   const handlePlateLayout = useCallback((_zone: { x: number; y: number; width: number; height: number }) => {
     if (plateWrapperRef.current) {
@@ -153,27 +230,41 @@ export default function MealMakerScreen() {
     }
   }, []);
 
-  // Navigation
+  // ─── Navigation ───────────────────────────────────────────────────────────
 
   const handlePlayAgain = useCallback(() => {
     resetGame();
     setTimeout(() => startGame(), 100);
   }, [resetGame, startGame]);
 
+  // Always navigates to Hero World regardless of where the user came from
   const handleBack = useCallback(() => {
     resetGame();
-    router.back();
+    router.replace('/(tabs)/heroWorld');
   }, [resetGame, router]);
+
+  // Returns to the idle/menu phase without leaving the game screen
+  const handleBackToMenu = useCallback(() => {
+    resetGame();
+    stopRoundMusic();
+    playMenuMusic();
+  }, [resetGame, stopRoundMusic, playMenuMusic]);
+
+  // When in playing phase, back goes to idle (start screen), not out of the game
+  const handleBackFromRound = useCallback(() => {
+    resetGame();
+    stopRoundMusic();
+    playMenuMusic();
+  }, [resetGame, stopRoundMusic, playMenuMusic]);
 
   const handleStartGame = useCallback(() => {
     startGame();
   }, [startGame]);
 
-  // Render
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    // Defines a loop: Scale to 1.1, then back to 1
     Animated.loop(
       Animated.sequence([
         Animated.timing(scale, { toValue: 1.05, duration: 400, useNativeDriver: true }),
@@ -188,7 +279,7 @@ export default function MealMakerScreen() {
 
         {/* HUD */}
         {gamePhase === 'playing' && (
-          <ScoreDisplay score={totalScore} timeRemaining={timeRemaining} onBack={handleBack} />
+          <ScoreDisplay score={totalScore} timeRemaining={timeRemaining} onBack={handleBackFromRound} />
         )}
 
         {/* Game field */}
@@ -244,7 +335,7 @@ export default function MealMakerScreen() {
                 </TouchableOpacity>
               </Animated.View>
 
-              {/* How to Play and Quit buttons side by side */}
+              {/* How to Play, Options, and Quit buttons */}
               <View style={styles.bottomButtonsRow}>
                 <TouchableOpacity
                   style={styles.aboutButton}
@@ -253,6 +344,15 @@ export default function MealMakerScreen() {
                 >
                   <BookOpen size={20} color={Colors.outline} />
                   <Text style={styles.aboutButtonText}>How to Play</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.aboutButton}
+                  onPress={() => setShowOptions(true)}
+                  activeOpacity={0.8}
+                >
+                  <Settings size={20} color={Colors.outline} />
+                  <Text style={styles.aboutButtonText}>Options</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.aboutButton} onPress={handleBack} activeOpacity={0.85}>
@@ -266,6 +366,16 @@ export default function MealMakerScreen() {
 
         {/* About modal */}
         <AboutModal visible={showAbout} onClose={() => setShowAbout(false)} />
+
+        {/* Options modal */}
+        <OptionsModal
+          visible={showOptions}
+          volume={settings.volume}
+          difficulty={settings.difficulty}
+          onVolumeChange={setVolume}
+          onDifficultyChange={setDifficulty}
+          onClose={() => setShowOptions(false)}
+        />
 
         {/* Plate area */}
         {gamePhase === 'playing' && (
@@ -293,8 +403,9 @@ export default function MealMakerScreen() {
             score={totalScore}
             highScore={highScore}
             isNewHighScore={isNewHighScore}
+            dailyReward={dailyReward}
             onPlayAgain={handlePlayAgain}
-            onBack={handleBack}
+            onBack={handleBackToMenu}
           />
         )}
       </View>

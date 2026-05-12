@@ -28,6 +28,7 @@ export interface Story {
  */
 export interface StoryPage {
   storyText: string;
+  displayText: string;
 }
 
 /**

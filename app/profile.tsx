@@ -29,6 +29,55 @@ import {
 import { FOOD_PREFERENCE_ITEMS, BLACKLIST_ITEMS } from '@/components/profile/FoodPreferencesSelector';
 import { Image } from 'expo-image';
 
+const LEVEL_THRESHOLDS = [
+  { level: 1, exp: 0 },
+  { level: 2, exp: 100 },
+  { level: 3, exp: 450 },
+  { level: 4, exp: 1000 },
+] as const;
+
+const EARN_EXP_ITEMS = [
+  {
+    id: 'read-story',
+    image: require('../assets/images/Read_Story_EXP.png'),
+    title: 'Read Story',
+    href: '/stories',
+  },
+  {
+    id: 'meal-maker',
+    image: require('../assets/images/Meal_Maker_EXP.png'),
+    title: 'Meal Maker',
+    href: '/heroWorld/meal-maker',
+  },
+  {
+    id: 'daily-challenge',
+    image: require('../assets/images/Daily_Challenge_EXP.png'),
+    title: 'Daily Challenge',
+    href: '/heroWorld/daily-challenge',
+  },
+] as const;
+
+function getHeroProgress(totalPoints: number) {
+  const safePoints = Math.max(0, totalPoints);
+  const currentLevelIndex = LEVEL_THRESHOLDS.reduce((matchedIndex, threshold, index) => {
+    return safePoints >= threshold.exp ? index : matchedIndex;
+  }, 0);
+  const currentLevel = LEVEL_THRESHOLDS[currentLevelIndex];
+  const nextLevel = LEVEL_THRESHOLDS[currentLevelIndex + 1];
+  const targetExp = nextLevel?.exp ?? currentLevel.exp;
+  const progressRatio = targetExp > 0 ? Math.min(safePoints / targetExp, 1) : 1;
+  const progressPercent = `${Math.round(progressRatio * 100)}%` as `${number}%`;
+
+  return {
+    level: currentLevel.level,
+    currentExp: safePoints,
+    targetExp,
+    expToNextLevel: nextLevel ? nextLevel.exp - safePoints : 0,
+    nextLevel: nextLevel?.level,
+    progressPercent,
+  };
+}
+
 // ─── Food Preferences Display ─────────────────────────────────────────────────
 
 interface FoodPreferencesSummaryProps {
@@ -288,14 +337,14 @@ export default function ProfileScreen() {
   const getAvatarImage = () => {
     switch (profile?.avatarId) {
       case 'hero':
-        if (profile.totalPoints > 300) return (<Image source={require('../assets/images/avatar/hero-4.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 200) return (<Image source={require('../assets/images/avatar/hero-3.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 100) return (<Image source={require('../assets/images/avatar/hero-2.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[3].exp) return (<Image source={require('../assets/images/avatar/hero-4.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[2].exp) return (<Image source={require('../assets/images/avatar/hero-3.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[1].exp) return (<Image source={require('../assets/images/avatar/hero-2.png')} style={styles.avatarImage}/>);
         return (<Image source={require('../assets/images/avatar/hero-1.png')} style={styles.avatarImage}/>);
       case 'princess':
-        if (profile.totalPoints > 300) return (<Image source={require('../assets/images/avatar/princess-4.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 200) return (<Image source={require('../assets/images/avatar/princess-3.png')} style={styles.avatarImage}/>);
-        if (profile.totalPoints > 100) return (<Image source={require('../assets/images/avatar/princess-2.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[3].exp) return (<Image source={require('../assets/images/avatar/princess-4.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[2].exp) return (<Image source={require('../assets/images/avatar/princess-3.png')} style={styles.avatarImage}/>);
+        if (profile.totalPoints > LEVEL_THRESHOLDS[1].exp) return (<Image source={require('../assets/images/avatar/princess-2.png')} style={styles.avatarImage}/>);
         return (<Image source={require('../assets/images/avatar/princess-1.png')} style={styles.avatarImage}/>);
       default:
         break;
@@ -337,6 +386,7 @@ export default function ProfileScreen() {
   }
 
   const mealMakerHighScore = profile.highScores['meal-maker'] ?? 0;
+  const heroProgress = getHeroProgress(profile.totalPoints);
 
   return (
     <View style={[styles.container_outer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -352,6 +402,46 @@ export default function ProfileScreen() {
             {getAvatarImage()}
           </View>
           <Text style={styles.username}>{profile.username}</Text>
+          <View style={styles.levelPill}>
+            <Text style={styles.levelPillText}>Level {heroProgress.level}</Text>
+          </View>
+        </View>
+
+        {/* Hero Growth */}
+        <View style={styles.growthSection}>
+          <Text style={styles.sectionTitle}>🌱 Hero Growth</Text>
+          <View style={styles.growthCard}>
+            <View style={styles.expLine}>
+              <Text style={styles.currentExp}>{heroProgress.currentExp}</Text>
+              <Text style={styles.expTotal}> / {heroProgress.targetExp} EXP</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: heroProgress.progressPercent }]} />
+            </View>
+            <Text style={styles.expHint}>
+              {heroProgress.nextLevel
+                ? `${heroProgress.expToNextLevel} EXP to Level ${heroProgress.nextLevel}`
+                : 'Max level reached'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Earn EXP */}
+        <View style={styles.earnSection}>
+          <Text style={styles.sectionTitle}>⚡ Earn EXP</Text>
+          <View style={styles.earnGrid}>
+            {EARN_EXP_ITEMS.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.earnCard}
+                onPress={() => router.push(item.href as any)}
+                activeOpacity={0.82}
+              >
+                <Image source={item.image} style={styles.earnImage} contentFit="contain" />
+                <Text style={styles.earnTitle}>{item.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Stats */}
@@ -362,7 +452,7 @@ export default function ProfileScreen() {
             <View style={styles.statCard}>
               <Text style={styles.statEmoji}>⭐</Text>
               <Text style={styles.statValue}>{profile.totalPoints}</Text>
-              <Text style={styles.statLabel}>Total Points</Text>
+              <Text style={styles.statLabel}>Total EXP</Text>
             </View>
 
             <View style={styles.statCard}>
@@ -466,9 +556,109 @@ const styles = StyleSheet.create({
     color: Colors.on_surface,
     fontWeight: '900',
   },
+  levelPill: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.badge,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.lg,
+  },
+  levelPillText: {
+    ...Typography.labelLarge,
+    color: Colors.on_primary,
+    fontWeight: '900',
+  },
   ageLabel: {
     ...Typography.bodyLarge,
     color: Colors.on_surface_variant,
+  },
+  sectionTitle: {
+    ...Typography.titleLarge,
+    color: Colors.on_surface,
+    fontWeight: '900',
+  },
+  growthSection: {
+    gap: Spacing.md,
+  },
+  growthCard: {
+    backgroundColor: Colors.surface_container_lowest,
+    borderRadius: Radius.card,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  expLine: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  currentExp: {
+    ...Typography.headlineMedium,
+    color: Colors.primary,
+    fontWeight: '900',
+  },
+  expTotal: {
+    ...Typography.titleSmall,
+    color: Colors.on_surface,
+    fontWeight: '800',
+    paddingBottom: 3,
+  },
+  progressTrack: {
+    height: 12,
+    borderRadius: Radius.badge,
+    backgroundColor: Colors.primary_container,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: Radius.badge,
+    backgroundColor: Colors.primary,
+  },
+  expHint: {
+    ...Typography.bodyMedium,
+    color: Colors.on_surface_variant,
+    fontWeight: '600',
+  },
+  earnSection: {
+    gap: Spacing.md,
+  },
+  earnGrid: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  earnCard: {
+    flex: 1,
+    minHeight: 132,
+    backgroundColor: Colors.surface_container_lowest,
+    borderRadius: Radius.card,
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  earnImage: {
+    width: 72,
+    height: 58,
+  },
+  earnTitle: {
+    ...Typography.labelMedium,
+    color: Colors.on_surface,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  earnExp: {
+    ...Typography.titleMedium,
+    color: Colors.primary,
+    fontWeight: '900',
+    textAlign: 'center',
   },
   statsSection: {
     gap: Spacing.md,

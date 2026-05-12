@@ -48,6 +48,7 @@ from app.services.food_display import (
     normalize_display_name,
     simple_display_name,
 )
+from app.services.food_metadata import find_existing_image as _find_metadata_image
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +78,12 @@ def _make_image_url(descriptor: str, section: str = "default") -> str:
 
 
 def _make_image_url_from_name(name: str) -> str:
-    """Generate a Pollinations AI image URL for a display name."""
+    """Generate a Pollinations AI image URL for a display name (512×512 fallback)."""
     clean = name.strip()
     encoded = urllib.parse.quote(f"{clean} food photography white background")
     return (
         f"https://image.pollinations.ai/prompt/{encoded}"
-        f"?model=flux&width=400&height=400&nologo=true"
+        f"?model=flux&width=512&height=512&nologo=true"
     )
 
 
@@ -193,12 +194,17 @@ def _build_name_filter(prefs: list[str]):
 def _to_food_item(food: CnFdes, section: str = "default") -> FoodItem:
     category = CAT_CODE_TO_PREF.get(food.food_category_code, "other")
     name = display_name_for_section(food.descriptor, section, category, food.health_grade or "")
+    # Prefer pre-existing metadata image (by food_id/cn_code first, then by name)
+    image_url = (
+        _find_metadata_image(name, food_id=str(food.cn_code))
+        or _make_image_url(food.descriptor, section)
+    )
     return FoodItem(
         cn_code=food.cn_code,
         name=name,
         category=category,
         grade=food.health_grade or "",
-        image_url=_make_image_url(food.descriptor, section),
+        image_url=image_url,
     )
 
 
@@ -647,7 +653,10 @@ def _apply_batch_display_rewrite(
             new_name, root_key = result
             if new_name and not is_generic_output_name(new_name, item.category):
                 item.name = new_name
-                item.image_url = _make_image_url_from_name(new_name)
+                item.image_url = (
+                    _find_metadata_image(new_name, food_id=str(item.cn_code))
+                    or _make_image_url_from_name(new_name)
+                )
                 if root_key:
                     root_keys_by_code[item.cn_code] = root_key
 
