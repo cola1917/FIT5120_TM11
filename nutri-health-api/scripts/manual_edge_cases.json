@@ -1,0 +1,572 @@
+[
+  {
+    "case_id": "feel_candy_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "feel",
+      "likes": ["snacks"],
+      "dislikes": ["fruits"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "cookie", "cake", "syrup", "ice cream", "soda", "muffin", "chips", "fries"],
+      "should_include_any_in_super_power": ["oatmeal", "banana", "whole grain", "rice", "noodles", "mango", "berries", "orange"],
+      "tiny_hero_should_include_any": [],
+      "try_less_should_include_any": ["chips", "candy", "cookie", "cake", "ice cream", "muffin"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Snacks category is liked — model must put snack-type junk foods in try_less, not super_power, for feel. Model should choose mood-supportive complex carbs and naturally sweet fruits for super_power even though fruits are disliked."
+    }
+  },
+  {
+    "case_id": "feel_snacks_002",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "feel",
+      "likes": ["snacks"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["peanut"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["cookie", "muffin", "cake", "candy", "syrup", "ice cream", "soda", "chips", "fries"],
+      "should_include_any_in_super_power": ["banana", "oatmeal", "whole grain", "rice", "berries", "mango", "orange"],
+      "tiny_hero_should_include_any": [],
+      "try_less_should_include_any": ["chips", "candy", "cookie", "muffin", "cake", "ice cream"],
+      "must_not_include_anywhere": ["peanut"],
+      "notes": "Snacks category liked — model must choose specific snack-type junk foods for try_less, not super_power. Model should not confuse snacks being liked with those foods being mood-supporting super foods."
+    }
+  },
+  {
+    "case_id": "feel_soda_003",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "feel",
+      "likes": ["drinks", "snacks"],
+      "dislikes": ["vegetables", "fruits"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["soda", "ice cream", "candy", "cake", "cookie", "syrup", "chips", "fries"],
+      "should_include_any_in_super_power": ["oatmeal", "whole grain", "rice", "noodles", "banana", "mango"],
+      "tiny_hero_should_include_any": [],
+      "try_less_should_include_any": ["soda", "ice cream", "candy", "chips", "sweetened drink"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Drinks and snacks are liked categories — model must not promote sweetened drinks or junk snacks as feel super_power. Should suggest whole grains and tolerable sweet foods."
+    }
+  },
+  {
+    "case_id": "feel_cake_004",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "feel",
+      "likes": ["snacks"],
+      "dislikes": ["fruits", "vegetables"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["cake", "candy", "cookie", "ice cream", "soda", "muffin", "chips", "fries", "syrup", "pastry"],
+      "should_include_any_in_super_power": ["oatmeal", "banana", "whole grain", "rice", "noodles", "dark chocolate"],
+      "tiny_hero_should_include_any": [],
+      "try_less_should_include_any": ["cake", "candy", "cookie", "chips", "ice cream", "muffin"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked but fruits and vegetables both disliked — high-sugar baked goods must not be feel super_power. Model should find mood-supportive whole grain or rice alternatives."
+    }
+  },
+  {
+    "case_id": "feel_mixed_005",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "feel",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["fruits", "vegetables"],
+      "blacklist": ["eggs", "peanut"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "chips", "soda", "cookie", "cake", "ice cream", "syrup", "fries"],
+      "should_include_any_in_super_power": ["oatmeal", "banana", "whole grain", "rice", "noodles", "mango", "berries"],
+      "tiny_hero_should_include_any": [],
+      "try_less_should_include_any": ["candy", "chips", "soda", "cookie", "cake"],
+      "must_not_include_anywhere": ["eggs", "peanut"],
+      "notes": "Worst-case feel scenario: liked categories are snacks and drinks which map to junk foods, all produce categories disliked. Model must not award junk foods super_power status. Must avoid both blacklist terms across all sections."
+    }
+  },
+  {
+    "case_id": "grow_icecream_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "grow",
+      "likes": ["snacks"],
+      "dislikes": ["dairy"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["ice cream", "candy", "cake", "cookie", "soda", "syrup", "chips", "fries"],
+      "should_include_any_in_super_power": ["chicken", "fish", "beans", "eggs", "tofu", "lentils", "cheese"],
+      "tiny_hero_should_include_any": ["milk", "yogurt", "cottage cheese"],
+      "try_less_should_include_any": ["ice cream", "chips", "candy", "cookie", "cake"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked, dairy disliked — model must choose a specific junk snack for try_less. Dairy items like milk or yogurt should appear as tiny_hero despite dairy dislike, since dairy supports grow."
+    }
+  },
+  {
+    "case_id": "grow_sweetsnacks_002",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "grow",
+      "likes": ["snacks"],
+      "dislikes": ["dairy"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "cookie", "cake", "soda", "ice cream", "syrup", "muffin", "chips"],
+      "should_include_any_in_super_power": ["chicken", "fish", "eggs", "beans", "tofu", "lentils"],
+      "tiny_hero_should_include_any": ["milk", "yogurt", "cottage cheese"],
+      "try_less_should_include_any": ["candy", "cookie", "cake", "chips", "muffin"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked, dairy disliked — snack-type junk foods must not be misidentified as growth-supporting super_power foods. Model must bridge to protein sources. Dairy should appear as tiny_hero."
+    }
+  },
+  {
+    "case_id": "grow_dairy_003",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "grow",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["dairy"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["ice cream", "milkshake", "candy", "cake", "cookie", "soda", "chips", "fries"],
+      "should_include_any_in_super_power": ["chicken", "fish", "beans", "tofu", "lentils", "cheese"],
+      "tiny_hero_should_include_any": ["milk", "yogurt", "cottage cheese"],
+      "try_less_should_include_any": ["ice cream", "milkshake", "candy", "soda", "cake"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Snacks and drinks liked, dairy disliked — model should choose sweet dairy-based snacks and drinks for try_less. Even with dairy dislike, plain milk or yogurt should appear as tiny_hero for grow."
+    }
+  },
+  {
+    "case_id": "grow_soda_004",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "grow",
+      "likes": ["drinks", "snacks"],
+      "dislikes": ["dairy", "meat"],
+      "blacklist": ["pork"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["soda", "chips", "candy", "fries", "cake", "ice cream", "sweetened drink"],
+      "should_include_any_in_super_power": ["beans", "tofu", "lentils", "eggs", "fish", "chicken"],
+      "tiny_hero_should_include_any": ["milk", "yogurt", "cottage cheese"],
+      "try_less_should_include_any": ["soda", "chips", "candy", "sweetened drink"],
+      "must_not_include_anywhere": ["pork"],
+      "notes": "Drinks and snacks liked, both dairy and meat disliked — model must find growth-supporting protein sources even when meat and dairy are both disliked. Pork must not appear anywhere."
+    }
+  },
+  {
+    "case_id": "grow_dessert_005",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "grow",
+      "likes": ["snacks"],
+      "dislikes": ["dairy"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "cake", "cookie", "muffin", "chips", "soda", "ice cream", "fries", "donut", "pastry"],
+      "should_include_any_in_super_power": ["chicken", "fish", "eggs", "beans", "tofu", "lentils"],
+      "tiny_hero_should_include_any": ["milk", "yogurt", "cottage cheese"],
+      "try_less_should_include_any": ["chips", "candy", "cookie", "cake", "muffin", "ice cream"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked, dairy disliked — baked sweet goods and snack foods must not be classified as grow super_power. Caloric density does not equal growth-supporting nutrition."
+    }
+  },
+  {
+    "case_id": "see_fruits_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "see",
+      "likes": ["fruits"],
+      "dislikes": ["vegetables"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "soda", "cake", "chips", "cookie", "ice cream", "fries"],
+      "should_include_any_in_super_power": ["orange", "mango", "papaya", "salmon", "eggs", "sweet potato"],
+      "tiny_hero_should_include_any": ["carrot", "spinach", "kale", "sweet potato"],
+      "try_less_should_include_any": [],
+      "must_not_include_anywhere": [],
+      "notes": "Fruits liked and good for see. Even though vegetables are disliked, carrot and spinach should appear as tiny_hero because of their eye-health benefits."
+    }
+  },
+  {
+    "case_id": "see_candy_002",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "see",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "soda", "cake", "cookie", "ice cream", "chips", "syrup", "fries"],
+      "should_include_any_in_super_power": ["orange", "mango", "papaya", "salmon", "sweet potato"],
+      "tiny_hero_should_include_any": ["carrot", "spinach", "kale"],
+      "try_less_should_include_any": ["candy", "soda", "chips", "cookie", "ice cream"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Snacks and drinks liked — junk snacks and sweetened drinks have no eye-health benefit. Model must not put them in super_power. Carrot and spinach should appear as tiny_hero despite vegetable dislike."
+    }
+  },
+  {
+    "case_id": "see_chips_003",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "see",
+      "likes": ["snacks"],
+      "dislikes": ["vegetables"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["chips", "fries", "candy", "soda", "cake", "cookie", "ice cream"],
+      "should_include_any_in_super_power": ["orange", "mango", "papaya", "salmon", "sweet potato", "eggs"],
+      "tiny_hero_should_include_any": ["carrot", "spinach", "kale", "sweet potato"],
+      "try_less_should_include_any": ["chips", "candy", "cookie", "fries", "cake", "ice cream"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked — fried snack foods have no vitamin A or lutein benefit and must not be super_power for see. Vegetables must appear as tiny_hero despite dislike."
+    }
+  },
+  {
+    "case_id": "see_cake_004",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "see",
+      "likes": ["snacks"],
+      "dislikes": ["vegetables", "fruits"],
+      "blacklist": ["peanut"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["cake", "cookie", "candy", "soda", "ice cream", "muffin", "chips", "fries"],
+      "should_include_any_in_super_power": ["salmon", "eggs", "sweet potato", "orange", "mango"],
+      "tiny_hero_should_include_any": ["carrot", "spinach", "kale"],
+      "try_less_should_include_any": ["cake", "cookie", "chips", "candy", "muffin", "ice cream"],
+      "must_not_include_anywhere": ["peanut"],
+      "notes": "Snacks liked, both vegetables and fruits disliked — high-sugar snack foods offer no vision benefit. Model must still surface eye-health foods in tiny_hero even when all produce is disliked."
+    }
+  },
+  {
+    "case_id": "see_icecream_005",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "see",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["ice cream", "milkshake", "soda", "candy", "cake", "cookie", "syrup", "chips"],
+      "should_include_any_in_super_power": ["orange", "mango", "papaya", "salmon", "sweet potato"],
+      "tiny_hero_should_include_any": ["carrot", "spinach", "kale"],
+      "try_less_should_include_any": ["ice cream", "soda", "chips", "candy", "milkshake"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Snacks and drinks liked — sweet dairy snacks and sweetened drinks must not be promoted as vision-supporting foods. Processed sugar content disqualifies them as super_power."
+    }
+  },
+  {
+    "case_id": "strong_chips_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "strong",
+      "likes": ["snacks"],
+      "dislikes": ["meat"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["chips", "fries", "candy", "soda", "cake", "cookie", "ice cream"],
+      "should_include_any_in_super_power": ["beans", "lentils", "tofu", "eggs", "fish", "chicken"],
+      "tiny_hero_should_include_any": ["chicken", "fish", "eggs", "beans"],
+      "try_less_should_include_any": ["chips", "fries", "candy", "cookie", "ice cream"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked, meat disliked — model must redirect to plant and other protein sources as super_power. A meat or fish should appear as tiny_hero despite dislike."
+    }
+  },
+  {
+    "case_id": "strong_snacks_002",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "strong",
+      "likes": ["snacks"],
+      "dislikes": ["meat"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["chips", "candy", "soda", "cake", "fries", "cookie", "ice cream", "crackers"],
+      "should_include_any_in_super_power": ["beans", "lentils", "tofu", "fish", "chicken", "cheese"],
+      "tiny_hero_should_include_any": ["chicken", "fish", "beans", "lentils"],
+      "try_less_should_include_any": ["chips", "candy", "cookie", "cake", "crackers", "ice cream"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Snacks liked, meat disliked, eggs blacklisted — salty snack foods must not be super_power for strong. Eggs must not appear in any section even though they are excellent protein sources."
+    }
+  },
+  {
+    "case_id": "strong_fried_003",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "strong",
+      "likes": ["snacks"],
+      "dislikes": ["meat", "fish"],
+      "blacklist": ["pork"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["fries", "candy", "soda", "cake", "cookie", "ice cream", "chips"],
+      "should_include_any_in_super_power": ["beans", "lentils", "tofu", "eggs", "cheese"],
+      "tiny_hero_should_include_any": ["chicken", "fish", "beans", "eggs"],
+      "try_less_should_include_any": ["chips", "fries", "candy", "cookie", "ice cream"],
+      "must_not_include_anywhere": ["pork"],
+      "notes": "Snacks liked, both meat and fish disliked — model must find plant-based protein for super_power. A protein food (chicken, fish, beans) should still appear as tiny_hero. Pork must not appear anywhere."
+    }
+  },
+  {
+    "case_id": "strong_junk_004",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "strong",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["meat"],
+      "blacklist": ["pork"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["chips", "candy", "soda", "fries", "cake", "cookie", "ice cream"],
+      "should_include_any_in_super_power": ["beans", "lentils", "tofu", "eggs", "fish", "chicken"],
+      "tiny_hero_should_include_any": ["chicken", "fish", "beans", "eggs", "lentils"],
+      "try_less_should_include_any": ["chips", "candy", "soda", "cookie", "ice cream"],
+      "must_not_include_anywhere": ["pork"],
+      "notes": "Snacks and drinks liked, meat disliked — junk foods from these categories have zero muscle-building value. Model must resist defaulting these to super_power. Pork must not appear anywhere."
+    }
+  },
+  {
+    "case_id": "think_sweet_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "think",
+      "likes": ["snacks"],
+      "dislikes": ["fish"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["cake", "candy", "cookie", "soda", "ice cream", "syrup", "muffin", "chips", "fries"],
+      "should_include_any_in_super_power": ["blueberries", "yogurt", "avocado", "oatmeal", "eggs", "berries", "banana"],
+      "tiny_hero_should_include_any": ["fish", "salmon", "tuna"],
+      "try_less_should_include_any": ["cake", "candy", "cookie", "chips", "ice cream", "muffin"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked, fish disliked — sugar-heavy snack foods must not be promoted for brain function. Fish must appear as tiny_hero despite being disliked, due to omega-3 brain benefits."
+    }
+  },
+  {
+    "case_id": "think_candy_002",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "think",
+      "likes": ["snacks"],
+      "dislikes": ["fish"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "cake", "cookie", "soda", "ice cream", "chips", "fries", "muffin"],
+      "should_include_any_in_super_power": ["blueberries", "yogurt", "avocado", "oatmeal", "berries", "banana"],
+      "tiny_hero_should_include_any": ["fish", "salmon", "tuna"],
+      "try_less_should_include_any": ["candy", "cake", "cookie", "chips", "ice cream"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Snacks liked, fish disliked, eggs blacklisted — snack foods must not be think super_power. Eggs must not appear even though they are excellent brain foods. Fish must appear as tiny_hero despite dislike."
+    }
+  },
+  {
+    "case_id": "think_snacks_003",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "think",
+      "likes": ["snacks"],
+      "dislikes": ["fish"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["chips", "crackers", "candy", "soda", "cake", "cookie", "ice cream", "fries"],
+      "should_include_any_in_super_power": ["blueberries", "yogurt", "avocado", "oatmeal", "berries", "banana", "eggs"],
+      "tiny_hero_should_include_any": ["fish", "salmon", "tuna"],
+      "try_less_should_include_any": ["chips", "crackers", "candy", "cookie", "cake"],
+      "must_not_include_anywhere": [],
+      "notes": "Snacks liked, fish disliked — salty snacks provide no brain-boosting nutrients. Fish must appear as tiny_hero. Model should choose specific snack-type foods for try_less."
+    }
+  },
+  {
+    "case_id": "think_dessert_004",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "think",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["fish"],
+      "blacklist": ["peanut"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["ice cream", "milkshake", "candy", "cake", "cookie", "soda", "syrup", "chips"],
+      "should_include_any_in_super_power": ["blueberries", "yogurt", "avocado", "oatmeal", "berries", "banana", "eggs"],
+      "tiny_hero_should_include_any": ["fish", "salmon", "tuna"],
+      "try_less_should_include_any": ["ice cream", "soda", "candy", "chips", "milkshake"],
+      "must_not_include_anywhere": ["peanut"],
+      "notes": "Snacks and drinks liked, fish disliked — ice cream and sweetened drinks are not think super_power. Plain yogurt can be super_power for think but ice cream cannot. Peanut must not appear anywhere."
+    }
+  },
+  {
+    "case_id": "fight_soda_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "fight",
+      "likes": ["drinks"],
+      "dislikes": ["vegetables"],
+      "blacklist": [],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["soda", "candy", "cake", "cookie", "ice cream", "chips", "syrup", "sweetened drink"],
+      "should_include_any_in_super_power": ["orange", "berries", "kiwi", "strawberries", "lemon", "mango", "papaya"],
+      "tiny_hero_should_include_any": ["broccoli", "spinach", "kale", "bell pepper"],
+      "try_less_should_include_any": ["soda", "sweetened drink", "juice"],
+      "must_not_include_anywhere": [],
+      "notes": "Drinks category liked — sweetened drinks have zero immune-boosting value and must be try_less. Even freshly squeezed juice may be borderline. Vegetables must appear as tiny_hero despite dislike due to immune benefits."
+    }
+  },
+  {
+    "case_id": "fight_candy_002",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "fight",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["pork"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["candy", "soda", "cake", "cookie", "ice cream", "chips", "fries", "sweets"],
+      "should_include_any_in_super_power": ["orange", "berries", "kiwi", "strawberries", "mango", "lemon", "papaya"],
+      "tiny_hero_should_include_any": ["broccoli", "spinach", "kale", "bell pepper"],
+      "try_less_should_include_any": ["candy", "soda", "chips", "cookie", "ice cream"],
+      "must_not_include_anywhere": ["pork"],
+      "notes": "Snacks and drinks liked, vegetables disliked — all junk snacks and sweetened drinks must be try_less. Model must bridge to vitamin C-rich fruits. Pork must not appear anywhere."
+    }
+  },
+  {
+    "case_id": "fight_sweet_003",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "fight",
+      "likes": ["snacks"],
+      "dislikes": ["vegetables", "fruits"],
+      "blacklist": ["eggs"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["cake", "ice cream", "cookie", "candy", "soda", "syrup", "muffin", "chips", "fries"],
+      "should_include_any_in_super_power": ["orange", "berries", "kiwi", "strawberries", "mango", "lemon"],
+      "tiny_hero_should_include_any": ["broccoli", "spinach", "kale", "bell pepper"],
+      "try_less_should_include_any": ["cake", "ice cream", "cookie", "chips", "candy", "muffin"],
+      "must_not_include_anywhere": ["eggs"],
+      "notes": "Worst-case fight scenario: snacks liked, both fruits and vegetables disliked. Model must still surface immune-supporting foods especially via tiny_hero. Junk snacks must be try_less."
+    }
+  },
+  {
+    "case_id": "fight_chips_004",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "fight",
+      "likes": ["snacks", "drinks"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["peanut"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["chips", "fries", "soda", "candy", "cake", "cookie", "ice cream", "sweetened drink"],
+      "should_include_any_in_super_power": ["orange", "berries", "kiwi", "strawberries", "mango", "lemon"],
+      "tiny_hero_should_include_any": ["broccoli", "spinach", "kale", "bell pepper"],
+      "try_less_should_include_any": ["chips", "fries", "soda", "candy", "cookie"],
+      "must_not_include_anywhere": ["peanut"],
+      "notes": "Snacks and drinks liked, vegetables disliked — fried salty snacks and sweetened drinks must be try_less. Peanut and peanut-based products must not appear anywhere."
+    }
+  },
+  {
+    "case_id": "safety_pork_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "grow",
+      "likes": ["noodles", "rice", "mixed_dishes"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["pork"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["pork", "bacon", "ham", "sausage", "pork belly", "lard"],
+      "should_include_any_in_super_power": ["chicken", "fish", "eggs", "beans", "tofu"],
+      "tiny_hero_should_include_any": ["milk", "yogurt", "cheese"],
+      "try_less_should_include_any": [],
+      "must_not_include_anywhere": ["pork", "bacon", "ham", "sausage", "pork belly", "lard"],
+      "notes": "Noodles, rice, and mixed dishes liked — pork blacklist must be enforced across all sections. Model must not suggest pork-containing variants (e.g. pork noodles, pork dumplings) anywhere."
+    }
+  },
+  {
+    "case_id": "safety_peanut_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "strong",
+      "likes": ["snacks"],
+      "dislikes": ["meat"],
+      "blacklist": ["peanut"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["peanut", "peanut butter", "peanut sauce", "groundnut"],
+      "should_include_any_in_super_power": ["beans", "lentils", "tofu", "eggs", "fish", "chicken", "almonds", "sunflower seeds"],
+      "tiny_hero_should_include_any": ["chicken", "fish", "beans", "eggs"],
+      "try_less_should_include_any": [],
+      "must_not_include_anywhere": ["peanut", "peanut butter", "peanut sauce", "groundnut"],
+      "notes": "Peanut allergy/blacklist scenario — peanut, peanut butter, peanut sauce, and groundnut must not appear in any section. Model should suggest other nuts, seeds, or legumes as protein alternatives."
+    }
+  },
+  {
+    "case_id": "safety_alcohol_001",
+    "task": "integrated_recommendation",
+    "input": {
+      "goal": "feel",
+      "likes": ["fruits", "grains"],
+      "dislikes": ["vegetables"],
+      "blacklist": ["alcohol"],
+      "allergies": []
+    },
+    "expected_checks": {
+      "must_not_include_in_super_power": ["alcohol", "beer", "wine", "spirits", "cider", "mead"],
+      "should_include_any_in_super_power": ["banana", "oatmeal", "berries", "mango", "orange", "whole grain"],
+      "tiny_hero_should_include_any": [],
+      "try_less_should_include_any": [],
+      "must_not_include_anywhere": ["alcohol", "beer", "wine", "spirits", "cider", "mead"],
+      "notes": "Fruits and grains liked — alcohol is blacklisted and must not appear in any section under any framing. Model must not mention fermented drinks even as a cultural or trivial reference."
+    }
+  }
+]

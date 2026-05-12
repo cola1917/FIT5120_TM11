@@ -1,0 +1,54 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    ext {
+        // Android SDK Versions (used across all modules)
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+        minSdkVersion = 23
+        
+        // NDK Version - MUST match the installed version: 30.0.14904198
+        ndkVersion = "30.0.14904198"
+        
+        // Kotlin Version (must be compatible with your AGP version)
+        kotlinVersion = "1.9.24"
+        
+        // Android Gradle Plugin Version
+        agpVersion = "8.2.1"
+    }
+
+    repositories {
+        // 🇨🇳 Chinese mirrors for faster/reliable access (placed FIRST)
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        
+        // Original repos as fallback
+        google()
+        mavenCentral()
+    }
+    
+    dependencies {
+        // Android Gradle Plugin (with version)
+        classpath("com.android.tools.build:gradle:$agpVersion")
+        
+        // React Native Gradle Plugin (version managed by RN, no version needed)
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        
+        // Kotlin Gradle Plugin (with version)
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
+allprojects {
+    repositories {
+        // Chinese mirrors for app-level dependencies
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        
+        // Original repos
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+}
