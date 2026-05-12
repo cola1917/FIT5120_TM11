@@ -36,7 +36,7 @@ export default function BeStrongDetail({ goal, onBack, recommendations, recLoadi
 
   const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
     name: f.name,
-    description: `Grade ${f.grade}`,
+    description: `${f.grade}`,
     image: f.image_url,
   })) ?? goal.superFoods;
 
@@ -173,15 +173,10 @@ export default function BeStrongDetail({ goal, onBack, recommendations, recLoadi
         ) : tryLessFoods.length > 0 ? (
           <View style={styles.grid}>
             {tryLessFoods.map((food) => (
-              <View key={food.cn_code} style={[styles.smallCard, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }]}>
-                <View style={[styles.smallImageContainer, { width: 64, height: 64 }]}>
-                  <Image source={{ uri: food.image_url }} style={[styles.smallImage, { opacity: 0.7 }]} resizeMode="contain" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.foodNameSmall}>{food.name}</Text>
-                  <View style={[styles.badge, { backgroundColor: '#FFCCBC', marginTop: 4 }]}>
-                    <Text style={[styles.badgeText, { color: '#BF360C' }]}>EAT LESS</Text>
-                  </View>
+              <View key={food.cn_code} style={[styles.tryLessItemCard, { padding: 16 }]}>
+                <Text style={styles.tryLessFoodName}>{food.name}</Text>
+                <View style={[styles.badge, { backgroundColor: '#FFCCBC', marginTop: 8, alignSelf: 'flex-start' }]}>
+                  <Text style={[styles.badgeText, { color: '#BF360C' }]}>EAT LESS</Text>
                 </View>
               </View>
             ))}
@@ -375,6 +370,21 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#36392c',
     textAlign: 'center',
+  },
+  tryLessItemCard: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  tryLessFoodName: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#36392c',
+    textAlign: 'left',
   },
   tryLessCard: {
     backgroundColor: '#fff',

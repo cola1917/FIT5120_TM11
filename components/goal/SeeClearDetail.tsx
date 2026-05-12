@@ -9,7 +9,7 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import { ArrowLeft, Map } from 'lucide-react-native';
+import { ArrowRight, Star, ArrowLeft, Map } from 'lucide-react-native';
 import type { Goal } from './types';
 import type { RecommendationResponse } from '../../services/recommendations';
 import { useRouter } from 'expo-router';
@@ -36,10 +36,13 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
 
   const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
     name: f.name,
-    description: `Grade ${f.grade}`,
+    description: `${f.grade}`,
     image: f.image_url,
-    rating: 2,
   })) ?? goal.superFoods;
+
+  const sf0 = displaySuperFoods[0] ?? goal.superFoods[0];
+  const sf1 = displaySuperFoods[1] ?? goal.superFoods[1];
+  const sf2 = displaySuperFoods[2] ?? goal.superFoods[2];
 
   const tinyHeroFoods = recommendations?.tiny_hero_foods ?? [];
   const tryLessFoods = recommendations?.try_less_foods ?? [];
@@ -53,52 +56,76 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
 
       {/* Hero Section */}
       <View style={styles.heroSection}>
-        <View style={styles.heroImageContainer}>
-          <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrSM32q7XlPujehh6OBCUPQAxm54TnFOlVSbzvWsgAQtxU0KjG2n5wyUpxc_4EiVW9McN_SUvWo7fgk8Awixd4Pa3jdEu0P8Q8p78PeKWQfha8XySUS0wIWtJoY0QmzMHDRWqRoximNSRa8MU1FTDaC5CUdx0jOUJ054Er76eGsdJN0-JWkgHihX8_2EFJJwNygVT_ZyNmxvi_1ntUT5leg-lVCD4Y9xaNHGfXH1Nuzzzz6aqzUwBC9Mm4r_vONOZSeq1fIQL94nuU' }}
-            style={styles.heroImage}
-            resizeMode="contain"
-          />
-        </View>
-        <View style={styles.heroTextContainer}>
-          <Text style={styles.heroTitle}>Foods for 👓 {goal.title}</Text>
-          <Text style={styles.heroSubtitle}>{goal.description}</Text>
-        </View>
+        <Text style={styles.heroTitle}>Foods for 👓 {goal.title}</Text>
+        <Text style={styles.heroSubtitle}>{goal.description}</Text>
       </View>
 
-      {/* Super Power Foods */}
+      {/* Good Choice Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={[styles.sectionIndicator, { backgroundColor: '#4CAF50' }]} />
           <Text style={[styles.sectionTitle, { color: '#4CAF50' }]}>Super Power Foods</Text>
         </View>
-        <Text style={[styles.descriptionText, { color: '#4CAF50' }]}>Foods you love that help you reach your goal!</Text>
+        <Text style={[styles.infoDescriptionText, { color: '#4CAF50', fontStyle: 'italic' }]}>Foods you love that help you reach your goal!</Text>
 
         {recLoading ? (
-          <ActivityIndicator color="#4CAF50" size="large" style={{ marginVertical: 24 }} />
+          <ActivityIndicator color="#2196F3" size="large" style={{ marginVertical: 24 }} />
         ) : (
           <View style={styles.grid}>
-            {displaySuperFoods.map((food) => (
-              <View key={food.name} style={styles.foodCard}>
-                <View style={styles.foodInfo}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>GOOD CHOICE</Text>
-                  </View>
-                  <TouchableOpacity 
-                    style={styles.questButton}
-                    onPress={() => handleFoodQuestPress(food.name)}
-                    activeOpacity={0.7}
-                  >
-                    <Map color="#2E7D32" size={16} />
-                    <Text style={styles.questButtonText}>Find This Food</Text>
-                  </TouchableOpacity>
+            {/* Main Card */}
+            <View style={styles.mainCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>GOOD CHOICE</Text>
                 </View>
-                <View style={styles.foodIconContainer}>
-                  <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
-                </View>
+                <Text style={styles.foodNameLarge}>{sf0.name}</Text>
               </View>
-            ))}
+              <View style={styles.mainImageContainer}>
+                <Image source={{ uri: sf0.image }} style={styles.mainImage} resizeMode="cover" />
+              </View>
+              <Text style={styles.descriptionText}>{sf0.description}</Text>
+              <TouchableOpacity 
+                style={styles.questButton}
+                onPress={() => handleFoodQuestPress(sf0.name)}
+                activeOpacity={0.7}
+              >
+                <Map color="#2E7D32" size={16} />
+                <Text style={styles.questButtonText}>Find This Food</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Row of smaller cards */}
+            <View style={styles.row}>
+              <View style={styles.smallCard}>
+                <View style={styles.smallImageContainer}>
+                  <Image source={{ uri: sf1.image }} style={styles.smallImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.foodNameSmall}>{sf1.name}</Text>
+                <TouchableOpacity 
+                  style={styles.questButtonSmall}
+                  onPress={() => handleFoodQuestPress(sf1.name)}
+                  activeOpacity={0.7}
+                >
+                  <Map color="#2E7D32" size={14} />
+                  <Text style={styles.questButtonTextSmall}>Find This Food</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.smallCard}>
+                <View style={styles.smallImageContainer}>
+                  <Image source={{ uri: sf2.image }} style={styles.smallImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.foodNameSmall}>{sf2.name}</Text>
+                <TouchableOpacity 
+                  style={styles.questButtonSmall}
+                  onPress={() => handleFoodQuestPress(sf2.name)}
+                  activeOpacity={0.7}
+                >
+                  <Map color="#2E7D32" size={14} />
+                  <Text style={styles.questButtonTextSmall}>Find This Food</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
       </View>
@@ -116,13 +143,15 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
           ) : (
             <View style={styles.grid}>
               {tinyHeroFoods.map((food) => (
-                <View key={food.cn_code} style={[styles.foodCard, { borderLeftWidth: 4, borderLeftColor: '#9C27B0' }]}>
-                  <View style={styles.foodInfo}>
-                    <Text style={styles.foodName}>{food.name}</Text>
-                    <Text style={[styles.goodChoiceText, { color: '#7B1FA2' }]}>Hero Challenge</Text>
+                <View key={food.cn_code} style={[styles.mainCard, { borderLeftWidth: 4, borderLeftColor: '#9C27B0', padding: 16 }]}>
+                  <View style={styles.cardHeader}>
+                    <View style={[styles.badge, { backgroundColor: '#9C27B0' }]}>
+                      <Text style={styles.badgeText}>HERO CHALLENGE</Text>
+                    </View>
+                    <Text style={styles.foodNameLarge}>{food.name}</Text>
                   </View>
-                  <View style={styles.foodIconContainer}>
-                    <Image source={{ uri: food.image_url }} style={styles.foodImage} resizeMode="contain" />
+                  <View style={[styles.mainImageContainer, { height: 100 }]}>
+                    <Image source={{ uri: food.image_url }} style={styles.mainImage} resizeMode="cover" />
                   </View>
                 </View>
               ))}
@@ -137,20 +166,17 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
           <View style={[styles.sectionIndicator, { backgroundColor: '#FF8A65' }]} />
           <Text style={[styles.sectionTitle, { color: '#FF8A65' }]}>Try Less</Text>
         </View>
-        <Text style={[styles.descriptionText, { color: '#FF8A65', fontStyle: 'italic' }]}>Foods that make it hard to reach your goal.</Text>
+        <Text style={[styles.infoDescriptionText, { color: '#FF8A65', fontStyle: 'italic' }]}>Foods that make it hard to reach your goal.</Text>
 
         {recLoading ? (
           <ActivityIndicator color="#FF8A65" size="large" style={{ marginVertical: 24 }} />
         ) : tryLessFoods.length > 0 ? (
           <View style={styles.grid}>
             {tryLessFoods.map((food) => (
-              <View key={food.cn_code} style={[styles.foodCard, { backgroundColor: '#FFF3E0' }]}>
-                <View style={styles.foodInfo}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={[styles.goodChoiceText, { color: '#BF360C' }]}>Eat Less</Text>
-                </View>
-                <View style={styles.foodIconContainer}>
-                  <Image source={{ uri: food.image_url }} style={[styles.foodImage, { opacity: 0.7 }]} resizeMode="contain" />
+              <View key={food.cn_code} style={[styles.tryLessItemCard, { padding: 16 }]}>
+                <Text style={styles.tryLessFoodName}>{food.name}</Text>
+                <View style={[styles.badge, { backgroundColor: '#FFCCBC', marginTop: 8, alignSelf: 'flex-start' }]}>
+                  <Text style={[styles.badgeText, { color: '#BF360C' }]}>EAT LESS</Text>
                 </View>
               </View>
             ))}
@@ -158,25 +184,16 @@ export default function SeeClearDetail({ goal, onBack, recommendations, recLoadi
         ) : (
           <View style={styles.tryLessCard}>
             <View style={styles.tryLessContent}>
-              <View style={styles.badChoiceColumn}>
-                <Image source={{ uri: goal.tryLess.image }} style={styles.badImage} resizeMode="contain" />
-                <Text style={styles.badName}>{goal.tryLess.name}</Text>
-              </View>
-              <View style={styles.tryLessInfo}>
-                <Text style={styles.alternativeTip}>{goal.tryLess.alternative.tip}</Text>
-                <View style={styles.tryThisRow}>
-                  <View style={styles.divider} />
-                  <Text style={styles.tryThisText}>Try this instead!</Text>
-                  <View style={styles.divider} />
+              <View style={styles.choiceRow}>
+                <View style={styles.badImageContainer}>
+                  <Image source={{ uri: goal.tryLess.image }} style={styles.badImage} resizeMode="contain" />
                 </View>
-                <View style={styles.goodChoiceRow}>
+                <ArrowRight color="#2196F3" size={24} />
+                <View style={styles.goodImageContainer}>
                   <Image source={{ uri: goal.tryLess.alternative.image }} style={styles.goodImage} resizeMode="contain" />
-                  <View style={styles.goodChoiceInfo}>
-                    <Text style={styles.goodName}>{goal.tryLess.alternative.name}</Text>
-                    <Text style={styles.goodTip}>{goal.tryLess.alternative.tip}</Text>
-                  </View>
                 </View>
               </View>
+              <Text style={styles.tipText}>{goal.tryLess.alternative.tip}</Text>
             </View>
           </View>
         )}
@@ -202,7 +219,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#E8EAF6',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#2196F3',
@@ -213,34 +230,20 @@ const styles = StyleSheet.create({
     color: '#2196F3',
   },
   heroSection: {
-    marginBottom: 40,
+    marginBottom: 32,
     alignItems: 'center',
-  },
-  heroImageContainer: {
-    width: 192,
-    height: 192,
-    marginBottom: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-  },
-  heroTextContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
   },
   heroTitle: {
     fontSize: 32,
     fontWeight: '900',
     color: '#36392c',
     textAlign: 'center',
+    lineHeight: 40,
   },
   heroSubtitle: {
-    fontSize: 20,
-    color: '#2196F3',
-    fontWeight: '700',
+    fontSize: 18,
+    color: '#64748b',
+    fontWeight: '600',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -262,7 +265,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#2196F3',
+    color: '#36392c',
   },
   challengeSubtitle: {
     fontSize: 14,
@@ -271,7 +274,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontStyle: 'italic',
   },
-  descriptionText: {
+  infoDescriptionText: {
     fontSize: 14,
     color: '#36392c',
     fontWeight: '600',
@@ -280,75 +283,108 @@ const styles = StyleSheet.create({
   grid: {
     gap: 16,
   },
-  foodCard: {
+  mainCard: {
     backgroundColor: '#f1f5f9',
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  cardHeader: {
+    marginBottom: 16,
+  },
+  badge: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  foodNameLarge: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#36392c',
+  },
+  mainImageContainer: {
+    height: 160,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  descriptionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#64748b',
+    fontStyle: 'italic',
+  },
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 16,
+  },
+  smallCard: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+    padding: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
-  questButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  questButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2E7D32',
-  },
-  foodIconContainer: {
-    width: 100,
+  smallImageContainer: {
+    width: '100%',
     height: 100,
     backgroundColor: '#fff',
-    borderRadius: 50,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    padding: 8,
+    marginBottom: 12,
   },
-  foodImage: {
+  smallImage: {
     width: '100%',
     height: '100%',
   },
-  foodInfo: {
-    flex: 1,
-  },
-  badge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  badgeText: {
-    color: '#2196F3',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  foodName: {
-    fontSize: 24,
+  foodNameSmall: {
+    fontSize: 16,
     fontWeight: '900',
     color: '#36392c',
-    marginBottom: 2,
+    textAlign: 'center',
+  },
+  tryLessItemCard: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  tryLessFoodName: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#36392c',
+    textAlign: 'left',
   },
   tryLessCard: {
     backgroundColor: '#fff',
@@ -364,84 +400,89 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.1)',
   },
   tryLessContent: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 20,
-  },
-  badChoiceColumn: {
     alignItems: 'center',
   },
-  badImage: {
+  choiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 20,
+  },
+  badImageContainer: {
     width: 80,
     height: 80,
-    opacity: 0.7,
-    marginBottom: 8,
-  },
-  badName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#64748b',
-  },
-  tryLessInfo: {
-    width: '100%',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 40,
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
   },
-  alternativeTip: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
-    fontStyle: 'italic',
+  badImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.5,
+  },
+  goodImageContainer: {
+    width: 100,
+    height: 100,
+    backgroundColor: '#E8EAF6',
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderWidth: 4,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  goodImage: {
+    width: '100%',
+    height: '100%',
+  },
+  tipText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#36392c',
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
+    fontStyle: 'italic',
+    lineHeight: 24,
   },
-  tryThisRow: {
+  questButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    marginBottom: 16,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-  },
-  tryThisText: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#E91E63',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginHorizontal: 16,
-  },
-  goodChoiceRow: {
-    backgroundColor: '#f8fafc',
-    padding: 16,
+    gap: 6,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 16,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  questButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2E7D32',
+  },
+  questButtonSmall: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#FCE4EC',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: 'center',
   },
-  goodImage: {
-    width: 48,
-    height: 48,
-  },
-  goodChoiceInfo: {
-    flex: 1,
-  },
-  goodName: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#36392c',
-    marginBottom: 2,
-  },
-  goodTip: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#E91E63',
+  questButtonTextSmall: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#2E7D32',
   },
 });
